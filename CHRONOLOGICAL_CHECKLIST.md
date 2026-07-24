@@ -52,8 +52,8 @@ Earlier options (IntiVanta, HomePlate, etc.) are **not** used. Brand is **Amma C
 - [x] **1.0** Astro project scaffolded (`website/`)  
 - [x] **1.1** Edit `website/src/site.config.ts` — town, WhatsApp, address, email  
 - [ ] **1.2** `cd website && npm install && npm run dev` — preview locally  
-- [ ] **1.3** Deploy — follow [`website/DEPLOY.md`](./website/DEPLOY.md) (**Vercel recommended**)  
-- [ ] **1.4** Confirm `/` and `/privacy` load on the live URL · save URLs in Brand pack below  
+- [x] **1.3** Deployed on Vercel → https://amma-chethi-ruchulu.vercel.app/  
+- [x] **1.4** Home + privacy live · URLs saved in Brand pack below  
 - [x] **1.5** Create Gmail → `order.ammachethiruchulu@gmail.com` · optional Facebook Page later  
 
 **Exit:** Live website URL + privacy policy URL (can change later).  
@@ -178,7 +178,7 @@ For a small home-kitchen / tiffin-style pilot in AP (turnover typically well und
 |------:|------|-------|
 | 1 | Freeze name | [x] Amma Chethi Ruchulu |
 | 2 | Save logo | [x] `logo.jpeg` |
-| 3 | One-page site + privacy (Astro in `website/`) | [x] scaffolded — edit config & deploy |
+| 3 | One-page site + privacy (Astro) | [x] live on Vercel |
 | 4 | Udyam certificate | [ ] |
 | 5 | Start FSSAI Basic Registration (parallel; before real sales) | [ ] |
 | 6 | Start Meta verification | [ ] |
@@ -197,8 +197,8 @@ For a small home-kitchen / tiffin-style pilot in AP (turnover typically well und
 | Tagline | Authentic Home Cooked Flavors |
 | Address (public site) | **Guntur, Andhra Pradesh** only |
 | Address (Udyam / Meta / FSSAI) | 4-115, Davuluru, Kollipara, Guntur, Andhra Pradesh — 522304 |
-| Website URL | *(pending deploy)* |
-| Privacy policy URL | *(pending deploy)/privacy* |
+| Website URL | https://amma-chethi-ruchulu.vercel.app/ |
+| Privacy policy URL | https://amma-chethi-ruchulu.vercel.app/privacy |
 | Logo file path | `logo.jpeg` / `website/public/logo.jpeg` |
 | Primary colour | Terracotta / marigold |
 | Secondary | Leaf green, deep brown, cream |

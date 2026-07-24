@@ -6,7 +6,7 @@ import { defineConfig } from 'astro/config';
 //   base: '/YOUR_REPO_NAME/',
 // See website/DEPLOY.md
 export default defineConfig({
-  site: 'https://ammachethiruchulu.vercel.app',
+  site: 'https://amma-chethi-ruchulu.vercel.app',
   base: '/',
   trailingSlash: 'ignore',
 });
