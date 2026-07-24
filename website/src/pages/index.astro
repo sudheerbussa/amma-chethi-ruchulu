@@ -1,0 +1,111 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site, waLink } from '../site.config';
+---
+
+<BaseLayout>
+  <header class="wrap site-header">
+    <a class="brand-mark" href="/">
+      <img src="/logo.jpeg" alt="" width="48" height="48" />
+      <span class="brand-text">
+        <strong>{site.nameEn}</strong>
+        <span>{site.locality}</span>
+      </span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a href="#how">How it works</a>
+      <a href="#order">Order</a>
+      <a href="/privacy">Privacy</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-label="Introduction">
+      <div class="hero-bg" role="img" aria-label="Amma Chethi Ruchulu brand artwork"></div>
+      <div class="wrap hero-inner">
+        <p class="hero-telugu">{site.nameTe}</p>
+        <h1>{site.nameEn}</h1>
+        <p class="hero-tag">{site.tagline}</p>
+        <p>{site.blurb}</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href={waLink('Hi, I want today\'s menu')}>Order on WhatsApp</a>
+          <a class="btn btn-ghost" href="#how">See how it works</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="order" aria-labelledby="order-heading">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="order-heading">Order ahead. Eat well.</h2>
+          <p>
+            We cook in limited batches with specialist home cooks — not restaurant rush.
+            Place your order before the cutoff so we can collect, pack, and deliver on time.
+          </p>
+        </div>
+        <div class="split two">
+          <div class="cutoff">
+            <h3>Lunch</h3>
+            <p>{site.cutoffs.lunch} · Delivery around midday</p>
+          </div>
+          <div class="cutoff">
+            <h3>Dinner</h3>
+            <p>{site.cutoffs.dinner} · Evening delivery window</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section band" id="how" aria-labelledby="how-heading">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="how-heading">From home kitchen to your door</h2>
+          <p>Simple flow designed for taste and trust in your locality.</p>
+        </div>
+        <ol class="flow">
+          <li>
+            <strong>You order</strong>
+            <span>WhatsApp menu for lunch or dinner before cutoff.</span>
+          </li>
+          <li>
+            <strong>Specialists cook</strong>
+            <span>Homemakers known for their signature dishes prepare your meal.</span>
+          </li>
+          <li>
+            <strong>We pack</strong>
+            <span>Food is collected and packed at our hub with care.</span>
+          </li>
+          <li>
+            <strong>Riders deliver</strong>
+            <span>Fresh to your address in the scheduled window.</span>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="cta-band" aria-labelledby="cta-heading">
+      <h2 id="cta-heading">Ready to taste home?</h2>
+      <p>
+        Message us on WhatsApp for today’s menu. Based in {site.locality} —
+        cooked with heart, delivered in your area.
+      </p>
+      <a class="btn btn-primary" href={waLink('Menu please')}>Chat on WhatsApp</a>
+      <p class="address-line">
+        <a href={`tel:+${site.whatsapp}`}>{site.whatsappDisplay}</a>
+        ·
+        <a href={`mailto:${site.email}`}>{site.email}</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>© {new Date().getFullYear()} {site.nameEn}. {site.tagline}. · {site.locality}</p>
+      <nav aria-label="Footer">
+        <a href="/privacy">Privacy Policy</a>
+        <a href={`mailto:${site.email}`}>Contact</a>
+        <a href={waLink()}>WhatsApp</a>
+      </nav>
+    </div>
+  </footer>
+</BaseLayout>

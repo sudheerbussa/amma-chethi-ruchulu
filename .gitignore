@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Astro / build output
+dist/
+.astro/
+.vercel/
+.netlify/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Logs & debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Test / coverage
+coverage/
+
+# Optional local tooling
+*.local
+.cache/

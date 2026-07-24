@@ -1,0 +1,9 @@
+# Inherits from repo root; keep local copy for standalone website clones
+node_modules/
+dist/
+.astro/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log

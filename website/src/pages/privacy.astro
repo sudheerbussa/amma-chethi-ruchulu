@@ -1,0 +1,104 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site, waLink } from '../site.config';
+---
+
+<BaseLayout
+  title={`Privacy Policy — ${site.nameEn}`}
+  description={`Privacy policy for ${site.nameEn} WhatsApp ordering and website.`}
+>
+  <header class="wrap site-header">
+    <a class="brand-mark" href="/">
+      <img src="/logo.jpeg" alt="" width="48" height="48" />
+      <span class="brand-text">
+        <strong>{site.nameEn}</strong>
+        <span>Privacy</span>
+      </span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href={waLink()}>WhatsApp</a>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap legal">
+    <h1>Privacy Policy</h1>
+    <p class="meta">Last updated: 24 July 2026 · {site.nameEn}</p>
+
+    <p>
+      This policy explains how <strong>{site.nameEn}</strong> (“we”, “us”) collects and uses
+      information when you visit this website or order food via WhatsApp or related channels.
+    </p>
+
+    <h2>Who we are</h2>
+    <p>
+      We operate a local home-cooked food ordering service in {site.locality}. Contact:
+      <a href={`mailto:${site.email}`}>{site.email}</a>
+      or WhatsApp <a href={waLink()}>{site.whatsappDisplay}</a>.
+    </p>
+
+    <h2>Information we collect</h2>
+    <ul>
+      <li>Name, phone number, and delivery address you share when ordering</li>
+      <li>Order details (dishes, quantities, meal slot, payment confirmation)</li>
+      <li>Messages you send us on WhatsApp for support or feedback</li>
+      <li>Basic technical data if you browse this site (e.g. browser type), depending on hosting logs</li>
+    </ul>
+
+    <h2>How we use information</h2>
+    <ul>
+      <li>To confirm, prepare, pack, and deliver your orders</li>
+      <li>To communicate cutoffs, menus, and delivery status</li>
+      <li>To process payments through our payment partners</li>
+      <li>To improve service quality and handle complaints</li>
+      <li>To comply with food safety and legal requirements where applicable</li>
+    </ul>
+
+    <h2>Sharing</h2>
+    <p>
+      We share only what is needed with cooks (order quantities), delivery partners (address and
+      contact for drop-off), and payment providers (to collect payment). We do not sell your
+      personal data.
+    </p>
+
+    <h2>WhatsApp</h2>
+    <p>
+      Orders and support may run on WhatsApp. Messages are also subject to
+      <a href="https://www.whatsapp.com/legal/privacy-policy" rel="noopener noreferrer" target="_blank"
+        >WhatsApp’s Privacy Policy</a
+      >. Prefer our official business number listed on this site.
+    </p>
+
+    <h2>Retention</h2>
+    <p>
+      We keep order and contact records as long as needed for delivery, accounting, food-safety
+      traceability, and legal obligations, then delete or anonymise them when no longer required.
+    </p>
+
+    <h2>Your choices</h2>
+    <p>
+      You may ask to correct your details, request deletion where allowed, or opt out of optional
+      menu broadcasts. Contact us at <a href={`mailto:${site.email}`}>{site.email}</a>.
+    </p>
+
+    <h2>Updates</h2>
+    <p>
+      We may update this page from time to time. The “Last updated” date at the top will change
+      when we do.
+    </p>
+
+    <p style="margin-top: 2.5rem">
+      <a class="btn btn-ghost" href="/">← Back to home</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>© {new Date().getFullYear()} {site.nameEn}</p>
+      <nav aria-label="Footer">
+        <a href="/">Home</a>
+        <a href={`mailto:${site.email}`}>Contact</a>
+      </nav>
+    </div>
+  </footer>
+</BaseLayout>
