@@ -54,27 +54,32 @@ Earlier options (IntiVanta, HomePlate, etc.) are **not** used. Brand is **Amma C
 - [ ] **1.2** `cd website && npm install && npm run dev` — preview locally  
 - [x] **1.3** Deployed on Vercel → https://amma-chethi-ruchulu.vercel.app/  
 - [x] **1.4** Home + privacy live · URLs saved in Brand pack below  
-- [x] **1.5** Create Gmail → `order.ammachethiruchulu@gmail.com` · optional Facebook Page later  
+- [x] **1.5** Create Gmail → `order.ammachethiruchulu@gmail.com` · Facebook Page ✓  
+  https://www.facebook.com/profile.php?id=61592543611685  
 
 **Exit:** Live website URL + privacy policy URL (can change later).  
 **Dev docs:** `website/README.md`
 
 ---
 
-### Phase 2 — Udyam (Day 1–2, parallel with Phase 1)
+### Phase 2 — Udyam ✓ DONE
 
-- [ ] **2.1** Gather Aadhaar (OTP mobile), PAN, address, bank IFSC  
-- [ ] **2.2** Register only on [udyamregistration.gov.in](https://udyamregistration.gov.in)  
-- [ ] **2.3** Organisation: Proprietorship; enterprise name = **Amma Chethi Ruchulu**  
-- [ ] **2.4** Download **Udyam certificate PDF** + note URN  
-- [ ] **2.5** Confirm name/address on PDF match your notes  
+**URN:** `UDYAM-AP-04-0142646`  
+**Fill-in sheet:** [`UDYAM_FILL_SHEET.md`](./UDYAM_FILL_SHEET.md)
 
-**Exit:** Udyam PDF saved in `meta-verification/`.  
-**Detail checklist:** `UDYAM_META_VERIFICATION_CHECKLIST.md`
+- [x] **2.1** Gather Aadhaar (OTP mobile), PAN, bank IFSC  
+- [x] **2.2** Register on official portal only (₹0)  
+- [x] **2.3** Proprietorship · enterprise name = **Amma Chethi Ruchulu** · address updated to Tenali (proof-ready)  
+- [x] **2.4** Download latest Udyam PDF · saved in `meta-verification/` (29 Jul 2026)  
+- [x] **2.5** Ready for Meta (use exact name/address from **latest** PDF)  
+
+**Exit:** ✓ Certificate saved → **Phase 3 Meta verification next.** FSSAI (2B) before real food sales.
 
 ---
 
-### Phase 2B — FSSAI registration (start soon; required before selling food)
+### Phase 2B — FSSAI registration (do in parallel with Meta wait)
+
+**Fill-in sheet:** [`FSSAI_FILL_SHEET.md`](./FSSAI_FILL_SHEET.md) · Portal: [foscos.fssai.gov.in](https://foscos.fssai.gov.in)
 
 **Do not block website / Meta on this** — but **must complete before Phase 6 real paid orders.**
 
@@ -84,53 +89,68 @@ For a small home-kitchen / tiffin-style pilot in AP (turnover typically well und
 |-----------|------|--------|
 | **Basic Registration** | Before first real customer sale | [foscos.fssai.gov.in](https://foscos.fssai.gov.in) |
 
-- [ ] **2B.1** Decide FBO address (your **hub / packing** address — or registered business address)  
-- [ ] **2B.2** Gather: photo, Aadhaar/PAN, address proof, food product list (e.g. cooked meals / tiffin)  
-- [ ] **2B.3** Apply online → pay fee (Basic Registration is low — often ₹100/year class; confirm on FoSCoS)  
-- [ ] **2B.4** Save **14-digit FSSAI number** + certificate PDF  
+- [ ] **2B.1** Decide FBO address = Udyam address (Tenali — same as certificate)  
+- [ ] **2B.2** Gather: photo, Aadhaar/PAN (Lakshmi), address proof for Tenali, food product list  
+- [ ] **2B.3** Apply online → pay fee → save application reference  
+- [ ] **2B.4** Save **14-digit FSSAI number** + certificate PDF in `meta-verification/`  
 - [ ] **2B.5** Plan to print FSSAI no. on packaging / labels  
-- [ ] **2B.6** (Later) Guide each cook: they may need their own registration if they are separate manufacturers — confirm with FoSCoS / local Food Safety Officer for your hub + multi-cook model  
+- [ ] **2B.6** (Later) Guide each cook on their own registration if needed  
 
 **Exit:** FSSAI registration active for Amma Chethi Ruchulu before live food sales.  
-**Not required for:** building website, Udyam, Meta verification, or WhatsApp API testing with fake/test orders.
+**Not required for:** Meta wait, or local order-bot testing with simulate.
 
 ---
 
-### Phase 3 — Meta Business verification (Day 2–7)
+### Phase 3 — Meta Business verification (IN PROGRESS)
 
-- [ ] **3.1** Create/open [Meta Business Manager](https://business.facebook.com)  
-- [ ] **3.2** Legal name + address = **exact Udyam match**  
-- [ ] **3.3** Website + privacy URLs from Phase 1  
-- [ ] **3.4** Start **Business Verification** → upload Udyam (+ PAN/address if asked)  
-- [ ] **3.5** Respond to Meta emails; wait 1–5+ business days  
+**Submitted:** Business verification with Udyam PDF (proprietor: Lakshmi Penumaka).  
+**Typical wait:** 1–5+ business days. Check Security Centre + `order.ammachethiruchulu@gmail.com`.
+
+- [x] **3.1** Create/open [Meta Business Manager](https://business.facebook.com) → Amma Chethi Ruchulu portfolio  
+- [x] **3.2** Legal name + address = **exact Udyam match**  
+- [x] **3.3** Website + privacy URLs from Phase 1  
+- [x] **3.4** Start **Business Verification** → upload Udyam  
+- [ ] **3.5** Respond to Meta emails if they ask for more docs; wait for decision  
 - [ ] **3.6** Mark verified when Security Centre shows Verified  
 
-**Exit:** Business Verified (or submitted without blockers).
+**Exit:** Business Verified → Phase 4 WhatsApp Cloud API.
 
 ---
 
-### Phase 4 — WhatsApp channel setup (after number ready; can overlap Phase 3)
+### Phase 4 — WhatsApp channel setup (can start while Meta verifies)
 
-- [ ] **4.1** Buy/activate **dedicated +91 SIM** (not your personal forever-WhatsApp)  
-- [ ] **4.2** Add WhatsApp product in Meta → WABA → verify phone OTP  
-- [ ] **4.3** Set display name + profile photo (**logo**) + about text + website  
-- [ ] **4.4** Create Developer App → Cloud API → copy Phone number ID / tokens  
-- [ ] **4.5** (Later) Submit **utility** templates only for testing  
+**Guide:** [`WHATSAPP_API_TEST_NOW.md`](./WHATSAPP_API_TEST_NOW.md) — sandbox test number first.
 
-**Exit:** Cloud API number live; can send/receive in test.
+- [ ] **4.1** (Optional later) dedicated +91 SIM — for now use Meta **test number**  
+- [ ] **4.2** Create Developer App → add WhatsApp → API Setup  
+- [ ] **4.3** Copy temporary token + Phone number ID into `order-bot/.env`  
+- [ ] **4.4** Add your phone as test recipient; send Meta sample message  
+- [ ] **4.5** After Verified: real number `8886128995` + display name + logo + website  
+- [ ] **4.6** (Later) Submit **utility** templates  
+
+**Exit:** Cloud API test send/receive works with order-bot.
 
 ---
 
-### Phase 5 — Local server for architecture testing (parallel with Phases 2–4)
+### Phase 5 — Local server for architecture testing (STARTED)
 
-- [ ] **5.1** Postgres schema (cooks, dishes, orders, slots)  
-- [ ] **5.2** Webhook app on local PC  
-- [ ] **5.3** Cloudflare Tunnel (public HTTPS)  
+**Code:** [`order-bot/`](./order-bot/) — Express + JSON store + official Cloud API webhook
+
+- [x] **5.1** Schema (cooks/dishes via `dishes`, orders, sessions) in `order-bot/sql/schema.sql`  
+- [x] **5.2** Webhook app scaffold (`order-bot/src`)  
+- [ ] **5.3** Cloudflare Tunnel (public HTTPS) when Meta WhatsApp is ready  
 - [ ] **5.4** Connect Meta webhook → receive test messages  
-- [ ] **5.5** Buttons + lunch/dinner cutoff logic  
-- [ ] **5.6** WhatsApp Flow (order form) + Flow endpoint  
-- [ ] **5.7** Razorpay **test** payment links  
-- [ ] **5.8** Hub packing order list export  
+- [x] **5.5** Buttons/text + lunch/dinner cutoff logic  
+- [ ] **5.6** WhatsApp Flow (order form) — later  
+- [ ] **5.7** Razorpay **test** payment links — later  
+- [ ] **5.8** Hub packing list: `GET /orders` for now  
+
+**Local test now (no Meta token needed):**
+
+```bash
+cd order-bot && npm install && npm run db:init && npm run dev
+curl -X POST http://127.0.0.1:3000/simulate -H 'Content-Type: application/json' -d '{"from":"919999999999","text":"Lunch"}'
+```
 
 **Exit:** End-to-end test order on WhatsApp without real customers.  
 **Cost target:** ~₹0 Meta (customer-initiated chats only).
@@ -180,10 +200,10 @@ For a small home-kitchen / tiffin-style pilot in AP (turnover typically well und
 | 2 | Save logo | [x] `logo.jpeg` |
 | 3 | One-page site + privacy (Astro) | [x] live on Vercel |
 | 4 | Udyam certificate | [ ] |
-| 5 | Start FSSAI Basic Registration (parallel; before real sales) | [ ] |
-| 6 | Start Meta verification | [ ] |
-| 7 | Dedicated SIM | [ ] |
-| 8 | Start local webhook scaffold | [ ] |
+| 5 | Start FSSAI Basic Registration | [ ] see `FSSAI_FILL_SHEET.md` |
+| 6 | Start Meta verification | [x] submitted |
+| 7 | Dedicated SIM / Cloud API phone | [ ] after Verified |
+| 8 | Local order bot scaffold | [x] `order-bot/` — run simulate |
 
 ---
 
@@ -196,15 +216,16 @@ For a small home-kitchen / tiffin-style pilot in AP (turnover typically well und
 | Telugu | అమ్మ చేతి రుచులు |
 | Tagline | Authentic Home Cooked Flavors |
 | Address (public site) | **Guntur, Andhra Pradesh** only |
-| Address (Udyam / Meta / FSSAI) | 4-115, Davuluru, Kollipara, Guntur, Andhra Pradesh — 522304 |
-| Website URL | https://amma-chethi-ruchulu.vercel.app/ |
-| Privacy policy URL | https://amma-chethi-ruchulu.vercel.app/privacy |
+| Address (Udyam / Meta / FSSAI) | 11-4-89, Donka Road, Chenchupeta, Tenali, Guntur, Andhra Pradesh — 522202 |
+| Website URL | https://ammachethiruchulu.co.in/ |
+| Privacy policy URL | https://ammachethiruchulu.co.in/privacy |
 | Logo file path | `logo.jpeg` / `website/public/logo.jpeg` |
 | Primary colour | Terracotta / marigold |
 | Secondary | Leaf green, deep brown, cream |
-| WhatsApp | +91 88861 28995 (`918886128995`) |
+| WhatsApp (site / wa.me) | +91 98235 83498 (`919823583498`) |
 | Email | **order.ammachethiruchulu@gmail.com** ✓ |
-| Udyam URN | *(pending)* |
+| Facebook Page | https://www.facebook.com/profile.php?id=61592543611685 ✓ |
+| Udyam URN | **UDYAM-AP-04-0142646** ✓ (26 Jul 2026) |
 
 ### Email (finalized)
 

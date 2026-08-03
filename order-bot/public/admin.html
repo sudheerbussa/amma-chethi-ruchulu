@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amma Chethi Ruchulu — Ops</title>
+    <style>
+      :root {
+        --bg: #1a1410;
+        --panel: #2a211c;
+        --text: #f6efe7;
+        --muted: #b9a99a;
+        --accent: #c45c26;
+        --line: #3f332c;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: radial-gradient(circle at top, #2c2018, var(--bg));
+        color: var(--text);
+        min-height: 100vh;
+      }
+      header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+        justify-content: space-between;
+      }
+      h1 { font-size: 1.15rem; margin: 0; font-weight: 650; }
+      h2 { font-size: 1rem; margin: 0 0 0.75rem; }
+      .sub { color: var(--muted); font-size: 0.85rem; }
+      main { padding: 1rem 1.5rem 2rem; max-width: 1100px; margin: 0 auto; }
+      .login, .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.35rem; }
+      input, select, button {
+        font: inherit;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        padding: 0.6rem 0.75rem;
+      }
+      input {
+        width: 100%;
+        background: #18120e;
+        color: var(--text);
+      }
+      input.stock { width: 72px; padding: 0.35rem; }
+      button {
+        background: var(--accent);
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button.secondary { background: #4a3a30; }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: end; }
+      .row > * { flex: 1; min-width: 140px; }
+      .toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; align-items: center; }
+      table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+      th, td { text-align: left; padding: 0.7rem 0.5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      .status {
+        display: inline-block;
+        padding: 0.15rem 0.45rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        background: #3a2f28;
+      }
+      .status.pending_payment { background: #5a4020; color: #ffd89a; }
+      .status.paid, .status.preparing { background: #1f3d2d; color: #9be4b5; }
+      .status.out_for_delivery { background: #1f3348; color: #9bc7ff; }
+      .status.delivered { background: #243528; color: #b7f0c8; }
+      .status.cancelled { background: #4a2424; color: #ffb4b4; }
+      .actions { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+      .actions button { padding: 0.35rem 0.55rem; font-size: 0.75rem; }
+      .msg { margin-top: 0.75rem; color: var(--muted); min-height: 1.2em; }
+      .msg.err { color: #ffb4b4; }
+      .msg.ok { color: #9be4b5; }
+      .phone { font-family: ui-monospace, monospace; font-size: 0.8rem; }
+      .tabs button.active { outline: 2px solid #e8c4a8; }
+      @media (max-width: 720px) {
+        th:nth-child(4), td:nth-child(4) { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Amma Chethi Ruchulu — Ops dashboard</h1>
+        <div class="sub">Orders · menu stock · WhatsApp-linked statuses</div>
+      </div>
+      <div class="sub" id="meta"></div>
+    </header>
+    <main>
+      <section class="login" id="loginBox">
+        <label for="token">Admin token</label>
+        <div class="row">
+          <div>
+            <input id="token" type="password" placeholder="ADMIN_TOKEN from .env" />
+          </div>
+          <button id="loginBtn" type="button">Unlock</button>
+        </div>
+        <p class="msg" id="loginMsg">Local ops system for Tenali kitchen.</p>
+      </section>
+
+      <section id="app" hidden>
+        <div class="toolbar tabs">
+          <button type="button" class="active" id="tabOrders">Orders</button>
+          <button type="button" class="secondary" id="tabDishes">Menu / stock</button>
+          <button type="button" id="refreshBtn">Refresh</button>
+          <button type="button" class="secondary" id="logoutBtn">Lock</button>
+          <select id="filter">
+            <option value="all">All statuses</option>
+            <option value="pending_payment">Pending payment</option>
+            <option value="paid">Paid</option>
+            <option value="preparing">Preparing</option>
+            <option value="out_for_delivery">Out for delivery</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="msg" id="msg"></div>
+
+        <div class="panel" id="ordersPanel">
+          <h2>Orders</h2>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Status</th>
+                  <th>Items</th>
+                  <th>Customer</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel" id="dishesPanel" hidden>
+          <h2>Menu / stock</h2>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Item</th>
+                  <th>Price</th>
+                  <th>Left / Max</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="dishesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script>
+      const NEXT = {
+        pending_payment: [['paid', 'Mark paid'], ['cancelled', 'Cancel']],
+        paid: [['preparing', 'Ready'], ['cancelled', 'Cancel']],
+        preparing: [['out_for_delivery', 'Out'], ['cancelled', 'Cancel']],
+        out_for_delivery: [['delivered', 'Done'], ['cancelled', 'Cancel']],
+        delivered: [],
+        cancelled: [],
+      };
+
+      function token() { return localStorage.getItem('acr_admin_token') || ''; }
+      function setToken(v) {
+        if (v) localStorage.setItem('acr_admin_token', v);
+        else localStorage.removeItem('acr_admin_token');
+      }
+      function showMsg(text, ok) {
+        const el = document.getElementById('msg');
+        el.textContent = text || '';
+        el.className = 'msg ' + (ok ? 'ok' : text ? 'err' : '');
+      }
+      async function api(path, opts = {}) {
+        const res = await fetch(path, {
+          ...opts,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token(),
+            ...(opts.headers || {}),
+          },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        return data;
+      }
+      function rupees(paise) { return '₹' + (Number(paise || 0) / 100).toFixed(0); }
+
+      function renderOrders(orders) {
+        const filter = document.getElementById('filter').value;
+        const rows = orders.filter((o) => filter === 'all' || o.status === filter);
+        document.getElementById('tbody').innerHTML = rows.map((o) => {
+          const actions = (NEXT[o.status] || [])
+            .map(([st, label]) => `<button type="button" data-ref="${o.order_ref}" data-status="${st}">${label}</button>`)
+            .join('');
+          const fee = o.delivery_fee_paise != null ? ' · del ' + rupees(o.delivery_fee_paise) : '';
+          return `<tr>
+            <td><strong>${o.order_ref}</strong><div class="sub">${new Date(o.created_at).toLocaleString()}</div></td>
+            <td><span class="status ${o.status}">${o.status}</span></td>
+            <td>${o.qty}× ${o.dish_name}<div class="sub">${rupees(o.total_paise)}${fee} · ${o.meal}</div></td>
+            <td><div class="phone">${o.phone}</div><div class="sub">${o.address || ''}</div></td>
+            <td><div class="actions">${actions || '—'}</div></td>
+          </tr>`;
+        }).join('');
+      }
+
+      function renderDishes(dishes) {
+        document.getElementById('dishesBody').innerHTML = dishes.map((d) => {
+          const left = Math.max(0, d.max_portions - d.portions_sold);
+          return `<tr>
+            <td><strong>${d.code}</strong><div class="sub">${d.category}</div></td>
+            <td>${d.name}${d.active ? '' : ' <span class="sub">[OFF]</span>'}</td>
+            <td>${rupees(d.price_paise)}</td>
+            <td>${left} / ${d.max_portions}</td>
+            <td class="actions">
+              <input class="stock" data-code="${d.code}" type="number" min="0" value="${d.max_portions}" />
+              <button type="button" data-stock="${d.code}">Save</button>
+              <button type="button" class="secondary" data-active="${d.code}" data-on="${d.active ? '0' : '1'}">${d.active ? 'Off' : 'On'}</button>
+            </td>
+          </tr>`;
+        }).join('');
+      }
+
+      async function refresh() {
+        const [ordersData, dishesData] = await Promise.all([
+          api('/admin/api/orders'),
+          api('/admin/api/dishes'),
+        ]);
+        document.getElementById('meta').textContent =
+          ordersData.business + ' · ' + ordersData.orders.length + ' orders · ' + dishesData.dishes.length + ' dishes';
+        renderOrders(ordersData.orders);
+        renderDishes(dishesData.dishes);
+        showMsg('Updated ' + new Date().toLocaleTimeString(), true);
+      }
+
+      async function unlock() {
+        const t = document.getElementById('token').value.trim();
+        setToken(t);
+        try {
+          await refresh();
+          document.getElementById('loginBox').hidden = true;
+          document.getElementById('app').hidden = false;
+        } catch (e) {
+          setToken('');
+          document.getElementById('loginMsg').textContent = e.message;
+          document.getElementById('loginMsg').className = 'msg err';
+        }
+      }
+
+      function showTab( whichtab ) {
+        const orders = whichtab === 'orders';
+        document.getElementById('ordersPanel').hidden = !orders;
+        document.getElementById('dishesPanel').hidden = orders;
+        document.getElementById('tabOrders').classList.toggle('active', orders);
+        document.getElementById('tabDishes').classList.toggle('active', !orders);
+        document.getElementById('tabOrders').classList.toggle('secondary', !orders);
+        document.getElementById('tabDishes').classList.toggle('secondary', orders);
+      }
+
+      document.getElementById('loginBtn').onclick = unlock;
+      document.getElementById('refreshBtn').onclick = () => refresh().catch((e) => showMsg(e.message));
+      document.getElementById('filter').onchange = () => refresh().catch((e) => showMsg(e.message));
+      document.getElementById('logoutBtn').onclick = () => { setToken(''); location.reload(); };
+      document.getElementById('tabOrders').onclick = () => showTab('orders');
+      document.getElementById('tabDishes').onclick = () => showTab('dishes');
+
+      document.getElementById('tbody').onclick = async (ev) => {
+        const btn = ev.target.closest('button[data-ref]');
+        if (!btn) return;
+        btn.disabled = true;
+        try {
+          await api('/admin/api/orders/' + btn.dataset.ref + '/status', {
+            method: 'POST',
+            body: JSON.stringify({ status: btn.dataset.status, notify: true }),
+          });
+          await refresh();
+        } catch (e) {
+          showMsg(e.message);
+        } finally {
+          btn.disabled = false;
+        }
+      };
+
+      document.getElementById('dishesBody').onclick = async (ev) => {
+        const stockBtn = ev.target.closest('button[data-stock]');
+        const activeBtn = ev.target.closest('button[data-active]');
+        try {
+          if (stockBtn) {
+            const code = stockBtn.dataset.stock;
+            const input = document.querySelector('input.stock[data-code="' + code + '"]');
+            await api('/admin/api/dishes/' + code + '/stock', {
+              method: 'POST',
+              body: JSON.stringify({ max_portions: Number(input.value) }),
+            });
+            await refresh();
+          }
+          if (activeBtn) {
+            await api('/admin/api/dishes/' + activeBtn.dataset.active + '/active', {
+              method: 'POST',
+              body: JSON.stringify({ active: activeBtn.dataset.on === '1' }),
+            });
+            await refresh();
+          }
+        } catch (e) {
+          showMsg(e.message);
+        }
+      };
+
+      if (token()) unlock();
+    </script>
+  </body>
+</html>

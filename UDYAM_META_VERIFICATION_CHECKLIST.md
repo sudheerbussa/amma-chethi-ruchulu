@@ -11,19 +11,18 @@ Beware of lookalike sites that charge fees — registration is free.
 
 ---
 
-## Before you start — decide your legal name
+## Before you start — legal name (FINALIZED)
 
-Pick **one** trade name and use it everywhere. Example:
+| Field | Your value |
+|-------|------------|
+| Legal / enterprise name | **Amma Chethi Ruchulu** |
+| Display name (WhatsApp / site) | Amma Chethi Ruchulu |
+| Address | 11-4-89, Donka Road, Chenchupeta, Tenali, Guntur, Andhra Pradesh — 522202 |
+| Email | order.ammachethiruchulu@gmail.com |
+| Website | https://ammachethiruchulu.co.in/ |
+| Privacy | https://ammachethiruchulu.co.in/privacy |
 
-| Field | Example (replace with yours) |
-|-------|------------------------------|
-| Legal / enterprise name | `Sudhir Home Kitchen` or your personal name if prop. is in your name |
-| Display name (WhatsApp) | Same or shorter brand, e.g. `DishByHome` |
-| Address | Home / hub address you will use on Udyam + Meta |
-
-**Critical rule for Meta:**  
-Legal name on **Udyam certificate** = legal name in **Meta Business Manager** = name on any address proof you upload.  
-Character-for-character match. Do not invent a different company name later.
+**Filled walkthrough for today:** `UDYAM_FILL_SHEET.md`
 
 ---
 
