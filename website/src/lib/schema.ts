@@ -23,10 +23,7 @@ export function localBusinessSchema() {
       postalCode: site.postalCode,
       addressCountry: site.country,
     },
-    areaServed: [
-      { '@type': 'City', name: 'Tenali' },
-      { '@type': 'City', name: 'Guntur' },
-    ],
+    areaServed: [{ '@type': 'City', name: 'Tenali' }],
     sameAs: [waLink('Hi')],
     potentialAction: {
       '@type': 'OrderAction',
@@ -84,12 +81,10 @@ export function webPageServiceSchema(opts: {
     description: opts.description,
     url: absoluteUrl(opts.path),
     provider: { '@id': `${absoluteUrl('/')}#business` },
-    areaServed: opts.areaName
-      ? { '@type': 'Place', name: opts.areaName }
-      : [
-          { '@type': 'City', name: 'Guntur' },
-          { '@type': 'City', name: 'Tenali' },
-        ],
+    areaServed: {
+      '@type': 'Place',
+      name: opts.areaName ?? 'Tenali',
+    },
     offers: {
       '@type': 'Offer',
       availability: 'https://schema.org/InStock',

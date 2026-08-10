@@ -1,9 +1,9 @@
 # SEO Keyword Sheet — Amma Chethi Ruchulu
 
 Use this as the living keyword / pSEO backlog (local-biz-dev Phase 0).  
-**Rule:** one primary intent per URL · drop off-intent terms · expand monthly.
+**Rule:** one primary intent per URL · only areas you actually deliver · drop off-intent terms.
 
-Primary market: **Guntur / Tenali, Andhra Pradesh**  
+Primary market: **Tenali, Andhra Pradesh** (including Chenchupeta)  
 Canonical: https://ammachethiruchulu.co.in  
 Channel: WhatsApp order-ahead lunch & dinner
 
@@ -13,7 +13,7 @@ Channel: WhatsApp order-ahead lunch & dinner
 
 | Keyword | Intent | Target URL | Status |
 |---------|--------|------------|--------|
-| home cooked food delivery Guntur | commercial | `/topics/home-cooked-food-delivery-guntur/` | live |
+| home cooked food delivery Tenali | commercial | `/topics/home-cooked-food-delivery-tenali/` | live |
 
 ---
 
@@ -21,17 +21,17 @@ Channel: WhatsApp order-ahead lunch & dinner
 
 | Keyword | Target URL | Notes |
 |---------|------------|--------|
-| homemade lunch delivery Tenali | `/topics/homemade-lunch-delivery-tenali/` | lunch cutoff intent |
-| homemade dinner delivery Guntur | `/topics/homemade-dinner-delivery-guntur/` | dinner cutoff |
-| Andhra home food Guntur | `/topics/andhra-home-food-guntur/` | cuisine |
-| tiffin delivery Guntur | `/topics/tiffin-delivery-guntur/` | mess/tiffin intent |
-| WhatsApp food order Guntur | `/topics/whatsapp-food-order-guntur/` | channel intent |
-| pulihora delivery Guntur | `/topics/pulihora-delivery-guntur/` | dish — menu-led |
-| homemade biryani delivery Guntur | `/topics/homemade-biryani-delivery-guntur/` | dish — menu-led |
-| vegetarian home food delivery Guntur | `/topics/vegetarian-home-food-delivery-guntur/` | diet |
-| office lunch delivery Guntur | `/topics/office-lunch-delivery-guntur/` | B2C office |
+| homemade lunch delivery Tenali | `/topics/homemade-lunch-delivery-tenali/` | lunch cutoff |
+| homemade dinner delivery Tenali | `/topics/homemade-dinner-delivery-tenali/` | dinner cutoff |
+| Andhra home food Tenali | `/topics/andhra-home-food-tenali/` | cuisine |
+| tiffin delivery Tenali | `/topics/tiffin-delivery-tenali/` | mess/tiffin intent |
+| WhatsApp food order Tenali | `/topics/whatsapp-food-order-tenali/` | channel intent |
+| pulihora delivery Tenali | `/topics/pulihora-delivery-tenali/` | dish — menu-led |
+| homemade biryani delivery Tenali | `/topics/homemade-biryani-delivery-tenali/` | dish — menu-led |
+| vegetarian home food delivery Tenali | `/topics/vegetarian-home-food-delivery-tenali/` | diet |
+| office lunch delivery Tenali | `/topics/office-lunch-delivery-tenali/` | B2C office |
 | home kitchen food Tenali | `/topics/home-kitchen-food-tenali/` | brand+local |
-| scheduled meal delivery Guntur | `/topics/scheduled-meal-delivery-guntur/` | model explainer |
+| scheduled meal delivery Tenali | `/topics/scheduled-meal-delivery-tenali/` | model explainer |
 
 ---
 
@@ -41,27 +41,24 @@ Channel: WhatsApp order-ahead lunch & dinner
 |---------|------------|
 | home cooked food delivery Tenali | `/areas/tenali/` |
 | food delivery Chenchupeta Tenali | `/areas/chenchupeta/` |
-| home food delivery Guntur city | `/areas/guntur/` |
-| home cooked food Angalakuduru | `/areas/angalakuduru/` |
-| food delivery Kolakaluru | `/areas/kolakaluru/` |
-| home food delivery Duggirala | `/areas/duggirala/` |
-| food delivery Narakoduru | `/areas/narakoduru/` |
-| home cooked food Pedaravuru | `/areas/pedaravuru/` |
 
 ---
 
-## Backlog ideas (not yet pages)
+## Do not target until you deliver there
 
-Add only if you actually serve / stock the intent:
+- Guntur city / other towns outside Tenali
+- Society pages outside current rider radius
 
-- [ ] `gongura pachadi` + locality
-- [ ] `pappu` / `sambar rice` delivery Guntur
+---
+
+## Backlog ideas (Tenali only)
+
+- [ ] `gongura pachadi` + Tenali
+- [ ] `pappu` / `sambar rice` delivery Tenali
 - [ ] `Sunday special lunch Tenali`
 - [ ] `student tiffin Tenali`
-- [ ] Society/apartment cluster pages (only with permission & coverage)
-- [ ] Telugu path pages `/te/...` (i18n boost per playbook)
-
-**Drop / avoid:** pan-India keywords, “swiggy alternative” spam, areas outside radius, medical/diet-claim pages.
+- [ ] Society/apartment cluster pages (only with coverage)
+- [ ] Telugu path pages `/te/...` (optional i18n)
 
 ---
 
@@ -71,7 +68,7 @@ Add only if you actually serve / stock the intent:
 2. Ahrefs Keyword Generator — Questions tab → FAQ  
 3. Autocomplete (keyword + space)  
 4. Maps / “near me” phrasing for GBP posts  
-5. Filter invalid intent  
+5. Filter invalid intent / out-of-area terms  
 6. Add row to `src/data/topics.ts` or `areas.ts` with unique copy  
 7. Build → deploy → GSC URL Inspection → Request indexing  
 

@@ -5,5 +5,167 @@
       "has": [{ "type": "host", "value": "amma-chethi-ruchulu.vercel.app" }],
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/topics/home-cooked-food-delivery-guntur",
+      "destination": "/topics/home-cooked-food-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/home-cooked-food-delivery-guntur/",
+      "destination": "/topics/home-cooked-food-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/homemade-dinner-delivery-guntur",
+      "destination": "/topics/homemade-dinner-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/homemade-dinner-delivery-guntur/",
+      "destination": "/topics/homemade-dinner-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/andhra-home-food-guntur",
+      "destination": "/topics/andhra-home-food-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/andhra-home-food-guntur/",
+      "destination": "/topics/andhra-home-food-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/tiffin-delivery-guntur",
+      "destination": "/topics/tiffin-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/tiffin-delivery-guntur/",
+      "destination": "/topics/tiffin-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/whatsapp-food-order-guntur",
+      "destination": "/topics/whatsapp-food-order-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/whatsapp-food-order-guntur/",
+      "destination": "/topics/whatsapp-food-order-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/pulihora-delivery-guntur",
+      "destination": "/topics/pulihora-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/pulihora-delivery-guntur/",
+      "destination": "/topics/pulihora-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/homemade-biryani-delivery-guntur",
+      "destination": "/topics/homemade-biryani-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/homemade-biryani-delivery-guntur/",
+      "destination": "/topics/homemade-biryani-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/vegetarian-home-food-delivery-guntur",
+      "destination": "/topics/vegetarian-home-food-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/vegetarian-home-food-delivery-guntur/",
+      "destination": "/topics/vegetarian-home-food-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/office-lunch-delivery-guntur",
+      "destination": "/topics/office-lunch-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/office-lunch-delivery-guntur/",
+      "destination": "/topics/office-lunch-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/scheduled-meal-delivery-guntur",
+      "destination": "/topics/scheduled-meal-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/topics/scheduled-meal-delivery-guntur/",
+      "destination": "/topics/scheduled-meal-delivery-tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/areas/guntur",
+      "destination": "/areas/tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/areas/guntur/",
+      "destination": "/areas/tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/areas/angalakuduru",
+      "destination": "/areas/tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/areas/angalakuduru/",
+      "destination": "/areas/tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/areas/kolakaluru",
+      "destination": "/areas/tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/areas/kolakaluru/",
+      "destination": "/areas/tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/areas/duggirala",
+      "destination": "/areas/tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/areas/duggirala/",
+      "destination": "/areas/tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/areas/narakoduru",
+      "destination": "/areas/tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/areas/narakoduru/",
+      "destination": "/areas/tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/areas/pedaravuru",
+      "destination": "/areas/tenali/",
+      "permanent": true
+    },
+    {
+      "source": "/areas/pedaravuru/",
+      "destination": "/areas/tenali/",
+      "permanent": true
+    }
   ]
 }

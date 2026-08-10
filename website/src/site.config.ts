@@ -4,14 +4,14 @@ export const site = {
   nameTe: 'అమ్మ చేతి రుచులు',
   tagline: 'Authentic Home Cooked Flavors',
   blurb:
-    'Signature dishes from specialist home cooks in your town — ordered ahead, packed with care, delivered fresh.',
+    'Signature dishes from specialist home cooks in Tenali — ordered ahead, packed with care, delivered fresh.',
   /** Canonical public domain (use for sitemap, OG, JSON-LD) */
   domain: 'https://ammachethiruchulu.co.in',
-  /** Shown on website (public) — city / district level only */
-  locality: 'Guntur, Andhra Pradesh',
+  /** Shown on website (public) — delivery city only */
+  locality: 'Tenali, Andhra Pradesh',
   region: 'AP',
   country: 'IN',
-  /** Full postal address — Udyam / Meta / FSSAI / GBP; keep off marketing hero if preferred */
+  /** Full postal address — Udyam / Meta / FSSAI / GBP; district name is administrative only */
   address: '11-4-89, Donka Road, Chenchupeta, Tenali, Guntur, Andhra Pradesh — 522202',
   streetAddress: '11-4-89, Donka Road, Chenchupeta',
   addressLocality: 'Tenali',
@@ -27,9 +27,9 @@ export const site = {
     dinner: 'Order by 4:00 PM (serve 7–10 PM)',
   },
   /** Default SEO strings */
-  defaultTitle: 'Amma Chethi Ruchulu — Home Cooked Food Delivery in Guntur & Tenali',
+  defaultTitle: 'Amma Chethi Ruchulu — Home Cooked Food Delivery in Tenali',
   defaultDescription:
-    'Order authentic Andhra home-cooked lunch and dinner in Guntur and Tenali. Specialist home cooks, scheduled delivery via WhatsApp. Order before cutoff.',
+    'Order authentic Andhra home-cooked lunch and dinner in Tenali. Specialist home cooks, scheduled delivery via WhatsApp. Order before cutoff.',
   ogImage: '/logo.jpeg',
   /** Optional GA4 measurement ID — leave empty until property is ready */
   ga4Id: '',
