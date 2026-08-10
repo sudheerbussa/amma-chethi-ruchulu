@@ -5,17 +5,19 @@ No unofficial WhatsApp bridges.
 
 ## What it does (MVP)
 
+**MVP** = *Minimum Viable Product* — smallest set of features that can run real daily orders (WhatsApp order → kitchen → pay → deliver).
+
 1. Receives WhatsApp webhooks from Meta  
-2. Interactive **buttons** (Lunch / Dinner / Full menu) + **list** dish picker  
-3. Quantity reply buttons (1–3) with typed qty fallback  
-4. Still accepts typed `Hi` / `Menu` / `Lunch` / `Dinner` / dish codes  
-5. Enforces cutoffs (lunch 7:00 AM, dinner 2:00 PM IST)  
-7. Stores orders in local **JSON** (`data/orders.json`)  
-8. **Admin WhatsApp commands** + local **ops dashboard** at `/admin`  
-9. Postgres-oriented schema kept in `sql/schema.sql` for later migration  
+2. Interactive **buttons** (Lunch / Dinner) + **list** dish picker + multi-item cart  
+3. Cutoffs (lunch 10:00 / dinner 16:00 IST) with **next-day pre-order** after deadline  
+4. Stores data in **Postgres** on VPS (`DATABASE_URL`); local may use JSON when URL is empty  
+5. **Admin WhatsApp commands** + ops dashboard at `/admin`  
+6. Payment: **Razorpay** web checkout when keys set (`UPI_FALLBACK=0` by default); else UPI QR + `PAID`
 
-See **`OPS.md`** for UPI switch, admin phones, and dashboard token.  
-
+See **`AMMAS.md`** for home-cook (Amma) data model and weekly payout design.  
+See **`VPS-REQUIREMENTS.md`** for the full prerequisites checklist before any personal VPS deploy (accounts, OS stack, env vars, integrations).  
+See **`OPS.md`** for ops. See **`DEPLOY.md`** for code updates after go-live.  
+See **`SETUP-VPS.md`** for **new VPS from zero** + **Postgres enable / JSON fallback** (copy-paste commands).
 
 ## Setup
 
@@ -25,6 +27,23 @@ cp .env.example .env
 npm install
 npm run db:init
 BYPASS_CUTOFFS=1 npm run dev
+```
+
+### Postgres (optional)
+
+```bash
+# needs Docker
+docker compose up -d
+
+# in .env:
+# DATABASE_URL=postgres://acr:acr_dev@127.0.0.1:5432/acr_orders
+
+npm run db:migrate
+# one-time import of existing orders.json:
+npm run db:import-json
+
+npm run dev
+# /health should show "driver":"pg"
 ```
 
 ### Test without Meta (dry-run)
@@ -56,7 +75,7 @@ Replies print in the terminal when `WHATSAPP_ACCESS_TOKEN` is empty.
 
 | Meal | Order by |
 |------|----------|
-| Lunch | 07:00 |
-| Dinner | 14:00 |
+| Lunch | 10:00 |
+| Dinner | 16:00 |
 
-Set `BYPASS_CUTOFFS=1` only for after-hours local testing.
+After cut-off, customers can pre-order the next day. Set `BYPASS_CUTOFFS=1` only for after-hours local testing.

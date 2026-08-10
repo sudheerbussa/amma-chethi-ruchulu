@@ -1,9 +1,10 @@
 import { getDb } from '../db.js';
 import { config } from '../config.js';
 import { sendText } from '../whatsapp.js';
-import { applyOrderStatus, formatOrdersList } from '../orders/status.js';
+import { applyOrderStatus, formatOrdersList, formatFeedbackList } from '../orders/status.js';
 import { categoryLabel } from '../menu.js';
 import { nowIst } from '../cutoffs.js';
+import { formatLinesText, getOrderLines } from '../orders/cart.js';
 
 function digits(phone) {
   return String(phone || '').replace(/\D/g, '');
@@ -27,39 +28,44 @@ function adminHelp() {
     `MENU — list dishes + stock\n` +
     `STOCK <code> <max> — set max portions\n` +
     `OFF <code> / ON <code> — hide/show dish\n` +
+    `FEEDBACKS — recent customer ratings\n` +
+    `HELPS — customer help tickets\n` +
     `ADMIN — this help\n\n` +
     `Dashboard: http://127.0.0.1:${config.port}/admin`
   );
 }
 
-function cookSummary(meal) {
+async function cookSummary(meal) {
   const db = getDb();
-  const orders = db.listOrdersForMeal(meal, ['paid', 'preparing', 'out_for_delivery']);
+  const orders = await db.listOrdersForMeal(meal, ['paid', 'preparing', 'out_for_delivery']);
   if (!orders.length) return `${meal.toUpperCase()} — no confirmed kitchen orders yet.`;
 
   const byDish = new Map();
   for (const o of orders) {
-    const key = o.dish_code;
-    const cur = byDish.get(key) || {
-      code: o.dish_code,
-      name: o.dish_name,
-      qty: 0,
-      refs: [],
-    };
-    cur.qty += o.qty;
-    cur.refs.push(`${o.order_ref}(${o.status})`);
-    byDish.set(key, cur);
+    for (const line of getOrderLines(o)) {
+      const key = line.code || line.name;
+      const cur = byDish.get(key) || {
+        code: line.code,
+        name: line.name,
+        qty: 0,
+        refs: [],
+      };
+      cur.qty += line.qty || 0;
+      cur.refs.push(`${o.order_ref}(${o.status})`);
+      byDish.set(key, cur);
+    }
   }
 
   const lines = [...byDish.values()]
-    .map((d) => `${d.code} ${d.name} × ${d.qty}\n  ${d.refs.join(', ')}`)
+    .map((d) => `${d.code || ''} ${d.name} × ${d.qty}\n  ${[...new Set(d.refs)].join(', ')}`)
     .join('\n\n');
 
   const packs = orders
     .map(
       (o) =>
-        `${o.order_ref} · ${o.qty}x ${o.dish_name}\n` +
+        `${o.order_ref} · ${formatLinesText(getOrderLines(o))}\n` +
         `${o.phone}\n${o.address}\n` +
+        (o.service_label || o.service_date ? `Service: ${o.service_label || o.service_date}\n` : '') +
         `Pay ${formatPaise(o.total_paise)} · ${o.status}`,
     )
     .join('\n\n---\n\n');
@@ -73,8 +79,8 @@ function cookSummary(meal) {
   );
 }
 
-function menuSummary() {
-  const dishes = getDb().listAllDishes();
+async function menuSummary() {
+  const dishes = await getDb().listAllDishes();
   const lines = dishes.map((d) => {
     const left = Math.max(0, d.max_portions - d.portions_sold);
     const flag = d.active ? '' : ' [OFF]';
@@ -103,33 +109,57 @@ export async function tryHandleAdmin({ from, text }) {
   }
 
   if (lower === 'orders') {
-    await sendText(phone, `Recent orders\n\n${formatOrdersList(db.listOrders(15))}`);
+    await sendText(phone, `Recent orders\n\n${formatOrdersList(await db.listOrders(15))}`);
     return true;
   }
 
   if (lower === 'pending') {
-    const pending = db.listOrders(50).filter((o) => o.status === 'pending_payment');
+    const pending = await db.listOrders(50).filter((o) => o.status === 'pending_payment');
     await sendText(phone, `Pending payment\n\n${formatOrdersList(pending)}`);
     return true;
   }
 
   if (lower === 'menu') {
-    await sendText(phone, menuSummary());
+    await sendText(phone, await menuSummary());
+    return true;
+  }
+
+  if (lower === 'feedbacks' || lower === 'feedback') {
+    await sendText(phone, `Customer feedback\n\n${formatFeedbackList(await db.listFeedbacks(15))}`);
+    return true;
+  }
+
+  if (lower === 'helps' || lower === 'help tickets' || lower === 'tickets') {
+    const tickets = await db.listHelpTickets(15);
+    if (!tickets.length) {
+      await sendText(phone, 'No help tickets yet.');
+      return true;
+    }
+    const body = tickets
+      .map(
+        (t) =>
+          `#${t.id} · ${t.topic} · ${t.phone}\n` +
+          `${t.order_ref || '—'} (${t.order_status || '—'})\n` +
+          `${t.message}\n` +
+          `${t.created_at}`,
+      )
+      .join('\n\n---\n\n');
+    await sendText(phone, `Help tickets\n\n${body}`);
     return true;
   }
 
   if (lower === 'cook' || lower === 'cook lunch') {
-    await sendText(phone, cookSummary('lunch'));
+    await sendText(phone, await cookSummary('lunch'));
     return true;
   }
   if (lower === 'cook dinner') {
-    await sendText(phone, cookSummary('dinner'));
+    await sendText(phone, await cookSummary('dinner'));
     return true;
   }
 
   const stock = raw.match(/^stock\s+([A-Za-z0-9_-]+)\s+(\d+)$/i);
   if (stock) {
-    const dish = db.setDishStock(stock[1], Number(stock[2]));
+    const dish = await db.setDishStock(stock[1], Number(stock[2]));
     if (!dish) {
       await sendText(phone, `Unknown code ${stock[1].toUpperCase()}`);
       return true;
@@ -145,7 +175,7 @@ export async function tryHandleAdmin({ from, text }) {
   const onOff = raw.match(/^(on|off)\s+([A-Za-z0-9_-]+)$/i);
   if (onOff) {
     const active = onOff[1].toLowerCase() === 'on';
-    const dish = db.setDishActive(onOff[2], active);
+    const dish = await db.setDishActive(onOff[2], active);
     if (!dish) {
       await sendText(phone, `Unknown code ${onOff[2].toUpperCase()}`);
       return true;

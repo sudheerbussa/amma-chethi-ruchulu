@@ -1,0 +1,19 @@
+Kitchen alert voiceovers (generic clips — no per-order speech)
+
+Export MP3 from Google AI Studio / ElevenLabs and put files here:
+
+  enabled.mp3     Optional. Played when staff taps "Enable kitchen voice".
+  new-order.mp3   Required. New booking / pending payment.
+  paid-order.mp3  Required. Payment confirmed — kitchen should cook.
+
+Suggested English scripts (or record Telugu equivalently):
+
+  enabled:     "Kitchen alerts are on."
+  new-order:   "New order received. Please check the admin panel."
+  paid-order:  "Payment received. New paid order."
+
+After deploy, URLs are:
+  https://order.ammachethiruchulu.co.in/sounds/new-order.mp3
+  https://order.ammachethiruchulu.co.in/sounds/paid-order.mp3
+
+Keep clips short (2–5 seconds). Loud volume for kitchen tablet.

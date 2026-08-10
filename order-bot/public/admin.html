@@ -3,171 +3,1285 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Amma Chethi Ruchulu — Ops</title>
+    <title>ACR Kitchen Ops</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <style>
       :root {
-        --bg: #1a1410;
-        --panel: #2a211c;
-        --text: #f6efe7;
-        --muted: #b9a99a;
-        --accent: #c45c26;
-        --line: #3f332c;
+        --bg: #eef2ef;
+        --panel: #ffffff;
+        --text: #13201a;
+        --muted: #5c6f66;
+        --line: #d5e0da;
+        --accent: #0d6e5a;
+        --accent-2: #0a5848;
+        --accent-soft: #e4f4ef;
+        --warn: #b45309;
+        --danger: #b42318;
+        --ok: #027a48;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.06);
+        --radius: 12px;
+        --sidebar: #11241e;
+        --sidebar-text: #d7e8e0;
+        --sidebar-w: 250px;
       }
       * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
       body {
         margin: 0;
-        font-family: "Segoe UI", system-ui, sans-serif;
-        background: radial-gradient(circle at top, #2c2018, var(--bg));
-        color: var(--text);
         min-height: 100vh;
+        font-family: "DM Sans", system-ui, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(ellipse 80% 50% at 100% 0%, #cfe8dc 0%, transparent 45%),
+          var(--bg);
       }
-      header {
-        padding: 1.25rem 1.5rem;
-        border-bottom: 1px solid var(--line);
+      .shell {
+        /* Mobile-first block: fixed drawer must not sit in a grid track (was pushing content off-screen). */
+        display: block;
+        min-height: 100vh;
+        min-height: 100dvh;
+        width: 100%;
+      }
+      .sidebar {
+        background: linear-gradient(180deg, #16332a, var(--sidebar));
+        color: var(--sidebar-text);
+        padding: 1.25rem 1rem 2rem;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .sidebar-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+      }
+      .sidebar-head .brand-block { flex: 1; min-width: 0; }
+      .nav-close {
+        display: none;
+        flex-shrink: 0;
+        width: 2.25rem;
+        height: 2.25rem;
+        border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.08);
+        color: #fff;
+        border-radius: 10px;
+        font-size: 1.25rem;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+      }
+      .brand { font-weight: 700; font-size: 1.05rem; letter-spacing: -0.02em; margin: 0 0 0.2rem; }
+      .brand-sub { font-size: 0.78rem; opacity: 0.7; margin-bottom: 0.75rem; }
+      .nav { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
+      .nav button {
+        text-align: left;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        border-radius: 10px;
+        padding: 0.65rem 0.75rem;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 500;
+        opacity: 0.85;
+        touch-action: manipulation;
+      }
+      .nav button:hover { background: rgba(255,255,255,0.06); opacity: 1; }
+      .nav button.active { background: rgba(255,255,255,0.12); opacity: 1; box-shadow: inset 3px 0 0 #3ecf9a; }
+      .sidebar-actions {
+        margin-top: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        flex-shrink: 0;
+      }
+      .nav-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: rgba(10, 20, 16, 0.45);
+        z-index: 40;
+        border: 0;
+        padding: 0;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .main {
+        padding: 1.25rem 1.5rem 2.5rem;
+        max-width: 1200px;
+        width: 100%;
+        min-width: 0;
+      }
+      .topbar {
         display: flex;
         flex-wrap: wrap;
         gap: 0.75rem;
         align-items: center;
         justify-content: space-between;
+        margin-bottom: 1.25rem;
       }
-      h1 { font-size: 1.15rem; margin: 0; font-weight: 650; }
-      h2 { font-size: 1rem; margin: 0 0 0.75rem; }
-      .sub { color: var(--muted); font-size: 0.85rem; }
-      main { padding: 1rem 1.5rem 2rem; max-width: 1100px; margin: 0 auto; }
-      .login, .panel {
+      .topbar-left {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65rem;
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+      .topbar-titles { min-width: 0; }
+      .menu-toggle {
+        display: none;
+        flex-shrink: 0;
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 10px;
+        cursor: pointer;
+        padding: 0;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow);
+        touch-action: manipulation;
+      }
+      .menu-toggle span {
+        display: block;
+        width: 1.1rem;
+        height: 2px;
+        background: var(--text);
+        border-radius: 1px;
+        position: relative;
+      }
+      .menu-toggle span::before,
+      .menu-toggle span::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--text);
+        border-radius: 1px;
+      }
+      .menu-toggle span::before { top: -5px; }
+      .menu-toggle span::after { top: 5px; }
+      h1 { margin: 0; font-size: 1.35rem; letter-spacing: -0.02em; line-height: 1.25; }
+      h2 { margin: 0 0 0.85rem; font-size: 1.05rem; }
+      .sub { color: var(--muted); font-size: 0.86rem; }
+      .login, .panel, .stat {
         background: var(--panel);
         border: 1px solid var(--line);
-        border-radius: 14px;
-        padding: 1rem;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+      .login, .panel { padding: 1.1rem 1.15rem; margin-bottom: 1rem; }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.75rem;
         margin-bottom: 1rem;
       }
-      label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.35rem; }
-      input, select, button {
+      .stat { padding: 0.9rem 1rem; }
+      .stat .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+      .stat .value { font-size: 1.35rem; font-weight: 700; margin-top: 0.25rem; letter-spacing: -0.02em; word-break: break-word; }
+      label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.3rem; font-weight: 500; }
+      input, select, textarea, button.btn {
         font: inherit;
         border-radius: 10px;
         border: 1px solid var(--line);
-        padding: 0.6rem 0.75rem;
-      }
-      input {
-        width: 100%;
-        background: #18120e;
+        padding: 0.55rem 0.7rem;
+        background: #fff;
         color: var(--text);
+        max-width: 100%;
       }
-      input.stock { width: 72px; padding: 0.35rem; }
-      button {
+      select, input:not([type="checkbox"]):not([type="radio"]) { width: 100%; }
+      .toolbar input:not([type="checkbox"]),
+      .toolbar select { width: auto; min-width: 0; }
+      textarea { width: 100%; min-height: 110px; resize: vertical; }
+      input[type="number"].stock { width: 72px; }
+      .btn {
         background: var(--accent);
-        color: white;
+        color: #fff;
         border: none;
         cursor: pointer;
         font-weight: 600;
+        touch-action: manipulation;
+        white-space: nowrap;
       }
-      button.secondary { background: #4a3a30; }
-      button:disabled { opacity: 0.5; cursor: not-allowed; }
-      .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: end; }
-      .row > * { flex: 1; min-width: 140px; }
-      .toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; align-items: center; }
-      table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+      .btn:hover { background: var(--accent-2); }
+      .btn.ghost { background: #fff; color: var(--text); border: 1px solid var(--line); }
+      .btn.warn { background: #b45309; }
+      .btn.danger { background: var(--danger); }
+      .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; margin-bottom: 0.85rem; }
+      .toolbar > * { min-width: 0; }
+      .toolbar > div { flex: 1 1 140px; max-width: 100%; }
+      .grow { flex: 1 1 160px; }
+      .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-top: 0.5rem;
+        max-width: 100%;
+      }
+      table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 520px; }
       th, td { text-align: left; padding: 0.7rem 0.5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
-      th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      th {
+        color: var(--muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 600;
+        cursor: default;
+      }
+      th.sortable { cursor: pointer; user-select: none; }
+      th.sortable:hover { color: var(--accent); }
+      .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.82rem; word-break: break-all; }
       .status {
         display: inline-block;
-        padding: 0.15rem 0.45rem;
+        padding: 0.18rem 0.5rem;
         border-radius: 999px;
-        font-size: 0.75rem;
-        background: #3a2f28;
+        font-size: 0.72rem;
+        font-weight: 600;
+        background: #eef2f0;
+        color: var(--muted);
       }
-      .status.pending_payment { background: #5a4020; color: #ffd89a; }
-      .status.paid, .status.preparing { background: #1f3d2d; color: #9be4b5; }
-      .status.out_for_delivery { background: #1f3348; color: #9bc7ff; }
-      .status.delivered { background: #243528; color: #b7f0c8; }
-      .status.cancelled { background: #4a2424; color: #ffb4b4; }
-      .actions { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
-      .actions button { padding: 0.35rem 0.55rem; font-size: 0.75rem; }
-      .msg { margin-top: 0.75rem; color: var(--muted); min-height: 1.2em; }
-      .msg.err { color: #ffb4b4; }
-      .msg.ok { color: #9be4b5; }
-      .phone { font-family: ui-monospace, monospace; font-size: 0.8rem; }
-      .tabs button.active { outline: 2px solid #e8c4a8; }
-      @media (max-width: 720px) {
-        th:nth-child(4), td:nth-child(4) { display: none; }
+      .status.pending_payment { background: #fff7ed; color: #c2410c; }
+      .status.paid, .status.preparing { background: #ecfdf3; color: #027a48; }
+      .status.out_for_delivery { background: #eff8ff; color: #175cd3; }
+      .status.delivered { background: #eef4ff; color: #3538cd; }
+      .status.cancelled { background: #fef3f2; color: #b42318; }
+      .actions { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+      .actions .btn { padding: 0.3rem 0.5rem; font-size: 0.75rem; white-space: normal; }
+      .msg { min-height: 1.2em; margin: 0.5rem 0 0; font-size: 0.88rem; color: var(--muted); }
+      .msg.err { color: var(--danger); }
+      .msg.ok { color: var(--ok); }
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.65rem;
+        margin-bottom: 0.75rem;
+      }
+      .checkline { display: flex; align-items: center; gap: 0.4rem; margin-top: 1.4rem; font-size: 0.9rem; }
+      .checkline input { width: auto; }
+      .cust-list { max-height: 280px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+      .cust-list label {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.45rem 0.65rem;
+        margin: 0;
+        border-bottom: 1px solid var(--line);
+        color: var(--text);
+        font-size: 0.88rem;
+        cursor: pointer;
+      }
+      .cust-list label:hover { background: var(--accent-soft); }
+      .note-box {
+        background: var(--accent-soft);
+        border: 1px solid #b7d9cb;
+        border-radius: 10px;
+        padding: 0.75rem 0.9rem;
+        font-size: 0.85rem;
+        color: #0e4a3a;
+        margin-bottom: 0.85rem;
+        line-height: 1.45;
+      }
+      .login-page {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background:
+          radial-gradient(ellipse 70% 50% at 20% 0%, #cfe8dc 0%, transparent 50%),
+          radial-gradient(ellipse 50% 40% at 100% 100%, #d4e4dc 0%, transparent 45%),
+          var(--bg);
+      }
+      .login-page .login {
+        width: 100%;
+        max-width: 400px;
+        margin: 0;
+        padding: 1.75rem 1.5rem;
+      }
+      .login-page h1 { margin-bottom: 0.25rem; }
+      .login-page .field { margin-bottom: 0.85rem; }
+      .login-page input { width: 100%; }
+      .subtabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-bottom: 0.85rem;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 0.65rem;
+      }
+      .subtabs button {
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--muted);
+        border-radius: 8px;
+        padding: 0.4rem 0.7rem;
+        font: inherit;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .subtabs button:hover { background: var(--accent-soft); color: var(--text); }
+      .subtabs button.active {
+        background: var(--accent-soft);
+        color: var(--accent);
+        border-color: #b7d9cb;
+      }
+      .subtabs button .count {
+        font-weight: 500;
+        font-size: 0.75rem;
+        opacity: 0.75;
+        margin-left: 0.2rem;
+      }
+      #sessionUser { font-size: 0.78rem; opacity: 0.75; margin-bottom: 0.75rem; }
+      #msg { flex: 1 1 100%; text-align: right; }
+      [hidden] { display: none !important; }
+
+      /* —— Mobile: off-canvas drawer (sidebar out of document flow) —— */
+      @media (max-width: 900px) {
+        .shell {
+          display: block;
+        }
+        body.nav-open {
+          overflow: hidden;
+          position: relative;
+        }
+        body.nav-open .nav-backdrop {
+          display: block;
+        }
+        .sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          bottom: 0;
+          width: min(var(--sidebar-w), 86vw);
+          max-height: none;
+          height: 100%;
+          height: 100dvh;
+          z-index: 50;
+          transform: translateX(-105%);
+          transition: transform 0.22s ease;
+          box-shadow: none;
+          /* keep out of layout */
+          margin: 0;
+        }
+        body.nav-open .sidebar {
+          transform: translateX(0);
+          box-shadow: 8px 0 32px rgba(0, 0, 0, 0.28);
+        }
+        .nav-close { display: inline-flex; align-items: center; justify-content: center; }
+        .menu-toggle { display: inline-flex; }
+        .main {
+          display: block;
+          width: 100%;
+          max-width: none;
+          padding: 0.85rem 0.85rem 5rem;
+          margin: 0;
+        }
+        .topbar {
+          position: sticky;
+          top: 0;
+          z-index: 30;
+          background: rgba(238, 242, 239, 0.96);
+          margin: -0.85rem -0.85rem 0.85rem;
+          padding: 0.75rem 0.85rem;
+          border-bottom: 1px solid var(--line);
+        }
+        h1 { font-size: 1.15rem; }
+        .panel, .login { padding: 0.9rem 0.85rem; }
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.55rem;
+        }
+        .stat .value { font-size: 1.15rem; }
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        .form-grid > div[style*="grid-column"] {
+          grid-column: auto !important;
+        }
+        .toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .toolbar > div,
+        .toolbar .grow {
+          flex: 1 1 auto;
+          width: 100%;
+          max-width: none;
+        }
+        .toolbar .btn,
+        .toolbar > button {
+          width: 100%;
+        }
+        .toolbar > p.sub {
+          width: 100%;
+        }
+        table { font-size: 0.84rem; min-width: 480px; }
+        th, td { padding: 0.55rem 0.4rem; }
+        .actions .btn { min-height: 2rem; }
+        #msg { text-align: left; font-size: 0.8rem; }
+
+        /* Tables → cards on phone */
+        .table-desktop { display: none !important; }
+        .mobile-cards {
+          display: flex;
+          flex-direction: column;
+          gap: 0.7rem;
+        }
+        .m-card {
+          background: var(--panel);
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          padding: 0.85rem 0.9rem;
+          box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+        }
+        .m-card-top {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 0.5rem;
+          margin-bottom: 0.55rem;
+        }
+        .m-card-ref {
+          font-weight: 700;
+          font-size: 1.05rem;
+          letter-spacing: -0.02em;
+          line-height: 1.2;
+        }
+        .m-card-meta {
+          font-size: 0.8rem;
+          color: var(--muted);
+          margin-top: 0.2rem;
+          line-height: 1.35;
+        }
+        .m-card-row {
+          display: flex;
+          gap: 0.4rem;
+          font-size: 0.88rem;
+          margin-top: 0.4rem;
+          line-height: 1.4;
+        }
+        .m-card-row .k {
+          flex: 0 0 4.5rem;
+          color: var(--muted);
+          font-size: 0.78rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+          padding-top: 0.1rem;
+        }
+        .m-card-row .v {
+          flex: 1;
+          min-width: 0;
+          word-break: break-word;
+        }
+        .m-card .actions {
+          margin-top: 0.75rem;
+          padding-top: 0.65rem;
+          border-top: 1px solid var(--line);
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.4rem;
+        }
+        .m-card .actions .btn {
+          width: 100%;
+          min-height: 2.4rem;
+          font-size: 0.82rem;
+          white-space: normal;
+        }
+        .m-card .actions .btn:only-child {
+          grid-column: 1 / -1;
+        }
+        .m-card a.phone-link {
+          color: var(--accent);
+          font-weight: 600;
+          text-decoration: none;
+          font-family: "IBM Plex Mono", ui-monospace, monospace;
+          font-size: 0.9rem;
+        }
+        .m-empty {
+          text-align: center;
+          color: var(--muted);
+          padding: 1.25rem 0.5rem;
+          font-size: 0.9rem;
+        }
+        .status-text {
+          font-size: 0.72rem;
+          font-weight: 600;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .stats { grid-template-columns: 1fr; }
+        .brand { font-size: 0.95rem; }
+      }
+
+      @media (min-width: 901px) {
+        .shell {
+          display: grid;
+          grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+          align-items: start;
+        }
+        .nav-backdrop {
+          display: none !important;
+        }
+        .sidebar {
+          position: sticky;
+          top: 0;
+          height: 100vh;
+          height: 100dvh;
+          max-height: 100vh;
+          max-height: 100dvh;
+          grid-column: 1;
+          grid-row: 1;
+        }
+        .main {
+          grid-column: 2;
+          grid-row: 1;
+          max-width: 1200px;
+        }
+        .menu-toggle,
+        .nav-close {
+          display: none !important;
+        }
+        .mobile-cards { display: none !important; }
+        .table-desktop { display: block; }
+      }
+
+      .mobile-cards { display: none; }
+      .table-desktop { display: block; }
+
+      .pw-wrap {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+      }
+      .pw-wrap input {
+        width: 100%;
+        padding-right: 4.5rem;
+      }
+      .pw-toggle {
+        position: absolute;
+        right: 0.35rem;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 0;
+        background: transparent;
+        color: var(--accent);
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0.35rem 0.5rem;
+        border-radius: 8px;
+      }
+      .pw-toggle:hover { background: var(--accent-soft); }
+
+      /* WhatsApp conversations */
+      .conv-layout {
+        display: grid;
+        grid-template-columns: minmax(220px, 320px) 1fr;
+        gap: 0.75rem;
+        min-height: 420px;
+      }
+      @media (max-width: 900px) {
+        .conv-layout {
+          grid-template-columns: 1fr;
+          min-height: 0;
+        }
+        .conv-layout.thread-open .conv-list-panel { display: none; }
+        .conv-layout:not(.thread-open) .conv-thread-panel { display: none; }
+      }
+      .conv-list {
+        max-height: 560px;
+        overflow-y: auto;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #f7faf8;
+      }
+      .conv-item {
+        display: block;
+        width: 100%;
+        text-align: left;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        background: transparent;
+        padding: 0.75rem 0.85rem;
+        cursor: pointer;
+        font: inherit;
+        color: inherit;
+      }
+      .conv-item:hover { background: var(--accent-soft); }
+      .conv-item.active { background: #dceee6; box-shadow: inset 3px 0 0 var(--accent); }
+      .conv-item .nm { font-weight: 600; font-size: 0.92rem; }
+      .conv-item .snippet {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 0.2rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .conv-thread {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #edf2ef;
+        min-height: 360px;
+        max-height: 560px;
+      }
+      .conv-thread-head {
+        padding: 0.75rem 0.9rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .conv-msgs {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.85rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .bubble {
+        max-width: min(92%, 420px);
+        padding: 0.55rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.88rem;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .bubble.in {
+        align-self: flex-start;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-bottom-left-radius: 4px;
+      }
+      .bubble.out {
+        align-self: flex-end;
+        background: #cce8dc;
+        border: 1px solid #b0d4c4;
+        border-bottom-right-radius: 4px;
+      }
+      .bubble .meta {
+        font-size: 0.7rem;
+        color: var(--muted);
+        margin-top: 0.35rem;
+      }
+      .bubble .kind-tag {
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
       }
     </style>
   </head>
   <body>
-    <header>
-      <div>
-        <h1>Amma Chethi Ruchulu — Ops dashboard</h1>
-        <div class="sub">Orders · menu stock · WhatsApp-linked statuses</div>
+    <div id="loginView" class="login-page">
+      <div class="login">
+        <h1>Kitchen Ops</h1>
+        <p class="sub" style="margin-bottom:1.25rem;">Amma Chethi Ruchulu — sign in to manage orders &amp; menu</p>
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" type="text" value="superadmin" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="pw-wrap">
+            <input id="password" type="password" placeholder="ADMIN_TOKEN from server .env" autocomplete="current-password" />
+            <button type="button" class="pw-toggle" id="togglePasswordBtn" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+        </div>
+        <p class="sub" style="margin:0 0 0.75rem;font-size:0.82rem;">Username is usually <strong>superadmin</strong>. Password is the full <code>ADMIN_TOKEN</code> value from production <code>.env</code> (not the Razorpay key).</p>
+        <button class="btn" id="loginBtn" type="button" style="width:100%;margin-top:0.25rem;">Log in</button>
+        <p class="msg" id="loginMsg"></p>
       </div>
-      <div class="sub" id="meta"></div>
-    </header>
-    <main>
-      <section class="login" id="loginBox">
-        <label for="token">Admin token</label>
-        <div class="row">
-          <div>
-            <input id="token" type="password" placeholder="ADMIN_TOKEN from .env" />
-          </div>
-          <button id="loginBtn" type="button">Unlock</button>
-        </div>
-        <p class="msg" id="loginMsg">Local ops system for Tenali kitchen.</p>
-      </section>
+    </div>
 
-      <section id="app" hidden>
-        <div class="toolbar tabs">
-          <button type="button" class="active" id="tabOrders">Orders</button>
-          <button type="button" class="secondary" id="tabDishes">Menu / stock</button>
-          <button type="button" id="refreshBtn">Refresh</button>
-          <button type="button" class="secondary" id="logoutBtn">Lock</button>
-          <select id="filter">
-            <option value="all">All statuses</option>
-            <option value="pending_payment">Pending payment</option>
-            <option value="paid">Paid</option>
-            <option value="preparing">Preparing</option>
-            <option value="out_for_delivery">Out for delivery</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
-        <div class="msg" id="msg"></div>
-
-        <div class="panel" id="ordersPanel">
-          <h2>Orders</h2>
-          <div style="overflow-x:auto">
-            <table>
-              <thead>
-                <tr>
-                  <th>Order</th>
-                  <th>Status</th>
-                  <th>Items</th>
-                  <th>Customer</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="tbody"></tbody>
-            </table>
+    <div id="appView" class="shell" hidden>
+      <button type="button" class="nav-backdrop" id="navBackdrop" aria-label="Close menu"></button>
+      <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
+        <div class="sidebar-head">
+          <div class="brand-block">
+            <p class="brand">Amma Chethi Ruchulu</p>
+            <p class="brand-sub" id="metaLine">Order management</p>
           </div>
+          <button type="button" class="nav-close" id="navCloseBtn" aria-label="Close menu">×</button>
+        </div>
+        <p id="sessionUser"></p>
+        <nav class="nav">
+          <button type="button" class="active" data-tab="dashboard">Dashboard</button>
+          <button type="button" data-tab="orders">Orders</button>
+          <button type="button" data-tab="kitchen">Kitchen</button>
+          <button type="button" data-tab="menu">Menu editor</button>
+          <button type="button" data-tab="offers">Offers</button>
+          <button type="button" data-tab="ammas">Ammas</button>
+          <button type="button" data-tab="customers">Customers & broadcast</button>
+          <button type="button" data-tab="messages">Messages</button>
+          <button type="button" data-tab="feedback">Feedback & help</button>
+        </nav>
+        <div class="sidebar-actions">
+          <button type="button" class="btn ghost" id="voiceAlertBtn" style="width:100%;" title="Play generic kitchen clips for new and paid orders">
+            Enable kitchen voice
+          </button>
+          <p class="sub" id="voiceAlertStatus" style="margin:0;font-size:0.75rem;line-height:1.35;">
+            Off — add MP3s under /sounds, then enable. Generic clips only (no order details).
+          </p>
+          <button type="button" class="btn ghost" id="refreshBtn" style="width:100%;">Refresh</button>
+          <button type="button" class="btn ghost" id="logoutBtn" style="width:100%;">Log out</button>
+        </div>
+      </aside>
+
+      <div class="main">
+        <div class="topbar">
+          <div class="topbar-left">
+            <button type="button" class="menu-toggle" id="menuToggleBtn" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar">
+              <span aria-hidden="true"></span>
+            </button>
+            <div class="topbar-titles">
+              <h1 id="pageTitle">Dashboard</h1>
+              <div class="sub" id="pageSub">Today's kitchen pulse</div>
+            </div>
+          </div>
+          <p class="msg" id="msg"></p>
         </div>
 
-        <div class="panel" id="dishesPanel" hidden>
-          <h2>Menu / stock</h2>
-          <div style="overflow-x:auto">
-            <table>
-              <thead>
-                <tr>
-                  <th>Code</th>
-                  <th>Item</th>
-                  <th>Price</th>
-                  <th>Left / Max</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="dishesBody"></tbody>
-            </table>
+        <!-- Dashboard -->
+        <section data-panel="dashboard">
+          <div class="stats" id="statsGrid"></div>
+          <div class="panel">
+            <h2>Quick actions</h2>
+            <div class="toolbar">
+              <button class="btn" type="button" data-tab-jump="orders">Review orders</button>
+              <button class="btn ghost" type="button" data-tab-jump="kitchen">Kitchen board</button>
+              <button class="btn ghost" type="button" data-tab-jump="customers">Send promo</button>
+              <button class="btn ghost" type="button" id="exportCsvBtn">Export CSV</button>
+            </div>
           </div>
-        </div>
-      </section>
-    </main>
+          <div class="panel">
+            <h2>Latest activity</h2>
+            <div class="table-wrap table-desktop">
+              <table>
+                <thead><tr><th>Order</th><th>Status</th><th>Total</th><th>When</th></tr></thead>
+                <tbody id="latestBody"></tbody>
+              </table>
+            </div>
+            <div class="mobile-cards" id="latestCards"></div>
+          </div>
+        </section>
+
+        <!-- Orders -->
+        <section data-panel="orders" hidden>
+          <div class="panel">
+            <div class="toolbar">
+              <div class="grow">
+                <label for="orderSearch">Search</label>
+                <input id="orderSearch" placeholder="ref, phone, name…" />
+              </div>
+              <div>
+                <label for="filterStatus">Status</label>
+                <select id="filterStatus">
+                  <option value="all">All</option>
+                  <option value="pending_payment">Pending payment</option>
+                  <option value="paid">Paid</option>
+                  <option value="preparing">Preparing</option>
+                  <option value="out_for_delivery">Out</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div>
+                <label for="filterMeal">Meal</label>
+                <select id="filterMeal">
+                  <option value="all">All</option>
+                  <option value="lunch">Lunch</option>
+                  <option value="dinner">Dinner</option>
+                </select>
+              </div>
+              <div>
+                <label for="filterServiceFrom">Service from</label>
+                <input id="filterServiceFrom" type="date" />
+              </div>
+              <div>
+                <label for="filterServiceTo">Service to</label>
+                <input id="filterServiceTo" type="date" />
+              </div>
+              <div>
+                <label for="sortOrders">Sort</label>
+                <select id="sortOrders">
+                  <option value="service_desc">Service day · newest</option>
+                  <option value="service_asc">Service day · oldest</option>
+                  <option value="created_desc">Placed · newest</option>
+                  <option value="created_asc">Placed · oldest</option>
+                  <option value="total_desc">Highest total</option>
+                  <option value="total_asc">Lowest total</option>
+                  <option value="status">By status</option>
+                  <option value="ref">By order ref</option>
+                </select>
+              </div>
+            </div>
+            <div class="toolbar" style="margin-top:0.5rem">
+              <p class="sub grow" id="ordersSummary" style="margin:0"></p>
+              <button class="btn ghost" type="button" id="clearOrderFiltersBtn">Clear filters</button>
+              <button class="btn ghost" type="button" id="exportLunchCsvBtn" title="Other filters still apply">Export lunch CSV</button>
+              <button class="btn ghost" type="button" id="exportDinnerCsvBtn" title="Other filters still apply">Export dinner CSV</button>
+              <button class="btn" type="button" id="exportOrdersCsvBtn">Export CSV (filtered)</button>
+            </div>
+            <div class="table-wrap table-desktop">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order / service</th>
+                    <th>Status</th>
+                    <th>Items / total</th>
+                    <th>Customer</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ordersBody"></tbody>
+              </table>
+            </div>
+            <div class="mobile-cards" id="ordersCards"></div>
+          </div>
+        </section>
+
+        <!-- Kitchen -->
+        <section data-panel="kitchen" hidden>
+          <div class="panel">
+            <p class="sub">Paid + preparing + out for delivery — cook and pack focus.</p>
+            <div class="toolbar" style="margin:0.5rem 0">
+              <p class="sub grow" id="kitchenSummary" style="margin:0"></p>
+              <button class="btn ghost" type="button" id="exportKitchenLunchBtn">Export kitchen lunch</button>
+              <button class="btn ghost" type="button" id="exportKitchenDinnerBtn">Export kitchen dinner</button>
+            </div>
+            <div class="table-wrap table-desktop">
+              <table>
+                <thead><tr><th>Order</th><th>Meal / service</th><th>Pack list</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="kitchenBody"></tbody>
+              </table>
+            </div>
+            <div class="mobile-cards" id="kitchenCards"></div>
+          </div>
+        </section>
+
+        <!-- Menu -->
+        <section data-panel="menu" hidden>
+          <div class="panel">
+            <h2>Add or edit dish</h2>
+            <div class="form-grid">
+              <div>
+                <label for="dCode">Code</label>
+                <input id="dCode" placeholder="V11" class="mono" />
+              </div>
+              <div style="grid-column:span 2">
+                <label for="dName">Name</label>
+                <input id="dName" placeholder="Tomato Pappu" />
+              </div>
+              <div>
+                <label for="dCategory">Category</label>
+                <select id="dCategory">
+                  <option value="veg">veg</option>
+                  <option value="nonveg">nonveg</option>
+                  <option value="meals">meals</option>
+                  <option value="combos">combos</option>
+                  <option value="extras">extras</option>
+                </select>
+              </div>
+              <div>
+                <label for="dAmma">Amma (cook)</label>
+                <select id="dAmma"></select>
+              </div>
+              <div>
+                <label for="dCookCustom">Or type Amma name</label>
+                <input id="dCookCustom" placeholder="Leave empty to use select" />
+              </div>
+              <div>
+                <label for="dMeal">Meal</label>
+                <select id="dMeal">
+                  <option value="both">both</option>
+                  <option value="lunch">lunch</option>
+                  <option value="dinner">dinner</option>
+                </select>
+              </div>
+              <div>
+                <label for="dPrice">Price (₹)</label>
+                <input id="dPrice" type="number" min="0" step="1" value="60" />
+              </div>
+              <div>
+                <label for="dStock">Max portions</label>
+                <input id="dStock" type="number" min="0" value="20" />
+              </div>
+              <div style="grid-column:1/-1">
+                <label for="dNote">Note (optional)</label>
+                <input id="dNote" placeholder="4-5 pieces" />
+              </div>
+            </div>
+            <div class="toolbar">
+              <button class="btn" type="button" id="saveDishBtn">Save dish</button>
+              <button class="btn ghost" type="button" id="clearDishBtn">Clear form</button>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>Full menu</h2>
+            <p class="sub" style="margin:-0.4rem 0 0.75rem;">Browse by category to find or edit items faster</p>
+            <div class="subtabs" id="menuCatTabs" role="tablist" aria-label="Menu categories"></div>
+            <div class="toolbar">
+              <div class="grow">
+                <input id="menuSearch" placeholder="Search in this category…" />
+              </div>
+              <button type="button" class="btn ghost" id="newInCatBtn">+ New in this category</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Item</th>
+                    <th>Amma</th>
+                    <th>Meal</th>
+                    <th>Price</th>
+                    <th>Left / max</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="dishesBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Offers / launch promos -->
+        <section data-panel="offers" hidden>
+          <div class="note-box">
+            <strong>Launch offers</strong> apply automatically on WhatsApp checkout when enabled.
+            Food discount and free delivery <em>both stack</em> if the cart qualifies for each.
+            Example: food ₹350 → ₹50 off + free delivery.
+          </div>
+          <div class="panel">
+            <h2>Min order &amp; launch date</h2>
+            <p class="sub" id="opsEffectiveLine">Loading…</p>
+            <div class="form-grid">
+              <div>
+                <label for="opsMinOrder">Min food order (₹)</label>
+                <input id="opsMinOrder" type="number" min="0" step="1" value="0" />
+              </div>
+              <div>
+                <label for="opsMinScope">Apply min as</label>
+                <select id="opsMinScope">
+                  <option value="default">Default (all days)</option>
+                  <option value="today">Today only (IST)</option>
+                </select>
+              </div>
+              <div>
+                <label for="opsLaunch">First service day (launch)</label>
+                <input id="opsLaunch" type="date" value="2026-08-10" />
+              </div>
+            </div>
+            <div class="toolbar">
+              <button class="btn" type="button" id="saveOpsBtn">Save min order / launch</button>
+              <button class="btn ghost" type="button" id="clearOpsMinOverrideBtn">Clear today min override</button>
+            </div>
+            <p class="msg" id="opsMsg"></p>
+            <p class="sub" style="margin-top:0.75rem;">
+              Before launch, WhatsApp warns and only allows pre-booking opening day.
+              Kitchen closed Sundays (full day) and Saturday evenings (dinner).
+            </p>
+          </div>
+          <div class="panel">
+            <h2>Delivery pricing mode</h2>
+            <p class="sub" id="deliveryEffectiveLine">Loading…</p>
+            <div class="form-grid">
+              <div>
+                <label for="delMode">Default mode</label>
+                <select id="delMode">
+                  <option value="distance">Distance (0–3 / 3–6 / 6+ km)</option>
+                  <option value="flat">Flat rate (all addresses)</option>
+                </select>
+              </div>
+              <div>
+                <label for="delFlat">Flat fee (₹)</label>
+                <input id="delFlat" type="number" min="0" step="1" value="40" />
+              </div>
+              <div>
+                <label for="delScope">Apply as</label>
+                <select id="delScope">
+                  <option value="default">Default (all days until changed)</option>
+                  <option value="today">Today only (IST)</option>
+                </select>
+              </div>
+            </div>
+            <div class="toolbar">
+              <button class="btn" type="button" id="saveDeliveryBtn">Save delivery mode</button>
+              <button class="btn ghost" type="button" id="clearDeliveryOverrideBtn">Clear today override</button>
+            </div>
+            <p class="msg" id="deliveryMsg"></p>
+            <p class="sub" style="margin-top:0.75rem;">
+              Distance days: customer picks km band (₹30 / ₹45 / ₹60). Flat days: no km question; one fee for all.
+              Free-delivery offers still waive fee when cart food qualifies.
+            </p>
+          </div>
+          <div class="panel">
+            <h2>Add or edit offer</h2>
+            <div class="form-grid">
+              <div>
+                <label for="oId">ID (optional)</label>
+                <input id="oId" placeholder="auto if empty" />
+              </div>
+              <div>
+                <label for="oTitle">Title</label>
+                <input id="oTitle" placeholder="Launch offer — ₹50 off" />
+              </div>
+              <div>
+                <label for="oKind">Type</label>
+                <select id="oKind">
+                  <option value="flat_discount">Above ₹X food → ₹Y off</option>
+                  <option value="free_delivery">Above ₹X food → free delivery</option>
+                </select>
+              </div>
+              <div>
+                <label for="oAbove">Food threshold (₹)</label>
+                <input id="oAbove" type="number" min="0" step="1" value="200" />
+              </div>
+              <div id="oDiscountWrap">
+                <label for="oDiscount">Discount amount (₹)</label>
+                <input id="oDiscount" type="number" min="0" step="1" value="50" />
+              </div>
+              <div>
+                <label for="oEnabled">Enabled</label>
+                <select id="oEnabled">
+                  <option value="1" selected>On (launch)</option>
+                  <option value="0">Off</option>
+                </select>
+              </div>
+            </div>
+            <div class="toolbar">
+              <button class="btn" type="button" id="saveOfferBtn">Save offer</button>
+              <button class="btn ghost" type="button" id="clearOfferBtn">Clear form</button>
+            </div>
+            <p class="msg" id="offersMsg"></p>
+          </div>
+          <div class="panel">
+            <h2>Active rules</h2>
+            <p class="sub" id="offersHint">Enabled rules are used at checkout for all customers.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Above food</th>
+                    <th>Benefit</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="offersBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Ammas -->
+        <section data-panel="ammas" hidden>
+          <div class="note-box">
+            <strong>USP:</strong> Each dish shows its Amma name on WhatsApp
+            (“Tomato Pappu · Lakshmi Amma”). Preview of <em>this week’s</em> earnings uses food gross ×
+            payout share (default 70%). Full weekly pay runs land later — see <code>AMMAS.md</code>.
+          </div>
+          <div class="panel">
+            <h2>Add or edit Amma</h2>
+            <div class="form-grid">
+              <div style="grid-column:span 2">
+                <label for="aName">Name</label>
+                <input id="aName" placeholder="Lakshmi Amma" />
+              </div>
+              <div>
+                <label for="aId">Id (optional)</label>
+                <input id="aId" class="mono" placeholder="lakshmi" />
+              </div>
+              <div>
+                <label for="aShare">Payout share %</label>
+                <input id="aShare" type="number" min="0" max="100" step="1" value="70" />
+              </div>
+              <div>
+                <label for="aPhone">Phone (optional)</label>
+                <input id="aPhone" class="mono" placeholder="9198…" />
+              </div>
+              <div>
+                <label for="aUpi">UPI (optional)</label>
+                <input id="aUpi" placeholder="name@upi" />
+              </div>
+              <div style="grid-column:1/-1">
+                <label for="aNotes">Notes</label>
+                <input id="aNotes" placeholder="Specialises in…" />
+              </div>
+            </div>
+            <div class="toolbar">
+              <button class="btn" type="button" id="saveAmmaBtn">Save Amma</button>
+              <button class="btn ghost" type="button" id="clearAmmaBtn">Clear</button>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>All Ammas</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Share</th>
+                    <th>Dishes</th>
+                    <th>UPI / phone</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ammasBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>This week earnings (preview)</h2>
+            <p class="sub" id="earningsWeek">—</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Amma</th>
+                    <th>Portions</th>
+                    <th>Food gross</th>
+                    <th>Share due</th>
+                  </tr>
+                </thead>
+                <tbody id="earningsBody"></tbody>
+              </table>
+            </div>
+            <p class="msg" id="earningsTotals"></p>
+          </div>
+        </section>
+
+        <!-- Customers -->
+        <section data-panel="customers" hidden>
+          <div class="note-box">
+            <strong>WhatsApp Communities cannot be managed via Cloud API.</strong>
+            Use <em>broadcast</em> below to message customers in your database (today's menu, offers).
+            Free-form messages only work inside Meta’s 24‑hour care window; cold marketing later needs approved templates.
+          </div>
+          <div class="panel">
+            <h2>Broadcast</h2>
+            <label for="broadcastMsg">Message</label>
+            <textarea id="broadcastMsg" placeholder="Today’s dinner specials: 🍅 Tomato pappu, 🍗 Chicken curry. Order on WhatsApp — Hi"></textarea>
+            <div class="form-grid" style="margin-top:0.65rem">
+              <div>
+                <label for="audience">Audience</label>
+                <select id="audience">
+                  <option value="all">All customers</option>
+                  <option value="ordered">Anyone who ordered (≥1)</option>
+                  <option value="recent">Ordered last 7 days</option>
+                  <option value="selected">Selected only</option>
+                </select>
+              </div>
+            </div>
+            <div class="toolbar">
+              <button class="btn" type="button" id="sendBroadcastBtn">Send WhatsApp broadcast</button>
+            </div>
+            <p class="msg" id="broadcastMsgOut"></p>
+          </div>
+          <div class="panel">
+            <h2>Customer list <span class="sub" id="custCount"></span></h2>
+            <div class="toolbar">
+              <button class="btn ghost" type="button" id="selectAllCust">Select all</button>
+              <button class="btn ghost" type="button" id="clearCust">Clear selection</button>
+            </div>
+            <div class="cust-list" id="custList"></div>
+          </div>
+        </section>
+
+        <!-- WhatsApp message history -->
+        <section data-panel="messages" hidden>
+          <div class="note-box">
+            Shows WhatsApp traffic on the bot number from when logging was enabled.
+            Both customer (in) and bot (out) messages. Not a full Meta backup of past years.
+          </div>
+          <div class="panel" style="margin-bottom:0.75rem">
+            <div class="toolbar">
+              <div class="grow">
+                <label for="convSearch">Search people</label>
+                <input id="convSearch" placeholder="name, phone, last message…" />
+              </div>
+              <button class="btn ghost" type="button" id="reloadConvBtn">Reload</button>
+            </div>
+            <p class="sub" id="convNote" style="margin:0"></p>
+          </div>
+          <div class="conv-layout" id="convLayout">
+            <div class="panel conv-list-panel" style="margin:0;padding:0.65rem">
+              <h2 style="padding:0.35rem 0.5rem 0.5rem">Conversations</h2>
+              <div class="conv-list" id="convList"></div>
+            </div>
+            <div class="panel conv-thread-panel" style="margin:0;padding:0">
+              <div class="conv-thread">
+                <div class="conv-thread-head">
+                  <button type="button" class="btn ghost" id="convBackBtn" style="display:none">← Back</button>
+                  <div style="flex:1;min-width:0">
+                    <div id="convThreadTitle" style="font-weight:700">Select a conversation</div>
+                    <div class="sub" id="convThreadSub">Customer messages and bot replies</div>
+                  </div>
+                  <a class="btn ghost" id="convCallBtn" href="#" style="display:none">Call</a>
+                </div>
+                <div class="conv-msgs" id="convMsgs">
+                  <div class="m-empty" style="margin:auto">Pick a phone on the left to open the chat log</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Feedback -->
+        <section data-panel="feedback" hidden>
+          <div class="panel">
+            <h2>Ratings</h2>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>When</th><th>Order</th><th>Avg</th><th>Items</th><th>Comment</th></tr></thead>
+                <tbody id="feedbacksBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>Help tickets</h2>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>When</th><th># / Topic</th><th>Customer</th><th>Order</th><th>Message</th></tr></thead>
+                <tbody id="helpsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
     <script>
       const NEXT = {
         pending_payment: [['paid', 'Mark paid'], ['cancelled', 'Cancel']],
@@ -177,11 +1291,66 @@
         delivered: [],
         cancelled: [],
       };
+      const TITLES = {
+        dashboard: ['Dashboard', "Today's kitchen pulse"],
+        orders: ['Orders', 'Search, sort, update statuses'],
+        kitchen: ['Kitchen board', 'What to cook and pack now'],
+        menu: ['Menu editor', 'Prices, stock, Amma, on/off, new dishes'],
+        offers: ['Offers', 'Min order, launch, promos + delivery mode'],
+        ammas: ['Ammas', 'Home cooks — dishes, share %, weekly earnings preview'],
+        customers: ['Customers & broadcast', 'Promo / today\'s menu WhatsApp blasts'],
+        messages: ['Messages', 'WhatsApp who contacted + full thread'],
+        feedback: ['Feedback & help', 'Ratings and support tickets'],
+      };
+
+      const MENU_CATS = [
+        { id: 'veg', title: 'Veg curries' },
+        { id: 'nonveg', title: 'Non-veg' },
+        { id: 'meals', title: 'Rice & meals' },
+        { id: 'combos', title: 'Combos' },
+        { id: 'extras', title: 'Extras' },
+      ];
+
+      let state = {
+        orders: [], dishes: [], ammas: [], offers: [], delivery: null, ops: null, earnings: null, customers: [], feedbacks: [], tickets: [],
+        conversations: [], openPhone: null, threadMessages: [],
+        stats: null, tab: 'dashboard', menuCategory: 'veg', username: '',
+      };
+
+      /** Kitchen sound alerts: pre-recorded generic MP3s (Google AI Studio / ElevenLabs). */
+      const VOICE_LS = 'acr_kitchen_voice';
+      let voiceEnabled = localStorage.getItem(VOICE_LS) === '1';
+      /** order_ref → last known status (seeded on first load; no alerts until diffs). */
+      let orderStatusWatch = null;
+      let voicePollTimer = null;
+      let audioQueue = Promise.resolve();
+      /** Cache of Audio elements by clip key */
+      const audioPlayers = Object.create(null);
+
+      /**
+       * Files (put under public/sounds/ on laptop & VPS):
+       *   new-order.mp3   — any new booking / pending payment
+       *   paid-order.mp3  — payment confirmed
+       *   enabled.mp3     — optional; played when alerts turned on
+       * Formats: mp3 preferred; .wav / .ogg also ok if you rename map below.
+       */
+      const SOUND_CLIPS = {
+        enabled: '/sounds/enabled.mp3',
+        'new-order': '/sounds/new-order.mp3',
+        'paid-order': '/sounds/paid-order.mp3',
+      };
 
       function token() { return localStorage.getItem('acr_admin_token') || ''; }
       function setToken(v) {
         if (v) localStorage.setItem('acr_admin_token', v);
         else localStorage.removeItem('acr_admin_token');
+      }
+      function setSessionUser(u) {
+        state.username = u || '';
+        if (u) localStorage.setItem('acr_admin_user', u);
+        else localStorage.removeItem('acr_admin_user');
+        const el = document.getElementById('sessionUser');
+        if (el) el.textContent = u ? 'Signed in as ' + u : '';
       }
       function showMsg(text, ok) {
         const el = document.getElementById('msg');
@@ -201,87 +1370,1353 @@
         if (!res.ok) throw new Error(data.error || res.statusText);
         return data;
       }
-      function rupees(paise) { return '₹' + (Number(paise || 0) / 100).toFixed(0); }
+      function rupees(paise) {
+        return '₹' + (Number(paise || 0) / 100).toLocaleString('en-IN');
+      }
+      function esc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
+      function itemsText(o) {
+        if (Array.isArray(o.items) && o.items.length) {
+          return o.items.map((i) => (i.qty || 1) + '× ' + (i.name || i.code)).join(', ');
+        }
+        return (o.qty || 1) + '× ' + (o.dish_name || o.dish_code || '—');
+      }
+      function actionBtns(o) {
+        return (NEXT[o.status] || [])
+          .map(([st, label]) =>
+            '<button type="button" class="btn' + (st === 'cancelled' ? ' danger' : '') + '" data-ref="' +
+            o.order_ref + '" data-status="' + st + '">' + label + '</button>',
+          )
+          .join('');
+      }
 
-      function renderOrders(orders) {
-        const filter = document.getElementById('filter').value;
-        const rows = orders.filter((o) => filter === 'all' || o.status === filter);
-        document.getElementById('tbody').innerHTML = rows.map((o) => {
-          const actions = (NEXT[o.status] || [])
-            .map(([st, label]) => `<button type="button" data-ref="${o.order_ref}" data-status="${st}">${label}</button>`)
-            .join('');
+      function orderServiceDate(o) {
+        const d = String(o.service_date || '').slice(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+        if (o.created_at) {
+          try {
+            return new Date(o.created_at).toISOString().slice(0, 10);
+          } catch {
+            /* ignore */
+          }
+        }
+        return '';
+      }
+
+      function orderCreatedTs(o) {
+        const t = new Date(o.created_at || 0).getTime();
+        return Number.isFinite(t) ? t : 0;
+      }
+
+      function mealRank(meal) {
+        if (meal === 'lunch') return 0;
+        if (meal === 'dinner') return 1;
+        return 2;
+      }
+
+      function filteredOrders(opts = {}) {
+        const q = (document.getElementById('orderSearch')?.value || '').trim().toLowerCase();
+        const st = opts.status != null ? opts.status : (document.getElementById('filterStatus')?.value || 'all');
+        const mealUi = document.getElementById('filterMeal')?.value || 'all';
+        const meal = opts.meal != null ? opts.meal : mealUi;
+        const sort = opts.sort || document.getElementById('sortOrders')?.value || 'service_desc';
+        const from = opts.serviceFrom != null
+          ? opts.serviceFrom
+          : (document.getElementById('filterServiceFrom')?.value || '').slice(0, 10);
+        const to = opts.serviceTo != null
+          ? opts.serviceTo
+          : (document.getElementById('filterServiceTo')?.value || '').slice(0, 10);
+        let rows = state.orders.slice();
+        if (Array.isArray(opts.statuses) && opts.statuses.length) {
+          const set = new Set(opts.statuses);
+          rows = rows.filter((o) => set.has(o.status));
+        } else if (st !== 'all') {
+          rows = rows.filter((o) => o.status === st);
+        }
+        if (meal && meal !== 'all') rows = rows.filter((o) => o.meal === meal);
+        if (from) rows = rows.filter((o) => orderServiceDate(o) >= from);
+        if (to) rows = rows.filter((o) => orderServiceDate(o) <= to);
+        if (q && !opts.ignoreSearch) {
+          rows = rows.filter((o) =>
+            [o.order_ref, o.phone, o.customer_name, o.address, o.service_date, o.service_label, itemsText(o)]
+              .join(' ')
+              .toLowerCase()
+              .includes(q),
+          );
+        }
+        rows.sort((a, b) => {
+          if (sort === 'service_asc' || sort === 'service_desc') {
+            const dir = sort === 'service_asc' ? 1 : -1;
+            const sd = orderServiceDate(a).localeCompare(orderServiceDate(b));
+            if (sd) return sd * dir;
+            const m = mealRank(a.meal) - mealRank(b.meal);
+            if (m) return m;
+            return orderCreatedTs(b) - orderCreatedTs(a);
+          }
+          if (sort === 'created_asc' || sort === 'date_asc') return orderCreatedTs(a) - orderCreatedTs(b);
+          if (sort === 'created_desc' || sort === 'date_desc') return orderCreatedTs(b) - orderCreatedTs(a);
+          if (sort === 'total_desc') return (b.total_paise || 0) - (a.total_paise || 0);
+          if (sort === 'total_asc') return (a.total_paise || 0) - (b.total_paise || 0);
+          if (sort === 'status') {
+            const s = String(a.status).localeCompare(String(b.status));
+            if (s) return s;
+            return orderServiceDate(b).localeCompare(orderServiceDate(a));
+          }
+          if (sort === 'ref') return String(a.order_ref || '').localeCompare(String(b.order_ref || ''));
+          return orderServiceDate(b).localeCompare(orderServiceDate(a));
+        });
+        return rows;
+      }
+
+      /** Kitchen pack export: active kitchen statuses, one meal. Uses service date filters if set. */
+      function kitchenOrdersForMeal(meal) {
+        return filteredOrders({
+          meal,
+          statuses: ['paid', 'preparing', 'out_for_delivery'],
+          sort: 'service_asc',
+          ignoreSearch: true,
+        });
+      }
+
+      function csvEscape(v) {
+        const s = v == null ? '' : String(v);
+        if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+        return s;
+      }
+
+      /** Client-side CSV of current filter set — no extra libraries. */
+      function exportOrdersCsv(rows, filename) {
+        const list = rows || [];
+        const header = [
+          'order_ref',
+          'status',
+          'meal',
+          'service_date',
+          'service_label',
+          'total_rupees',
+          'food_rupees',
+          'delivery_fee_rupees',
+          'discount_rupees',
+          'phone',
+          'customer_name',
+          'address',
+          'delivery_zone',
+          'items',
+          'created_at',
+        ];
+        const lines = [header.join(',')];
+        for (const o of list) {
+          lines.push(
+            [
+              csvEscape(o.order_ref),
+              csvEscape(o.status),
+              csvEscape(o.meal),
+              csvEscape(orderServiceDate(o)),
+              csvEscape(o.service_label || ''),
+              csvEscape(((o.total_paise || 0) / 100).toFixed(2)),
+              csvEscape(o.food_paise != null ? (o.food_paise / 100).toFixed(2) : ''),
+              csvEscape(o.delivery_fee_paise != null ? (o.delivery_fee_paise / 100).toFixed(2) : ''),
+              csvEscape(o.discount_paise != null ? (o.discount_paise / 100).toFixed(2) : ''),
+              csvEscape(o.phone),
+              csvEscape(o.customer_name || ''),
+              csvEscape(o.address || ''),
+              csvEscape(o.delivery_zone || ''),
+              csvEscape(itemsText(o)),
+              csvEscape(o.created_at || ''),
+            ].join(','),
+          );
+        }
+        // BOM helps Excel open UTF-8 (Telugu names / ₹ in notes) cleanly
+        const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename || 'acr-orders.csv';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      }
+
+      function renderStats() {
+        const s = state.stats || {};
+        const cards = [
+          ['Revenue today', rupees(s.revenue_today_paise)],
+          ['Orders today', s.orders_today ?? 0],
+          ['Awaiting pay', s.pending_payment ?? 0],
+          ['In kitchen', s.kitchen ?? 0],
+          ['Out for delivery', s.out_for_delivery ?? 0],
+          ['Customers', s.customers ?? 0],
+          ['Low stock dishes', s.low_stock ?? 0],
+          ['Avg rating', s.avg_rating != null ? s.avg_rating + ' / 5' : '—'],
+        ];
+        document.getElementById('statsGrid').innerHTML = cards
+          .map(([label, value]) =>
+            '<div class="stat"><div class="label">' + label + '</div><div class="value">' + value + '</div></div>',
+          )
+          .join('');
+      }
+
+      function statusLabel(st) {
+        const map = {
+          pending_payment: 'Pending pay',
+          paid: 'Paid',
+          preparing: 'Preparing',
+          out_for_delivery: 'Out',
+          delivered: 'Delivered',
+          cancelled: 'Cancelled',
+        };
+        return map[st] || st || '—';
+      }
+
+      function phoneLink(phone) {
+        const p = String(phone || '').replace(/\D/g, '');
+        if (!p) return '—';
+        const tel = p.length === 10 ? '91' + p : p;
+        return '<a class="phone-link" href="tel:+' + esc(tel) + '">' + esc(phone) + '</a>';
+      }
+
+      function orderCardHtml(o, mode) {
+        const svc = o.service_label || orderServiceDate(o) || '—';
+        const meal = o.meal === 'dinner' ? 'Dinner' : o.meal === 'lunch' ? 'Lunch' : esc(o.meal || '—');
+        const fee = o.delivery_fee_paise != null ? ' · del ' + rupees(o.delivery_fee_paise) : '';
+        const placed = o.created_at ? new Date(o.created_at).toLocaleString() : '—';
+        const actions = actionBtns(o);
+        if (mode === 'latest') {
+          return (
+            '<article class="m-card">' +
+            '<div class="m-card-top">' +
+            '<div><div class="m-card-ref">' + esc(o.order_ref) + '</div>' +
+            '<div class="m-card-meta">' + esc(placed) + '</div></div>' +
+            '<span class="status ' + esc(o.status) + '">' + esc(statusLabel(o.status)) + '</span>' +
+            '</div>' +
+            '<div class="m-card-row"><span class="k">Total</span><span class="v"><strong>' +
+            rupees(o.total_paise) + '</strong> · ' + meal + '</span></div>' +
+            '</article>'
+          );
+        }
+        if (mode === 'kitchen') {
+          return (
+            '<article class="m-card">' +
+            '<div class="m-card-top">' +
+            '<div><div class="m-card-ref">' + esc(o.order_ref) + '</div>' +
+            '<div class="m-card-meta">' + meal + ' · ' + esc(svc) + '</div></div>' +
+            '<span class="status ' + esc(o.status) + '">' + esc(statusLabel(o.status)) + '</span>' +
+            '</div>' +
+            '<div class="m-card-row"><span class="k">Items</span><span class="v"><strong>' +
+            esc(itemsText(o)) + '</strong></span></div>' +
+            '<div class="m-card-row"><span class="k">Call</span><span class="v">' + phoneLink(o.phone) +
+            (o.customer_name ? ' · ' + esc(o.customer_name) : '') + '</span></div>' +
+            (o.address
+              ? '<div class="m-card-row"><span class="k">Addr</span><span class="v">' + esc(o.address) + '</span></div>'
+              : '') +
+            (actions ? '<div class="actions">' + actions + '</div>' : '') +
+            '</article>'
+          );
+        }
+        // full order card
+        return (
+          '<article class="m-card">' +
+          '<div class="m-card-top">' +
+          '<div><div class="m-card-ref">' + esc(o.order_ref) + '</div>' +
+          '<div class="m-card-meta">' + meal + ' · ' + esc(svc) + '</div></div>' +
+          '<span class="status ' + esc(o.status) + '">' + esc(statusLabel(o.status)) + '</span>' +
+          '</div>' +
+          '<div class="m-card-row"><span class="k">Items</span><span class="v">' + esc(itemsText(o)) + '</span></div>' +
+          '<div class="m-card-row"><span class="k">Total</span><span class="v"><strong>' +
+          rupees(o.total_paise) + '</strong>' + fee + '</span></div>' +
+          '<div class="m-card-row"><span class="k">Call</span><span class="v">' + phoneLink(o.phone) +
+          (o.customer_name ? '<br>' + esc(o.customer_name) : '') + '</span></div>' +
+          (o.address
+            ? '<div class="m-card-row"><span class="k">Addr</span><span class="v">' + esc(o.address) + '</span></div>'
+            : '') +
+          '<div class="m-card-row"><span class="k">Placed</span><span class="v">' + esc(placed) + '</span></div>' +
+          (actions ? '<div class="actions">' + actions + '</div>' : '') +
+          '</article>'
+        );
+      }
+
+      function fillCards(id, html) {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = html;
+      }
+
+      function renderLatest() {
+        const rows = state.orders.slice(0, 8);
+        document.getElementById('latestBody').innerHTML = rows.map((o) =>
+          '<tr><td><strong>' + esc(o.order_ref) + '</strong></td><td><span class="status ' + o.status + '">' +
+          esc(statusLabel(o.status)) + '</span></td><td>' + rupees(o.total_paise) + '</td><td class="sub">' +
+          (o.created_at ? new Date(o.created_at).toLocaleString() : '—') + '</td></tr>',
+        ).join('') || '<tr><td colspan="4" class="sub">No orders yet</td></tr>';
+        fillCards(
+          'latestCards',
+          rows.length
+            ? rows.map((o) => orderCardHtml(o, 'latest')).join('')
+            : '<div class="m-empty">No orders yet</div>',
+        );
+      }
+
+      function renderOrders() {
+        const rows = filteredOrders();
+        const sum = rows.reduce((s, o) => s + (o.total_paise || 0), 0);
+        const el = document.getElementById('ordersSummary');
+        if (el) {
+          el.textContent =
+            rows.length + ' order(s) shown · total ' + rupees(sum) +
+            ' · export uses this list';
+        }
+        document.getElementById('ordersBody').innerHTML = rows.map((o) => {
           const fee = o.delivery_fee_paise != null ? ' · del ' + rupees(o.delivery_fee_paise) : '';
-          return `<tr>
-            <td><strong>${o.order_ref}</strong><div class="sub">${new Date(o.created_at).toLocaleString()}</div></td>
-            <td><span class="status ${o.status}">${o.status}</span></td>
-            <td>${o.qty}× ${o.dish_name}<div class="sub">${rupees(o.total_paise)}${fee} · ${o.meal}</div></td>
-            <td><div class="phone">${o.phone}</div><div class="sub">${o.address || ''}</div></td>
-            <td><div class="actions">${actions || '—'}</div></td>
-          </tr>`;
-        }).join('');
+          const svc = o.service_label || orderServiceDate(o) || '—';
+          return '<tr>' +
+            '<td><strong>' + esc(o.order_ref) + '</strong><div class="sub">Service ' + esc(svc) +
+            (o.created_at ? ' · placed ' + new Date(o.created_at).toLocaleString() : '') +
+            '</div></td>' +
+            '<td><span class="status ' + o.status + '">' + esc(statusLabel(o.status)) + '</span></td>' +
+            '<td>' + esc(itemsText(o)) + '<div class="sub">' + rupees(o.total_paise) + fee +
+            ' · ' + esc(o.meal || '') + '</div></td>' +
+            '<td><div class="mono">' + esc(o.phone) + '</div><div class="sub">' +
+            esc((o.customer_name ? o.customer_name + ' · ' : '') + (o.address || '')) + '</div></td>' +
+            '<td><div class="actions">' + (actionBtns(o) || '—') + '</div></td></tr>';
+        }).join('') || '<tr><td colspan="5" class="sub">No matching orders</td></tr>';
+        fillCards(
+          'ordersCards',
+          rows.length
+            ? rows.map((o) => orderCardHtml(o, 'order')).join('')
+            : '<div class="m-empty">No matching orders</div>',
+        );
       }
 
-      function renderDishes(dishes) {
+      function renderKitchen() {
+        const rows = state.orders
+          .filter((o) => ['paid', 'preparing', 'out_for_delivery'].includes(o.status))
+          .slice()
+          .sort((a, b) => {
+            const sd = orderServiceDate(a).localeCompare(orderServiceDate(b));
+            if (sd) return sd;
+            const m = mealRank(a.meal) - mealRank(b.meal);
+            if (m) return m;
+            return orderCreatedTs(a) - orderCreatedTs(b);
+          });
+        const lunchN = rows.filter((o) => o.meal === 'lunch').length;
+        const dinnerN = rows.filter((o) => o.meal === 'dinner').length;
+        const sumEl = document.getElementById('kitchenSummary');
+        if (sumEl) {
+          sumEl.textContent =
+            rows.length + ' in kitchen · lunch ' + lunchN + ' · dinner ' + dinnerN +
+            ' · export one meal for pack list';
+        }
+        document.getElementById('kitchenBody').innerHTML = rows.map((o) =>
+          '<tr><td><strong>' + esc(o.order_ref) + '</strong><div class="mono sub">' + esc(o.phone) +
+          '</div></td><td>' + esc(o.meal) + '<div class="sub">' + esc(o.service_label || o.service_date || '') +
+          '</div></td><td>' + esc(itemsText(o)) + '</td><td><span class="status ' + o.status + '">' +
+          esc(statusLabel(o.status)) + '</span></td><td><div class="actions">' + actionBtns(o) + '</div></td></tr>',
+        ).join('') || '<tr><td colspan="5" class="sub">Kitchen queue empty</td></tr>';
+        fillCards(
+          'kitchenCards',
+          rows.length
+            ? rows.map((o) => orderCardHtml(o, 'kitchen')).join('')
+            : '<div class="m-empty">Kitchen queue empty</div>',
+        );
+      }
+
+      function categoryTabs() {
+        const known = MENU_CATS.map((c) => c.id);
+        const extras = [];
+        for (const d of state.dishes) {
+          const id = d.category || 'veg';
+          if (!known.includes(id) && !extras.includes(id)) extras.push(id);
+        }
+        return MENU_CATS.concat(extras.map((id) => ({ id, title: id })));
+      }
+
+      function countByCategory(catId) {
+        return state.dishes.filter((d) => (d.category || 'veg') === catId).length;
+      }
+
+      function renderMenuCatTabs() {
+        const host = document.getElementById('menuCatTabs');
+        if (!host) return;
+        const tabs = categoryTabs();
+        if (!tabs.some((c) => c.id === state.menuCategory)) {
+          state.menuCategory = tabs[0]?.id || 'veg';
+        }
+        host.innerHTML = tabs.map((c) =>
+          '<button type="button" role="tab" data-cat="' + c.id + '" class="' +
+          (state.menuCategory === c.id ? 'active' : '') + '" aria-selected="' +
+          (state.menuCategory === c.id ? 'true' : 'false') + '">' +
+          esc(c.title) + '<span class="count">(' + countByCategory(c.id) + ')</span></button>',
+        ).join('');
+      }
+
+      function fillAmmaSelect() {
+        const sel = document.getElementById('dAmma');
+        if (!sel) return;
+        const cur = sel.value;
+        sel.innerHTML =
+          '<option value="">— Select Amma —</option>' +
+          (state.ammas || [])
+            .filter((a) => a.active !== false)
+            .map((a) => '<option value="' + esc(a.id) + '">' + esc(a.name) + '</option>')
+            .join('');
+        if (cur) sel.value = cur;
+      }
+
+      function renderAmmas() {
+        fillAmmaSelect();
+        document.getElementById('ammasBody').innerHTML = (state.ammas || []).map((a) => {
+          const dishes = (a.dishes || []).map((d) => d.code + ' ' + d.name).join(', ') || '— no dishes —';
+          const share = ((Number(a.payout_share_bps) || 7000) / 100).toFixed(0) + '%';
+          return '<tr>' +
+            '<td><strong>' + esc(a.name) + '</strong>' +
+            (a.active === false ? ' <span class="sub">[OFF]</span>' : '') +
+            '<div class="sub mono">' + esc(a.id) + '</div>' +
+            (a.notes ? '<div class="sub">' + esc(a.notes) + '</div>' : '') +
+            '</td>' +
+            '<td>' + share + '</td>' +
+            '<td><span class="sub">' + (a.dish_count || 0) + ' · ' + esc(dishes) + '</span></td>' +
+            '<td class="sub mono">' + esc(a.upi_id || '—') +
+            (a.phone ? '<br>' + esc(a.phone) : '') + '</td>' +
+            '<td class="actions"><button type="button" class="btn ghost" data-edit-amma="' +
+            esc(a.id) + '">Edit</button></td></tr>';
+        }).join('') || '<tr><td colspan="5" class="sub">No Ammas yet</td></tr>';
+      }
+
+      function renderEarnings() {
+        const e = state.earnings;
+        if (!e) {
+          document.getElementById('earningsWeek').textContent = '—';
+          document.getElementById('earningsBody').innerHTML = '';
+          document.getElementById('earningsTotals').textContent = '';
+          return;
+        }
+        document.getElementById('earningsWeek').textContent =
+          'IST week ' + e.week_start + ' → ' + e.week_end + ' · ' + (e.order_count || 0) + ' paid+ orders';
+        document.getElementById('earningsBody').innerHTML = (e.rows || []).map((r) =>
+          '<tr><td><strong>' + esc(r.name) + '</strong></td><td>' + r.portions +
+          '</td><td>' + rupees(r.gross_food_paise) + '</td><td><strong>' +
+          rupees(r.share_paise) + '</strong></td></tr>',
+        ).join('') || '<tr><td colspan="4" class="sub">No paid food attributed this week yet</td></tr>';
+        document.getElementById('earningsTotals').textContent =
+          'Total food gross ' + rupees(e.total_gross_food_paise) +
+          ' · estimated Amma shares ' + rupees(e.total_share_paise);
+        document.getElementById('earningsTotals').className = 'msg ok';
+      }
+
+      function renderDishes() {
+        renderMenuCatTabs();
+        const cat = state.menuCategory || 'veg';
+        const q = (document.getElementById('menuSearch')?.value || '').toLowerCase();
+        let dishes = state.dishes.filter((d) => (d.category || 'veg') === cat);
+        if (q) {
+          dishes = dishes.filter((d) =>
+            (d.code + ' ' + d.name + ' ' + (d.cook_name || '') + ' ' + (d.note || '')).toLowerCase().includes(q),
+          );
+        }
+        dishes.sort((a, b) => String(a.code).localeCompare(String(b.code)));
         document.getElementById('dishesBody').innerHTML = dishes.map((d) => {
-          const left = Math.max(0, d.max_portions - d.portions_sold);
-          return `<tr>
-            <td><strong>${d.code}</strong><div class="sub">${d.category}</div></td>
-            <td>${d.name}${d.active ? '' : ' <span class="sub">[OFF]</span>'}</td>
-            <td>${rupees(d.price_paise)}</td>
-            <td>${left} / ${d.max_portions}</td>
-            <td class="actions">
-              <input class="stock" data-code="${d.code}" type="number" min="0" value="${d.max_portions}" />
-              <button type="button" data-stock="${d.code}">Save</button>
-              <button type="button" class="secondary" data-active="${d.code}" data-on="${d.active ? '0' : '1'}">${d.active ? 'Off' : 'On'}</button>
-            </td>
-          </tr>`;
-        }).join('');
+          const left = Math.max(0, (d.max_portions || 0) - (d.portions_sold || 0));
+          return '<tr>' +
+            '<td class="mono"><strong>' + esc(d.code) + '</strong></td>' +
+            '<td>' + esc(d.name) + (d.active ? '' : ' <span class="sub">[OFF]</span>') +
+            (d.note ? '<div class="sub">' + esc(d.note) + '</div>' : '') + '</td>' +
+            '<td class="sub">' + esc(d.cook_name || '—') + '</td>' +
+            '<td class="sub">' + esc(d.meal || 'both') + '</td>' +
+            '<td>' + rupees(d.price_paise) + '</td>' +
+            '<td>' + left + ' / ' + d.max_portions + '</td>' +
+            '<td class="actions">' +
+            '<input class="stock" data-code="' + d.code + '" type="number" min="0" value="' + d.max_portions + '" />' +
+            '<button type="button" class="btn ghost" data-stock="' + d.code + '">Stock</button>' +
+            '<button type="button" class="btn ghost" data-edit="' + d.code + '">Edit</button>' +
+            '<button type="button" class="btn ' + (d.active ? 'ghost' : '') + '" data-active="' + d.code +
+            '" data-on="' + (d.active ? '0' : '1') + '">' + (d.active ? 'Off' : 'On') + '</button>' +
+            '</td></tr>';
+        }).join('') || '<tr><td colspan="7" class="sub">No dishes in this category</td></tr>';
       }
 
-      async function refresh() {
-        const [ordersData, dishesData] = await Promise.all([
-          api('/admin/api/orders'),
-          api('/admin/api/dishes'),
-        ]);
-        document.getElementById('meta').textContent =
-          ordersData.business + ' · ' + ordersData.orders.length + ' orders · ' + dishesData.dishes.length + ' dishes';
-        renderOrders(ordersData.orders);
-        renderDishes(dishesData.dishes);
-        showMsg('Updated ' + new Date().toLocaleTimeString(), true);
+      function renderCustomers() {
+        document.getElementById('custCount').textContent = '(' + state.customers.length + ')';
+        document.getElementById('custList').innerHTML = state.customers.map((c) =>
+          '<label><input type="checkbox" class="cust-ck" value="' + esc(c.phone) + '" />' +
+          '<span><strong>' + esc(c.name || '—') + '</strong> · <span class="mono">' + esc(c.phone) +
+          '</span><div class="sub">Orders: ' + (c.order_count || 0) +
+          (c.last_order_at ? ' · last ' + new Date(c.last_order_at).toLocaleDateString() : '') +
+          '</div></span></label>',
+        ).join('') || '<div class="sub" style="padding:0.75rem">No customers yet</div>';
       }
 
-      async function unlock() {
-        const t = document.getElementById('token').value.trim();
-        setToken(t);
+      function renderFeedbacks() {
+        document.getElementById('feedbacksBody').innerHTML = (state.feedbacks || []).map((f) => {
+          const items = (f.items || []).map((i) => esc(i.name || i.code) + ': ' + i.rating + '/5').join('<br>');
+          return '<tr><td class="sub">' + (f.created_at ? new Date(f.created_at).toLocaleString() : '—') +
+            '</td><td><strong>' + esc(f.order_ref) + '</strong><div class="mono sub">' + esc(f.phone) +
+            '</div></td><td>' + (f.average_rating != null ? f.average_rating : '—') +
+            ' / 5</td><td>' + (items || '—') + '</td><td>' + esc(f.comment || '—') + '</td></tr>';
+        }).join('') || '<tr><td colspan="5" class="sub">No feedback yet</td></tr>';
+      }
+
+      function renderHelps() {
+        document.getElementById('helpsBody').innerHTML = (state.tickets || []).map((t) =>
+          '<tr><td class="sub">' + (t.created_at ? new Date(t.created_at).toLocaleString() : '—') +
+          '</td><td><strong>#' + t.id + '</strong><div class="sub">' + esc(t.topic) +
+          '</div></td><td class="mono">' + esc(t.phone) + '</td><td>' + esc(t.order_ref || '—') +
+          '</td><td>' + esc(t.message) + '</td></tr>',
+        ).join('') || '<tr><td colspan="5" class="sub">No help tickets</td></tr>';
+      }
+
+      function filteredConversations() {
+        const q = (document.getElementById('convSearch')?.value || '').trim().toLowerCase();
+        let rows = state.conversations || [];
+        if (q) {
+          rows = rows.filter((c) =>
+            [c.phone, c.customer_name, c.profile_name, c.last_body].join(' ').toLowerCase().includes(q),
+          );
+        }
+        return rows;
+      }
+
+      function renderConversationList() {
+        const list = document.getElementById('convList');
+        if (!list) return;
+        const rows = filteredConversations();
+        list.innerHTML = rows.map((c) => {
+          const name = c.customer_name || c.profile_name || c.phone;
+          const dir = c.last_direction === 'out' ? 'You: ' : '';
+          const when = c.last_at ? new Date(c.last_at).toLocaleString() : '';
+          return (
+            '<button type="button" class="conv-item' +
+            (state.openPhone === c.phone ? ' active' : '') +
+            '" data-phone="' + esc(c.phone) + '">' +
+            '<div class="nm">' + esc(name) +
+            (c.customer_name && c.customer_name !== c.phone
+              ? ' <span class="mono sub">· ' + esc(c.phone) + '</span>'
+              : '') +
+            '</div>' +
+            '<div class="snippet">' + esc(dir + (c.last_body || '')) + '</div>' +
+            '<div class="sub" style="margin-top:0.25rem">' + esc(when) +
+            ' · ' + (c.message_count || 0) + ' msgs' +
+            (c.order_count ? ' · ' + c.order_count + ' order(s)' : '') +
+            '</div></button>'
+          );
+        }).join('') || '<div class="m-empty">No conversations logged yet. New WhatsApp messages will appear here.</div>';
+      }
+
+      function renderThread() {
+        const box = document.getElementById('convMsgs');
+        const title = document.getElementById('convThreadTitle');
+        const sub = document.getElementById('convThreadSub');
+        const callBtn = document.getElementById('convCallBtn');
+        const layout = document.getElementById('convLayout');
+        const back = document.getElementById('convBackBtn');
+        if (!box) return;
+        if (!state.openPhone) {
+          if (layout) layout.classList.remove('thread-open');
+          if (back) back.style.display = 'none';
+          if (callBtn) callBtn.style.display = 'none';
+          if (title) title.textContent = 'Select a conversation';
+          if (sub) sub.textContent = 'Customer messages and bot replies';
+          box.innerHTML = '<div class="m-empty" style="margin:auto">Pick a phone on the left to open the chat log</div>';
+          return;
+        }
+        if (layout) layout.classList.add('thread-open');
+        if (back) back.style.display = '';
+        const conv = (state.conversations || []).find((c) => c.phone === state.openPhone);
+        const name = conv?.customer_name || conv?.profile_name || state.openPhone;
+        if (title) title.textContent = name;
+        if (sub) sub.textContent = state.openPhone + (conv?.order_count ? ' · ' + conv.order_count + ' order(s)' : '');
+        if (callBtn) {
+          const tel = state.openPhone.length === 10 ? '91' + state.openPhone : state.openPhone;
+          callBtn.href = 'tel:+' + tel;
+          callBtn.style.display = '';
+        }
+        const msgs = state.threadMessages || [];
+        box.innerHTML = msgs.length
+          ? msgs.map((m) => {
+              const kind = m.kind && m.kind !== 'text' ? '<div class="kind-tag">' + esc(m.kind) + '</div>' : '';
+              const when = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+              const who = m.direction === 'out' ? 'Bot' : 'Customer';
+              return (
+                '<div class="bubble ' + (m.direction === 'out' ? 'out' : 'in') + '">' +
+                kind +
+                esc(m.body || '') +
+                '<div class="meta">' + who + ' · ' + esc(when) + '</div>' +
+                '</div>'
+              );
+            }).join('')
+          : '<div class="m-empty" style="margin:auto">No messages in this thread</div>';
+        box.scrollTop = box.scrollHeight;
+      }
+
+      async function loadConversations() {
         try {
-          await refresh();
-          document.getElementById('loginBox').hidden = true;
-          document.getElementById('app').hidden = false;
+          const q = (document.getElementById('convSearch')?.value || '').trim();
+          const data = await api(
+            '/admin/api/conversations?limit=150' + (q ? '&q=' + encodeURIComponent(q) : ''),
+          );
+          state.conversations = data.conversations || [];
+          const note = document.getElementById('convNote');
+          if (note) {
+            note.textContent =
+              (data.note || '') +
+              (state.conversations.length ? ' · ' + state.conversations.length + ' people' : '');
+          }
+          renderConversationList();
         } catch (e) {
-          setToken('');
-          document.getElementById('loginMsg').textContent = e.message;
-          document.getElementById('loginMsg').className = 'msg err';
+          showMsg(e.message || 'Could not load conversations', false);
         }
       }
 
-      function showTab( whichtab ) {
-        const orders = whichtab === 'orders';
-        document.getElementById('ordersPanel').hidden = !orders;
-        document.getElementById('dishesPanel').hidden = orders;
-        document.getElementById('tabOrders').classList.toggle('active', orders);
-        document.getElementById('tabDishes').classList.toggle('active', !orders);
-        document.getElementById('tabOrders').classList.toggle('secondary', !orders);
-        document.getElementById('tabDishes').classList.toggle('secondary', orders);
+      async function openConversation(phone) {
+        state.openPhone = phone;
+        renderConversationList();
+        try {
+          const data = await api('/admin/api/conversations/' + encodeURIComponent(phone) + '?limit=300');
+          state.threadMessages = data.messages || [];
+          if (data.customer_name) {
+            const c = state.conversations.find((x) => x.phone === phone);
+            if (c) c.customer_name = data.customer_name;
+          }
+          renderThread();
+        } catch (e) {
+          showMsg(e.message || 'Could not load thread', false);
+        }
       }
 
-      document.getElementById('loginBtn').onclick = unlock;
-      document.getElementById('refreshBtn').onclick = () => refresh().catch((e) => showMsg(e.message));
-      document.getElementById('filter').onchange = () => refresh().catch((e) => showMsg(e.message));
-      document.getElementById('logoutBtn').onclick = () => { setToken(''); location.reload(); };
-      document.getElementById('tabOrders').onclick = () => showTab('orders');
-      document.getElementById('tabDishes').onclick = () => showTab('dishes');
+      function renderOpsSettings() {
+        const line = document.getElementById('opsEffectiveLine');
+        const data = state.ops;
+        if (!line) return;
+        if (!data) {
+          line.textContent = 'Ops settings not loaded';
+          return;
+        }
+        const s = data.settings || {};
+        const e = data.effective || {};
+        document.getElementById('opsMinOrder').value = Math.round((s.min_order_paise || 0) / 100);
+        document.getElementById('opsLaunch').value = s.launch_iso || '2026-08-10';
+        const minR = e.min_order_rupees != null
+          ? e.min_order_rupees
+          : Math.round((e.min_order_paise || 0) / 100);
+        const src = e.source === 'day_override'
+          ? ' (today override · ' + (s.min_order_day_override?.date || data.today) + ')'
+          : ' (default)';
+        line.textContent =
+          'Active min order today: ₹' + minR + src +
+          ' · Launch: ' + (s.launch_iso || '—') +
+          ' · calendar ' + (data.today || '—');
+      }
 
-      document.getElementById('tbody').onclick = async (ev) => {
+      function renderDeliverySettings() {
+        const line = document.getElementById('deliveryEffectiveLine');
+        const data = state.delivery;
+        if (!line) return;
+        if (!data) {
+          line.textContent = 'Delivery settings not loaded';
+          return;
+        }
+        const s = data.settings || {};
+        const e = data.effective || {};
+        const flatR = Math.round((e.flat_paise || s.flat_paise || 0) / 100);
+        document.getElementById('delMode').value = s.mode === 'flat' ? 'flat' : 'distance';
+        document.getElementById('delFlat').value = Math.round((s.flat_paise || 4000) / 100);
+        const effMode = e.mode === 'flat' ? 'FLAT ₹' + Math.round((e.flat_paise || 0) / 100) : 'DISTANCE (zones)';
+        const src = e.source === 'day_override' ? ' (today override · ' + (s.day_override?.date || e.date) + ')' : ' (default)';
+        line.textContent = 'Active for service today: ' + effMode + src + ' · calendar ' + (data.today || '—');
+      }
+
+      function renderOffers() {
+        const body = document.getElementById('offersBody');
+        if (!body) return;
+        const list = state.offers || [];
+        body.innerHTML = list.map((o) => {
+          const kindLabel = o.kind === 'free_delivery' ? 'Free delivery' : 'Flat discount';
+          const benefit =
+            o.kind === 'free_delivery'
+              ? 'Delivery ₹0'
+              : '−' + rupees(o.discount_paise);
+          return '<tr>' +
+            '<td><strong>' + esc(o.title) + '</strong><div class="mono sub">' + esc(o.id) + '</div></td>' +
+            '<td>' + esc(kindLabel) + '</td>' +
+            '<td>' + rupees(o.above_paise) + '</td>' +
+            '<td>' + benefit + '</td>' +
+            '<td><span class="status ' + (o.enabled ? 'paid' : 'cancelled') + '">' +
+            (o.enabled ? 'ON' : 'OFF') + '</span></td>' +
+            '<td class="actions">' +
+            '<button type="button" class="btn ghost" data-offer-edit="' + esc(o.id) + '">Edit</button>' +
+            '<button type="button" class="btn ghost" data-offer-toggle="' + esc(o.id) + '">' +
+            (o.enabled ? 'Disable' : 'Enable') + '</button>' +
+            '<button type="button" class="btn danger" data-offer-del="' + esc(o.id) + '">Delete</button>' +
+            '</td></tr>';
+        }).join('') || '<tr><td colspan="6" class="sub">No offers — save launch defaults by using Save offer</td></tr>';
+      }
+
+      function renderAll() {
+        renderStats();
+        renderLatest();
+        renderOrders();
+        renderKitchen();
+        renderDishes();
+        renderOffers();
+        renderOpsSettings();
+        renderDeliverySettings();
+        renderAmmas();
+        renderEarnings();
+        renderCustomers();
+        renderFeedbacks();
+        renderHelps();
+        renderConversationList();
+        renderThread();
+      }
+
+      function updateVoiceUi() {
+        const btn = document.getElementById('voiceAlertBtn');
+        const st = document.getElementById('voiceAlertStatus');
+        if (!btn || !st) return;
+        if (voiceEnabled) {
+          btn.textContent = 'Kitchen voice ON';
+          btn.classList.remove('ghost');
+          st.textContent =
+            'On — plays generic /sounds clips (new / paid). Poll every 12s. Keep this tab open.';
+        } else {
+          btn.textContent = 'Enable kitchen voice';
+          btn.classList.add('ghost');
+          st.textContent =
+            'Off — drop new-order.mp3 + paid-order.mp3 in public/sounds, enable here.';
+        }
+      }
+
+      function playAlertBeep() {
+        try {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (!Ctx) return;
+          const ctx = new Ctx();
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = 'sine';
+          o.frequency.value = 880;
+          g.gain.value = 0.08;
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.start();
+          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+          o.stop(ctx.currentTime + 0.3);
+          setTimeout(() => ctx.close().catch(() => {}), 400);
+        } catch {
+          /* ignore */
+        }
+      }
+
+      function getClipPlayer(key) {
+        const src = SOUND_CLIPS[key];
+        if (!src) return null;
+        if (!audioPlayers[key]) {
+          const a = new Audio(src);
+          a.preload = 'auto';
+          audioPlayers[key] = a;
+        }
+        return audioPlayers[key];
+      }
+
+      /** Queue generic voiceover MP3 (no per-order speech). Fallback: short beep. */
+      function playKitchenClip(key) {
+        if (!voiceEnabled) return;
+        audioQueue = audioQueue.then(
+          () =>
+            new Promise((resolve) => {
+              const audio = getClipPlayer(key);
+              let done = false;
+              const finish = () => {
+                if (done) return;
+                done = true;
+                resolve();
+              };
+              if (!audio) {
+                playAlertBeep();
+                setTimeout(finish, 350);
+                return;
+              }
+              const onFail = () => {
+                playAlertBeep();
+                setTimeout(finish, 350);
+              };
+              try {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.onended = finish;
+                audio.onerror = onFail;
+                const p = audio.play();
+                if (p && typeof p.catch === 'function') {
+                  p.catch(onFail);
+                }
+                setTimeout(finish, 20000);
+              } catch {
+                onFail();
+              }
+            }),
+        );
+      }
+
+      function processOrderAlerts(orders) {
+        const list = Array.isArray(orders) ? orders : [];
+        if (!orderStatusWatch) {
+          orderStatusWatch = Object.create(null);
+          for (const o of list) {
+            if (o && o.order_ref) orderStatusWatch[o.order_ref] = o.status;
+          }
+          return;
+        }
+        for (const o of list) {
+          if (!o || !o.order_ref) continue;
+          const ref = o.order_ref;
+          const prev = orderStatusWatch[ref];
+          const next = o.status;
+          orderStatusWatch[ref] = next;
+          if (!voiceEnabled) continue;
+
+          if (prev == null) {
+            if (next === 'pending_payment') {
+              playKitchenClip('new-order');
+            } else if (['paid', 'preparing', 'out_for_delivery'].includes(next)) {
+              playKitchenClip('paid-order');
+            }
+            continue;
+          }
+
+          if (
+            prev !== 'paid' &&
+            prev !== 'preparing' &&
+            prev !== 'out_for_delivery' &&
+            prev !== 'delivered' &&
+            next === 'paid'
+          ) {
+            playKitchenClip('paid-order');
+          }
+        }
+      }
+
+      async function pollOrdersForVoice() {
+        if (!voiceEnabled || !token()) return;
+        try {
+          const data = await api('/admin/api/orders?limit=150');
+          const orders = data.orders || [];
+          state.orders = orders;
+          processOrderAlerts(orders);
+          renderOrders();
+          renderKitchen();
+          renderLatest();
+        } catch {
+          /* keep previous; next poll retries */
+        }
+      }
+
+      function startVoicePoll() {
+        stopVoicePoll();
+        if (!voiceEnabled || !token()) return;
+        voicePollTimer = setInterval(() => {
+          pollOrdersForVoice();
+        }, 12000);
+      }
+
+      function stopVoicePoll() {
+        if (voicePollTimer) {
+          clearInterval(voicePollTimer);
+          voicePollTimer = null;
+        }
+      }
+
+      function setVoiceEnabled(on) {
+        voiceEnabled = Boolean(on);
+        if (voiceEnabled) localStorage.setItem(VOICE_LS, '1');
+        else localStorage.removeItem(VOICE_LS);
+        updateVoiceUi();
+        if (voiceEnabled) {
+          // User gesture unlocks playback; play optional enable clip
+          playKitchenClip('enabled');
+          startVoicePoll();
+          pollOrdersForVoice();
+        } else {
+          try {
+            Object.keys(audioPlayers).forEach((k) => {
+              audioPlayers[k].pause();
+            });
+          } catch {
+            /* ignore */
+          }
+          stopVoicePoll();
+        }
+      }
+
+      async function refresh() {
+        const results = await Promise.allSettled([
+          api('/admin/api/overview'),
+          api('/admin/api/orders?limit=300'),
+          api('/admin/api/dishes'),
+          api('/admin/api/ammas'),
+          api('/admin/api/ammas/earnings'),
+          api('/admin/api/customers?limit=500'),
+          api('/admin/api/feedbacks'),
+          api('/admin/api/helps'),
+          api('/admin/api/offers'),
+          api('/admin/api/delivery-settings'),
+          api('/admin/api/ops-settings'),
+          api('/admin/api/conversations?limit=150'),
+        ]);
+        const val = (i) => (results[i].status === 'fulfilled' ? results[i].value : null);
+        const overview = val(0);
+        const ordersData = val(1);
+        const dishesData = val(2);
+        const ammasData = val(3);
+        const earningsData = val(4);
+        const customersData = val(5);
+        const feedbacksData = val(6);
+        const helpsData = val(7);
+        const offersData = val(8);
+        const deliveryData = val(9);
+        const opsData = val(10);
+        const convData = val(11);
+
+        // Core endpoints required for a usable dashboard after login
+        if (!overview || !ordersData) {
+          const err =
+            (results[0].status === 'rejected' && results[0].reason) ||
+            (results[1].status === 'rejected' && results[1].reason) ||
+            new Error('Could not load dashboard');
+          throw err;
+        }
+
+        state.stats = overview.stats;
+        state.orders = ordersData.orders || [];
+        state.dishes = dishesData?.dishes || [];
+        state.ammas = ammasData?.ammas || [];
+        state.earnings = earningsData || { rows: [], week_start: null, week_end: null };
+        state.customers = customersData?.customers || [];
+        state.feedbacks = feedbacksData?.feedbacks || [];
+        state.tickets = helpsData?.tickets || [];
+        state.offers = offersData?.offers || [];
+        state.delivery = deliveryData || null;
+        state.ops = opsData || null;
+        state.conversations = convData?.conversations || state.conversations || [];
+        const note = document.getElementById('convNote');
+        if (note && convData?.note) {
+          note.textContent =
+            convData.note +
+            (state.conversations.length ? ' · ' + state.conversations.length + ' people' : '');
+        }
+        document.getElementById('metaLine').textContent =
+          (ordersData.business || 'ACR') + ' · ' + (overview.driver || '') + ' · ' + (overview.today || '');
+        processOrderAlerts(state.orders);
+        renderAll();
+        if (state.openPhone) {
+          openConversation(state.openPhone).catch(() => {});
+        }
+        const softFails = results.filter((r) => r.status === 'rejected').length;
+        showMsg(
+          softFails
+            ? 'Updated (some panels failed — use Refresh again)'
+            : 'Updated ' + new Date().toLocaleTimeString(),
+          !softFails,
+        );
+      }
+
+      function setMobileNavOpen(open) {
+        if (open) {
+          document.body.classList.add('nav-open');
+        } else {
+          document.body.classList.remove('nav-open');
+        }
+        var btn = document.getElementById('menuToggleBtn');
+        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+
+      function showTab(tab) {
+        state.tab = tab;
+        document.querySelectorAll('[data-panel]').forEach((el) => {
+          el.hidden = el.getAttribute('data-panel') !== tab;
+        });
+        document.querySelectorAll('.nav button[data-tab]').forEach((btn) => {
+          btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+        });
+        const t = TITLES[tab] || [tab, ''];
+        document.getElementById('pageTitle').textContent = t[0];
+        document.getElementById('pageSub').textContent = t[1];
+        setMobileNavOpen(false);
+        if (tab === 'messages') {
+          loadConversations().catch(() => {});
+          if (state.openPhone) openConversation(state.openPhone).catch(() => {});
+        }
+        try {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch {
+          window.scrollTo(0, 0);
+        }
+      }
+
+      function enterApp() {
+        document.getElementById('loginView').hidden = true;
+        document.getElementById('appView').hidden = false;
+        setSessionUser(localStorage.getItem('acr_admin_user') || 'superadmin');
+        showTab('dashboard');
+        updateVoiceUi();
+        if (voiceEnabled) startVoicePoll();
+      }
+
+      async function doLogin() {
+        const loginMsg = document.getElementById('loginMsg');
+        loginMsg.textContent = '';
+        loginMsg.className = 'msg';
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        try {
+          const res = await fetch('/admin/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || 'Login failed');
+          setToken(data.token);
+          setSessionUser(data.username || username);
+          document.getElementById('password').value = '';
+          await refresh();
+          enterApp();
+        } catch (e) {
+          setToken('');
+          setSessionUser('');
+          loginMsg.textContent = e.message;
+          loginMsg.className = 'msg err';
+        }
+      }
+
+      async function resumeSession() {
+        if (!token()) return;
+        try {
+          await refresh();
+          enterApp();
+        } catch {
+          setToken('');
+          setSessionUser('');
+        }
+      }
+
+      document.getElementById('loginBtn').onclick = doLogin;
+      document.getElementById('password').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doLogin();
+      });
+      document.getElementById('username').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('password').focus();
+      });
+      document.getElementById('refreshBtn').onclick = () => refresh().catch((e) => showMsg(e.message));
+      document.getElementById('voiceAlertBtn').onclick = () => setVoiceEnabled(!voiceEnabled);
+      document.getElementById('logoutBtn').onclick = () => {
+        stopVoicePoll();
+        setToken('');
+        setSessionUser('');
+        location.reload();
+      };
+      var menuToggleBtn = document.getElementById('menuToggleBtn');
+      if (menuToggleBtn) {
+        menuToggleBtn.addEventListener('click', function () {
+          setMobileNavOpen(!document.body.classList.contains('nav-open'));
+        });
+      }
+      var navCloseBtn = document.getElementById('navCloseBtn');
+      if (navCloseBtn) {
+        navCloseBtn.addEventListener('click', function () { setMobileNavOpen(false); });
+      }
+      var navBackdrop = document.getElementById('navBackdrop');
+      if (navBackdrop) {
+        navBackdrop.addEventListener('click', function () { setMobileNavOpen(false); });
+      }
+      window.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') setMobileNavOpen(false);
+      });
+      updateVoiceUi();
+
+      document.getElementById('menuCatTabs').onclick = (ev) => {
+        const btn = ev.target.closest('button[data-cat]');
+        if (!btn) return;
+        state.menuCategory = btn.dataset.cat;
+        document.getElementById('dCategory').value = state.menuCategory;
+        renderDishes();
+      };
+      document.getElementById('newInCatBtn').onclick = () => {
+        document.getElementById('dCategory').value = state.menuCategory || 'veg';
+        document.getElementById('dCode').focus();
+        document.getElementById('dCode').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+      document.querySelectorAll('.nav button[data-tab]').forEach((btn) => {
+        btn.onclick = () => showTab(btn.getAttribute('data-tab'));
+      });
+      document.querySelectorAll('[data-tab-jump]').forEach((btn) => {
+        btn.onclick = () => showTab(btn.getAttribute('data-tab-jump'));
+      });
+      ['orderSearch', 'filterStatus', 'filterMeal', 'filterServiceFrom', 'filterServiceTo', 'sortOrders'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', renderOrders);
+        if (el) el.addEventListener('change', renderOrders);
+      });
+      document.getElementById('menuSearch').addEventListener('input', renderDishes);
+
+      document.getElementById('ordersBody').onclick = orderAction;
+      document.getElementById('kitchenBody').onclick = orderAction;
+      const ordersCards = document.getElementById('ordersCards');
+      const kitchenCards = document.getElementById('kitchenCards');
+      if (ordersCards) ordersCards.onclick = orderAction;
+      if (kitchenCards) kitchenCards.onclick = orderAction;
+
+      document.getElementById('convList')?.addEventListener('click', (ev) => {
+        const btn = ev.target.closest('[data-phone]');
+        if (!btn) return;
+        openConversation(btn.getAttribute('data-phone'));
+      });
+      document.getElementById('convSearch')?.addEventListener('input', () => {
+        renderConversationList();
+      });
+      document.getElementById('reloadConvBtn')?.addEventListener('click', () => {
+        loadConversations().then(() => {
+          if (state.openPhone) return openConversation(state.openPhone);
+        });
+      });
+      document.getElementById('convBackBtn')?.addEventListener('click', () => {
+        state.openPhone = null;
+        state.threadMessages = [];
+        const layout = document.getElementById('convLayout');
+        if (layout) layout.classList.remove('thread-open');
+        renderConversationList();
+        renderThread();
+      });
+
+      document.getElementById('togglePasswordBtn').onclick = function () {
+        const input = document.getElementById('password');
+        const btn = document.getElementById('togglePasswordBtn');
+        if (!input || !btn) return;
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.textContent = show ? 'Hide' : 'Show';
+        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+        btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      };
+
+      document.getElementById('clearOrderFiltersBtn')?.addEventListener('click', () => {
+        ['orderSearch', 'filterServiceFrom', 'filterServiceTo'].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        const st = document.getElementById('filterStatus');
+        const meal = document.getElementById('filterMeal');
+        const sort = document.getElementById('sortOrders');
+        if (st) st.value = 'all';
+        if (meal) meal.value = 'all';
+        if (sort) sort.value = 'service_desc';
+        renderOrders();
+      });
+
+      function runExportOrders(opts = {}) {
+        const meal = opts.meal;
+        const kitchen = opts.kitchen === true;
+        let rows;
+        let label;
+        if (kitchen && (meal === 'lunch' || meal === 'dinner')) {
+          rows = kitchenOrdersForMeal(meal);
+          label = 'kitchen ' + meal;
+        } else if (meal === 'lunch' || meal === 'dinner') {
+          rows = filteredOrders({ meal });
+          label = meal;
+        } else {
+          rows = filteredOrders();
+          label = 'filtered';
+        }
+        if (!rows.length) {
+          showMsg('No ' + label + ' orders to export', false);
+          return;
+        }
+        const day =
+          (document.getElementById('filterServiceFrom')?.value || '').slice(0, 10) ||
+          new Date().toISOString().slice(0, 10);
+        const mealPart = meal === 'lunch' || meal === 'dinner' ? meal + '-' : '';
+        const kind = kitchen ? 'kitchen-' : '';
+        exportOrdersCsv(rows, 'acr-' + kind + mealPart + 'orders-' + day + '.csv');
+        showMsg('Exported ' + rows.length + ' ' + label + ' order(s)', true);
+      }
+
+      document.getElementById('exportOrdersCsvBtn')?.addEventListener('click', () => runExportOrders());
+      document.getElementById('exportLunchCsvBtn')?.addEventListener('click', () => runExportOrders({ meal: 'lunch' }));
+      document.getElementById('exportDinnerCsvBtn')?.addEventListener('click', () => runExportOrders({ meal: 'dinner' }));
+      document.getElementById('exportKitchenLunchBtn')?.addEventListener('click', () =>
+        runExportOrders({ meal: 'lunch', kitchen: true }),
+      );
+      document.getElementById('exportKitchenDinnerBtn')?.addEventListener('click', () =>
+        runExportOrders({ meal: 'dinner', kitchen: true }),
+      );
+
+      function syncOfferFormKind() {
+        const kind = document.getElementById('oKind').value;
+        const wrap = document.getElementById('oDiscountWrap');
+        if (wrap) wrap.hidden = kind === 'free_delivery';
+      }
+      document.getElementById('oKind').addEventListener('change', syncOfferFormKind);
+      syncOfferFormKind();
+
+      document.getElementById('clearOfferBtn').onclick = () => {
+        document.getElementById('oId').value = '';
+        document.getElementById('oTitle').value = '';
+        document.getElementById('oKind').value = 'flat_discount';
+        document.getElementById('oAbove').value = '200';
+        document.getElementById('oDiscount').value = '50';
+        document.getElementById('oEnabled').value = '1';
+        syncOfferFormKind();
+      };
+      document.getElementById('saveOpsBtn').onclick = async () => {
+        const msg = document.getElementById('opsMsg');
+        try {
+          const minRupees = Number(document.getElementById('opsMinOrder').value);
+          const scope = document.getElementById('opsMinScope').value;
+          const launch_iso = document.getElementById('opsLaunch').value;
+          const body =
+            scope === 'today'
+              ? { min_order_rupees: minRupees, apply_min_order_only_today: true, launch_iso }
+              : {
+                  min_order_rupees: minRupees,
+                  launch_iso,
+                  clear_min_order_day_override: true,
+                };
+          const data = await api('/admin/api/ops-settings', {
+            method: 'PUT',
+            body: JSON.stringify(body),
+          });
+          state.ops = data;
+          renderOpsSettings();
+          msg.textContent =
+            scope === 'today'
+              ? 'Today-only min order saved (IST). Tomorrow uses default.'
+              : 'Default min order + launch date saved.';
+          msg.className = 'msg ok';
+        } catch (e) {
+          msg.textContent = e.message;
+          msg.className = 'msg err';
+        }
+      };
+      document.getElementById('clearOpsMinOverrideBtn').onclick = async () => {
+        const msg = document.getElementById('opsMsg');
+        try {
+          const data = await api('/admin/api/ops-settings', {
+            method: 'PUT',
+            body: JSON.stringify({ clear_min_order_day_override: true }),
+          });
+          state.ops = data;
+          renderOpsSettings();
+          msg.textContent = 'Cleared min-order day override.';
+          msg.className = 'msg ok';
+        } catch (e) {
+          msg.textContent = e.message;
+          msg.className = 'msg err';
+        }
+      };
+      document.getElementById('saveDeliveryBtn').onclick = async () => {
+        const msg = document.getElementById('deliveryMsg');
+        try {
+          const mode = document.getElementById('delMode').value;
+          const flatRupees = Number(document.getElementById('delFlat').value);
+          const scope = document.getElementById('delScope').value;
+          const body =
+            scope === 'today'
+              ? { mode, flat_rupees: flatRupees, apply_only_today: true }
+              : { mode, flat_rupees: flatRupees, set_default: true, clear_day_override: false };
+          // When saving as default, clear today's override so default takes effect
+          if (scope === 'default') body.clear_day_override = true;
+          const data = await api('/admin/api/delivery-settings', {
+            method: 'PUT',
+            body: JSON.stringify(body),
+          });
+          state.delivery = data;
+          renderDeliverySettings();
+          msg.textContent =
+            scope === 'today'
+              ? 'Today-only delivery mode saved (IST). Tomorrow reverts to default.'
+              : 'Default delivery mode saved.';
+          msg.className = 'msg ok';
+        } catch (e) {
+          msg.textContent = e.message;
+          msg.className = 'msg err';
+        }
+      };
+      document.getElementById('clearDeliveryOverrideBtn').onclick = async () => {
+        const msg = document.getElementById('deliveryMsg');
+        try {
+          const data = await api('/admin/api/delivery-settings', {
+            method: 'PUT',
+            body: JSON.stringify({ clear_day_override: true }),
+          });
+          state.delivery = data;
+          renderDeliverySettings();
+          msg.textContent = 'Cleared day override — using default mode.';
+          msg.className = 'msg ok';
+        } catch (e) {
+          msg.textContent = e.message;
+          msg.className = 'msg err';
+        }
+      };
+      document.getElementById('saveOfferBtn').onclick = async () => {
+        const msg = document.getElementById('offersMsg');
+        try {
+          const kind = document.getElementById('oKind').value;
+          const body = {
+            id: document.getElementById('oId').value.trim() || undefined,
+            title: document.getElementById('oTitle').value.trim(),
+            kind,
+            above_rupees: Number(document.getElementById('oAbove').value),
+            discount_rupees: kind === 'flat_discount' ? Number(document.getElementById('oDiscount').value) : 0,
+            enabled: document.getElementById('oEnabled').value === '1',
+          };
+          const data = await api('/admin/api/offers', {
+            method: 'POST',
+            body: JSON.stringify(body),
+          });
+          state.offers = data.offers || [];
+          renderOffers();
+          msg.textContent = 'Offer saved — live on next WhatsApp checkout';
+          msg.className = 'msg ok';
+        } catch (e) {
+          msg.textContent = e.message;
+          msg.className = 'msg err';
+        }
+      };
+      document.getElementById('offersBody').onclick = async (ev) => {
+        const edit = ev.target.closest('button[data-offer-edit]');
+        const tog = ev.target.closest('button[data-offer-toggle]');
+        const del = ev.target.closest('button[data-offer-del]');
+        try {
+          if (edit) {
+            const o = (state.offers || []).find((x) => x.id === edit.dataset.offerEdit);
+            if (!o) return;
+            document.getElementById('oId').value = o.id;
+            document.getElementById('oTitle').value = o.title || '';
+            document.getElementById('oKind').value = o.kind;
+            document.getElementById('oAbove').value = Math.round((o.above_paise || 0) / 100);
+            document.getElementById('oDiscount').value = Math.round((o.discount_paise || 0) / 100);
+            document.getElementById('oEnabled').value = o.enabled ? '1' : '0';
+            syncOfferFormKind();
+            showTab('offers');
+            return;
+          }
+          if (tog) {
+            await api('/admin/api/offers/' + encodeURIComponent(tog.dataset.offerToggle) + '/toggle', {
+              method: 'POST',
+              body: JSON.stringify({}),
+            });
+            await refresh();
+          }
+          if (del) {
+            if (!confirm('Delete this offer?')) return;
+            await api('/admin/api/offers/' + encodeURIComponent(del.dataset.offerDel), {
+              method: 'DELETE',
+            });
+            await refresh();
+          }
+        } catch (e) {
+          showMsg(e.message);
+        }
+      };
+
+      async function orderAction(ev) {
         const btn = ev.target.closest('button[data-ref]');
         if (!btn) return;
         btn.disabled = true;
@@ -296,12 +2731,32 @@
         } finally {
           btn.disabled = false;
         }
-      };
+      }
 
       document.getElementById('dishesBody').onclick = async (ev) => {
         const stockBtn = ev.target.closest('button[data-stock]');
         const activeBtn = ev.target.closest('button[data-active]');
+        const editBtn = ev.target.closest('button[data-edit]');
         try {
+          if (editBtn) {
+            const d = state.dishes.find((x) => x.code === editBtn.dataset.edit);
+            if (!d) return;
+            document.getElementById('dCode').value = d.code;
+            document.getElementById('dName').value = d.name || '';
+            document.getElementById('dCategory').value = d.category || 'veg';
+            document.getElementById('dMeal').value = d.meal || 'both';
+            document.getElementById('dPrice').value = Math.round((d.price_paise || 0) / 100);
+            document.getElementById('dStock').value = d.max_portions || 0;
+            document.getElementById('dNote').value = d.note || '';
+            fillAmmaSelect();
+            document.getElementById('dAmma').value = d.amma_id || '';
+            document.getElementById('dCookCustom').value = d.amma_id ? '' : (d.cook_name || '');
+            state.menuCategory = d.category || 'veg';
+            showTab('menu');
+            renderDishes();
+            document.getElementById('dCode').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
           if (stockBtn) {
             const code = stockBtn.dataset.stock;
             const input = document.querySelector('input.stock[data-code="' + code + '"]');
@@ -323,7 +2778,115 @@
         }
       };
 
-      if (token()) unlock();
+      document.getElementById('saveDishBtn').onclick = async () => {
+        try {
+          const category = document.getElementById('dCategory').value;
+          const custom = document.getElementById('dCookCustom').value.trim();
+          const ammaId = document.getElementById('dAmma').value || null;
+          const body = {
+            code: document.getElementById('dCode').value,
+            name: document.getElementById('dName').value,
+            category,
+            meal: document.getElementById('dMeal').value,
+            price_rupees: Number(document.getElementById('dPrice').value),
+            max_portions: Number(document.getElementById('dStock').value),
+            note: document.getElementById('dNote').value || null,
+            active: true,
+          };
+          if (custom) {
+            body.cook_name = custom;
+            body.amma_id = null;
+          } else if (ammaId) {
+            body.amma_id = ammaId;
+            const a = state.ammas.find((x) => x.id === ammaId);
+            body.cook_name = a ? a.name : '';
+          }
+          await api('/admin/api/dishes', { method: 'POST', body: JSON.stringify(body) });
+          state.menuCategory = category || state.menuCategory;
+          showMsg('Dish saved', true);
+          await refresh();
+        } catch (e) {
+          showMsg(e.message);
+        }
+      };
+      document.getElementById('clearDishBtn').onclick = () => {
+        ['dCode', 'dName', 'dNote', 'dCookCustom'].forEach((id) => { document.getElementById(id).value = ''; });
+        document.getElementById('dPrice').value = 60;
+        document.getElementById('dStock').value = 20;
+        document.getElementById('dCategory').value = state.menuCategory || 'veg';
+        document.getElementById('dAmma').value = '';
+      };
+
+      document.getElementById('saveAmmaBtn').onclick = async () => {
+        try {
+          await api('/admin/api/ammas', {
+            method: 'POST',
+            body: JSON.stringify({
+              id: document.getElementById('aId').value.trim() || undefined,
+              name: document.getElementById('aName').value,
+              payout_share_pct: Number(document.getElementById('aShare').value),
+              phone: document.getElementById('aPhone').value || null,
+              upi_id: document.getElementById('aUpi').value || null,
+              notes: document.getElementById('aNotes').value || null,
+              active: true,
+            }),
+          });
+          showMsg('Amma saved', true);
+          await refresh();
+        } catch (e) {
+          showMsg(e.message);
+        }
+      };
+      document.getElementById('clearAmmaBtn').onclick = () => {
+        ['aId', 'aName', 'aPhone', 'aUpi', 'aNotes'].forEach((id) => { document.getElementById(id).value = ''; });
+        document.getElementById('aShare').value = 70;
+      };
+      document.getElementById('ammasBody').onclick = (ev) => {
+        const btn = ev.target.closest('button[data-edit-amma]');
+        if (!btn) return;
+        const a = state.ammas.find((x) => x.id === btn.dataset.editAmma);
+        if (!a) return;
+        document.getElementById('aId').value = a.id;
+        document.getElementById('aName').value = a.name || '';
+        document.getElementById('aShare').value = Math.round((Number(a.payout_share_bps) || 7000) / 100);
+        document.getElementById('aPhone').value = a.phone || '';
+        document.getElementById('aUpi').value = a.upi_id || '';
+        document.getElementById('aNotes').value = a.notes || '';
+        document.getElementById('aName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+
+      document.getElementById('selectAllCust').onclick = () => {
+        document.querySelectorAll('.cust-ck').forEach((c) => { c.checked = true; });
+      };
+      document.getElementById('clearCust').onclick = () => {
+        document.querySelectorAll('.cust-ck').forEach((c) => { c.checked = false; });
+      };
+
+      document.getElementById('sendBroadcastBtn').onclick = async () => {
+        const out = document.getElementById('broadcastMsgOut');
+        const message = document.getElementById('broadcastMsg').value.trim();
+        const audience = document.getElementById('audience').value;
+        const body = { message, audience };
+        if (audience === 'selected') {
+          body.phones = [...document.querySelectorAll('.cust-ck:checked')].map((c) => c.value);
+        }
+        try {
+          const r = await api('/admin/api/broadcast', { method: 'POST', body: JSON.stringify(body) });
+          out.className = 'msg ok';
+          out.textContent = 'Sent ok ' + r.ok + ' / fail ' + r.fail + ' of ' + r.sent_to + '. ' + (r.note || '');
+          if (r.errors && r.errors.length) out.textContent += ' Sample errors: ' + r.errors.map((e) => e.phone + ': ' + e.error).join('; ');
+        } catch (e) {
+          out.className = 'msg err';
+          out.textContent = e.message;
+        }
+      };
+
+      document.getElementById('exportCsvBtn').onclick = () => {
+        // Dashboard shortcut: same export as Orders (respects filters if already set)
+        runExportOrders();
+      };
+
+      resumeSession();
     </script>
   </body>
 </html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pay — Amma Chethi Ruchulu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+      :root {
+        --bg0: #0f1714;
+        --bg1: #16221c;
+        --panel: #1b2a24;
+        --text: #edf4f0;
+        --muted: #93a89c;
+        --accent: #1f7a55;
+        --accent-soft: #2d9a6c;
+        --line: #2a3d34;
+        --ok: #3dba7a;
+        --err: #e07070;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "DM Sans", system-ui, sans-serif;
+        background:
+          radial-gradient(ellipse 90% 60% at 80% -20%, #1f4a38 0%, transparent 50%),
+          linear-gradient(165deg, var(--bg1), var(--bg0));
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.25rem;
+      }
+      .card {
+        width: 100%;
+        max-width: 420px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 1.5rem 1.4rem 1.45rem;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      }
+      h1 { margin: 0 0 0.2rem; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; }
+      .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 1.15rem; }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 0.95rem;
+      }
+      .muted { color: var(--muted); }
+      .amount { font-size: 1.4rem; font-weight: 700; color: var(--accent-soft); }
+      details.bill {
+        margin: 0.85rem 0 1.1rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+      }
+      details.bill summary {
+        cursor: pointer;
+        list-style: none;
+        padding: 0.75rem 0.9rem;
+        font-weight: 600;
+        font-size: 0.92rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text);
+      }
+      details.bill summary::-webkit-details-marker { display: none; }
+      details.bill summary::after {
+        content: "▾";
+        color: var(--muted);
+        font-size: 0.85rem;
+        transition: transform 0.15s ease;
+      }
+      details.bill[open] summary::after { transform: rotate(180deg); }
+      .bill-body { padding: 0 0.9rem 0.85rem; }
+      .bill-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.35rem 0;
+        font-size: 0.88rem;
+        color: var(--muted);
+      }
+      .bill-line strong { color: var(--text); font-weight: 600; }
+      .bill-line.total {
+        margin-top: 0.35rem;
+        padding-top: 0.55rem;
+        border-top: 1px solid var(--line);
+        color: var(--text);
+        font-weight: 700;
+      }
+      button#payBtn {
+        width: 100%;
+        border: 0;
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        font-size: 1rem;
+        font-weight: 700;
+        font-family: inherit;
+        cursor: pointer;
+        background: linear-gradient(180deg, var(--accent-soft), var(--accent));
+        color: #fff;
+      }
+      button#payBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+      .msg { margin-top: 1rem; font-size: 0.9rem; line-height: 1.4; min-height: 1.25em; }
+      .msg.ok { color: var(--ok); }
+      .msg.err { color: var(--err); }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1 id="brand">Amma Chethi Ruchulu</h1>
+      <p class="sub">Secure payment · Razorpay</p>
+      <div class="row"><span class="muted">Order</span><span id="ref">—</span></div>
+      <div class="row">
+        <span class="muted">Amount</span>
+        <span class="amount" id="amount">—</span>
+      </div>
+      <details class="bill" id="billBox" hidden>
+        <summary><span>View bill split</span><span class="muted" id="billHint"></span></summary>
+        <div class="bill-body" id="billBody"></div>
+      </details>
+      <button type="button" id="payBtn" disabled>Pay now</button>
+      <p class="msg" id="msg" role="status"></p>
+    </div>
+    <script>
+      (function () {
+        const path = window.location.pathname || '';
+        const match = path.match(/\/pay\/([^/]+)\/?$/i);
+        const orderRef = match ? decodeURIComponent(match[1]).toUpperCase() : '';
+        const refEl = document.getElementById('ref');
+        const amountEl = document.getElementById('amount');
+        const brandEl = document.getElementById('brand');
+        const btn = document.getElementById('payBtn');
+        const msg = document.getElementById('msg');
+        const billBox = document.getElementById('billBox');
+        const billBody = document.getElementById('billBody');
+        const billHint = document.getElementById('billHint');
+
+        function setMsg(text, kind) {
+          msg.textContent = text || '';
+          msg.className = 'msg' + (kind ? ' ' + kind : '');
+        }
+
+        function formatInr(paise) {
+          const n = Number(paise) / 100;
+          return '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        }
+
+        function renderBreakdown(b) {
+          if (!b || !Array.isArray(b.items)) {
+            billBox.hidden = true;
+            return;
+          }
+          const lines = b.items.map(function (i) {
+            return (
+              '<div class="bill-line"><span>' +
+              (i.qty || 1) +
+              '× ' +
+              (i.name || i.code) +
+              '</span><span>' +
+              formatInr(i.line_paise) +
+              '</span></div>'
+            );
+          });
+          lines.push(
+            '<div class="bill-line"><span>Food subtotal</span><strong>' + formatInr(b.food_paise) + '</strong></div>',
+          );
+          if (b.discount_paise > 0) {
+            lines.push(
+              '<div class="bill-line"><span>Discount</span><strong>−' +
+                formatInr(b.discount_paise) +
+                '</strong></div>',
+            );
+          }
+          lines.push(
+            '<div class="bill-line"><span>' +
+              (b.delivery_label || 'Delivery') +
+              '</span><strong>' +
+              formatInr(b.delivery_fee_paise) +
+              '</strong></div>',
+          );
+          lines.push(
+            '<div class="bill-line total"><span>Total</span><span>' + formatInr(b.total_paise) + '</span></div>',
+          );
+          billBody.innerHTML = lines.join('');
+          billHint.textContent = b.meal ? b.meal : '';
+          billBox.hidden = false;
+        }
+
+        if (!orderRef) {
+          refEl.textContent = 'Missing';
+          setMsg('Invalid payment link. Open the link from WhatsApp.', 'err');
+          return;
+        }
+
+        refEl.textContent = orderRef;
+        let cached = null;
+
+        async function loadInfo() {
+          const infoRes = await fetch('/api/pay-info/' + encodeURIComponent(orderRef));
+          const info = await infoRes.json().catch(function () { return {}; });
+          if (infoRes.ok) {
+            if (info.business_name) brandEl.textContent = info.business_name;
+            amountEl.textContent = formatInr(info.total_paise);
+            renderBreakdown(info);
+          }
+          return info;
+        }
+
+        async function createOrder() {
+          setMsg('Preparing payment…');
+          btn.disabled = true;
+          const res = await fetch('/api/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_ref: orderRef }),
+          });
+          const data = await res.json().catch(function () { return {}; });
+          if (!res.ok) throw new Error(data.error || 'Could not create payment');
+          cached = data;
+          amountEl.textContent = formatInr(data.amount);
+          if (data.business_name) brandEl.textContent = data.business_name;
+          if (data.breakdown) renderBreakdown(data.breakdown);
+          setMsg('');
+          btn.disabled = false;
+          return data;
+        }
+
+        async function openCheckout() {
+          try {
+            const data = cached || (await createOrder());
+            if (typeof Razorpay === 'undefined') {
+              setMsg('Payment script failed to load. Check network and try again.', 'err');
+              return;
+            }
+            const options = {
+              key: data.key_id,
+              amount: data.amount,
+              currency: data.currency || 'INR',
+              name: data.business_name || 'Amma Chethi Ruchulu',
+              description: 'Order ' + orderRef,
+              order_id: data.order_id,
+              theme: { color: '#1f7a55' },
+              // WhatsApp order already has customer phone — do not force re-entry
+              prefill: {},
+              readonly: {},
+              handler: async function (response) {
+                setMsg('Confirming payment…');
+                btn.disabled = true;
+                try {
+                  const vRes = await fetch('/api/verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      order_ref: orderRef,
+                      razorpay_order_id: response.razorpay_order_id,
+                      razorpay_payment_id: response.razorpay_payment_id,
+                      razorpay_signature: response.razorpay_signature,
+                    }),
+                  });
+                  const vData = await vRes.json().catch(function () { return {}; });
+                  if (!vRes.ok || !vData.ok) {
+                    setMsg(vData.error || 'Payment could not be verified.', 'err');
+                    btn.disabled = false;
+                    return;
+                  }
+                  setMsg('Payment successful! Order ' + (vData.order_ref || orderRef) + ' is confirmed. You can return to WhatsApp.', 'ok');
+                  btn.textContent = 'Paid';
+                } catch (err) {
+                  setMsg(err.message || 'Verification failed', 'err');
+                  btn.disabled = false;
+                }
+              },
+              modal: {
+                ondismiss: function () {
+                  setMsg('Payment cancelled. Tap Pay now to try again.');
+                  btn.disabled = false;
+                },
+              },
+            };
+            if (data.customer_phone) {
+              options.prefill.contact = data.customer_phone;
+              options.readonly.contact = true;
+            }
+            if (data.customer_name) {
+              options.prefill.name = data.customer_name;
+              options.readonly.name = true;
+            }
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (resp) {
+              const desc = (resp && resp.error && (resp.error.description || resp.error.reason)) || 'Payment failed';
+              setMsg(desc, 'err');
+              btn.disabled = false;
+            });
+            rzp.open();
+          } catch (err) {
+            setMsg(err.message || 'Could not start payment', 'err');
+            btn.disabled = false;
+          }
+        }
+
+        btn.addEventListener('click', openCheckout);
+
+        loadInfo()
+          .then(function () { return createOrder(); })
+          .catch(function (err) { setMsg(err.message || 'Could not load order', 'err'); });
+      })();
+    </script>
+  </body>
+</html>
