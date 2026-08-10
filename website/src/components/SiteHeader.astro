@@ -1,0 +1,37 @@
+---
+import { site, waLink } from '../site.config';
+
+interface Props {
+  current?: string;
+}
+
+const { current = '' } = Astro.props;
+
+const links = [
+  { href: '/#how', label: 'How it works', id: 'how' },
+  { href: '/topics/', label: 'Topics', id: 'topics' },
+  { href: '/areas/', label: 'Areas', id: 'areas' },
+  { href: '/about/', label: 'About', id: 'about' },
+  { href: '/contact/', label: 'Contact', id: 'contact' },
+];
+---
+
+<header class="wrap site-header">
+  <a class="brand-mark" href="/">
+    <img src="/logo.jpeg" alt={`${site.nameEn} logo`} width="48" height="48" />
+    <span class="brand-text">
+      <strong>{site.nameEn}</strong>
+      <span>{site.locality}</span>
+    </span>
+  </a>
+  <nav class="nav" aria-label="Primary">
+    {
+      links.map((l) => (
+        <a href={l.href} aria-current={current === l.id ? 'page' : undefined}>
+          {l.label}
+        </a>
+      ))
+    }
+    <a class="nav-cta" href={waLink("Hi, I want today's menu")}>WhatsApp</a>
+  </nav>
+</header>

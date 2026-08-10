@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { site, waLink } from '../site.config';
+import { breadcrumbSchema } from '../lib/schema';
+---
+
+<BaseLayout
+  title={`Terms & Conditions — ${site.nameEn}`}
+  description={`Terms and conditions for ordering home-cooked food from ${site.nameEn} in ${site.locality}.`}
+  canonicalPath="/terms/"
+  jsonLd={[
+    breadcrumbSchema([
+      { name: 'Home', path: '/' },
+      { name: 'Terms', path: '/terms/' },
+    ]),
+  ]}
+>
+  <SiteHeader />
+  <main id="main" class="wrap legal">
+    <h1>Terms &amp; Conditions</h1>
+    <p class="meta">Last updated: 10 August 2026 · {site.nameEn}</p>
+
+    <p>
+      By ordering from <strong>{site.nameEn}</strong> via WhatsApp or this website, you agree to these
+      terms.
+    </p>
+
+    <h2>Orders &amp; cutoffs</h2>
+    <p>
+      Orders must be placed before the published cutoffs (lunch by 10:00 AM; dinner by 4:00 PM unless we
+      tell you otherwise). We may decline orders outside coverage, after cutoff, or when batch capacity
+      is full.
+    </p>
+
+    <h2>Pricing &amp; payment</h2>
+    <p>
+      Menu prices and delivery charges (if any) are shared on WhatsApp before confirmation. Payment
+      instructions are provided in chat. An order is confirmed only after we acknowledge it.
+    </p>
+
+    <h2>Delivery</h2>
+    <p>
+      Delivery windows are estimates. Delays can happen due to weather, traffic, or cook timing. Provide
+      an accurate address and reachable phone number. If you are unavailable at drop-off, re-delivery
+      may not be possible for that slot.
+    </p>
+
+    <h2>Food &amp; allergens</h2>
+    <p>
+      Meals are prepared in home kitchens and packed at our hub. Ingredient lists vary by cook and day.
+      Tell us about severe allergies before ordering; we cannot guarantee allergen-free facilities.
+    </p>
+
+    <h2>Cancellations</h2>
+    <p>
+      Once cooking has started for your batch, cancellations or refunds may not be possible. Ask early on
+      WhatsApp if you need to change an order.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      <a href={`mailto:${site.email}`}>{site.email}</a>
+      · <a href={waLink()}>{site.whatsappDisplay}</a>
+      · <a href="/contact/">Contact page</a>
+    </p>
+  </main>
+  <SiteFooter />
+</BaseLayout>

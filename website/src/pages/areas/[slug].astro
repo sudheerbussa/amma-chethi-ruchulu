@@ -1,0 +1,99 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import RelatedLinks from '../../components/RelatedLinks.astro';
+import { areas, getAreasBySlugs } from '../../data/areas';
+import { getTopicsBySlugs } from '../../data/topics';
+import {
+  breadcrumbSchema,
+  localBusinessSchema,
+  webPageServiceSchema,
+} from '../../lib/schema';
+import { waLink } from '../../site.config';
+
+export function getStaticPaths() {
+  return areas.map((area) => ({
+    params: { slug: area.slug },
+    props: { area },
+  }));
+}
+
+const { area } = Astro.props;
+const relatedTopics = getTopicsBySlugs(area.relatedTopicSlugs);
+const nearby = getAreasBySlugs(area.nearbySlugs);
+---
+
+<BaseLayout
+  title={area.title}
+  description={area.metaDescription}
+  canonicalPath={`/areas/${area.slug}/`}
+  jsonLd={[
+    localBusinessSchema(),
+    webPageServiceSchema({
+      name: area.h1,
+      description: area.metaDescription,
+      path: `/areas/${area.slug}/`,
+      areaName: area.name,
+    }),
+    breadcrumbSchema([
+      { name: 'Home', path: '/' },
+      { name: 'Areas', path: '/areas/' },
+      { name: area.name, path: `/areas/${area.slug}/` },
+    ]),
+  ]}
+>
+  <SiteHeader current="areas" />
+  <main id="main">
+    <article class="section">
+      <div class="wrap prose topic-prose">
+        <p class="crumb">
+          <a href="/">Home</a> / <a href="/areas/">Areas</a> / <span>{area.name}</span>
+        </p>
+        <h1>{area.h1}</h1>
+        <p class="lede">{area.intro}</p>
+        <p>
+          <a class="btn btn-primary" href={waLink(`Hi, can you deliver to ${area.name}?`)}
+            >Check delivery on WhatsApp</a
+          >
+        </p>
+        {
+          area.sections.map((s) => (
+            <>
+              <h2>{s.heading}</h2>
+              <p>{s.body}</p>
+            </>
+          ))
+        }
+        <h2>Order cutoffs</h2>
+        <p>
+          Lunch: order by 10:00 AM (serve ~12–3 PM). Dinner: order by 4:00 PM (serve ~7–10 PM). We confirm
+          the {area.name} route when you message us.
+        </p>
+      </div>
+    </article>
+
+    <RelatedLinks
+      title="Related guides"
+      links={relatedTopics.map((t) => ({
+        href: `/topics/${t.slug}/`,
+        label: t.h1,
+        hint: t.keyword,
+      }))}
+    />
+    <RelatedLinks
+      title="Nearby areas"
+      links={nearby.map((a) => ({
+        href: `/areas/${a.slug}/`,
+        label: a.name,
+        hint: a.keyword,
+      }))}
+    />
+    <CtaBand
+      heading={`Hungry in ${area.name}?`}
+      text="Ask for today’s menu and confirm your landmark on WhatsApp."
+    />
+  </main>
+  <SiteFooter />
+</BaseLayout>

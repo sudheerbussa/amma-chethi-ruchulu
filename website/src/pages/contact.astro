@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { site, waLink } from '../site.config';
+import { breadcrumbSchema, localBusinessSchema } from '../lib/schema';
+---
+
+<BaseLayout
+  title={`Contact ${site.nameEn} — WhatsApp & Email`}
+  description={`Contact ${site.nameEn} in ${site.locality}. WhatsApp ${site.whatsappDisplay} or email ${site.email} to order home-cooked lunch or dinner.`}
+  canonicalPath="/contact/"
+  jsonLd={[
+    localBusinessSchema(),
+    breadcrumbSchema([
+      { name: 'Home', path: '/' },
+      { name: 'Contact', path: '/contact/' },
+    ]),
+  ]}
+>
+  <SiteHeader current="contact" />
+  <main id="main" class="wrap legal">
+    <h1>Contact us</h1>
+    <p class="meta">Orders, menus, and delivery questions</p>
+
+    <h2>WhatsApp (fastest)</h2>
+    <p>
+      <a class="btn btn-primary" href={waLink("Hi, I want today's menu")}>Order on WhatsApp</a>
+    </p>
+    <p>
+      Number: <a href={`tel:+${site.whatsapp}`}>{site.whatsappDisplay}</a>
+    </p>
+
+    <h2>Email</h2>
+    <p>
+      <a href={`mailto:${site.email}`}>{site.email}</a>
+    </p>
+
+    <h2>Service area</h2>
+    <p>
+      {site.locality} — Tenali, Chenchupeta, and selected Guntur neighbourhoods. Confirm your address on
+      WhatsApp before paying.
+    </p>
+
+    <h2>Order cutoffs</h2>
+    <ul>
+      <li>Lunch: {site.cutoffs.lunch}</li>
+      <li>Dinner: {site.cutoffs.dinner}</li>
+    </ul>
+
+    <h2>Legal</h2>
+    <p>
+      <a href="/privacy/">Privacy Policy</a> · <a href="/terms/">Terms &amp; Conditions</a>
+    </p>
+  </main>
+  <SiteFooter />
+</BaseLayout>

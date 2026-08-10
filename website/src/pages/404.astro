@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { site, waLink } from '../site.config';
+---
+
+<BaseLayout
+  title={`Page not found — ${site.nameEn}`}
+  description="The page you requested is missing. Return home or order on WhatsApp."
+  noindex={true}
+>
+  <SiteHeader />
+  <main id="main" class="wrap legal">
+    <h1>Page not found</h1>
+    <p class="meta">404</p>
+    <p>That URL is not on this site. Try the home page, topic guides, or WhatsApp ordering.</p>
+    <p class="cta-row">
+      <a class="btn btn-primary" href="/">Go home</a>
+      <a class="btn btn-ghost" href="/topics/">Browse topics</a>
+      <a class="btn btn-ghost" href={waLink('Hi')}>WhatsApp</a>
+    </p>
+  </main>
+  <SiteFooter />
+</BaseLayout>

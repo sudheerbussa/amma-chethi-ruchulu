@@ -1,23 +1,36 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import FaqSection from '../components/FaqSection.astro';
+import CtaBand from '../components/CtaBand.astro';
+import RelatedLinks from '../components/RelatedLinks.astro';
 import { site, waLink } from '../site.config';
+import { homeFaqs } from '../data/faqs';
+import { topics } from '../data/topics';
+import { areas } from '../data/areas';
+import { faqPageSchema, localBusinessSchema } from '../lib/schema';
+
+const topicLinks = topics.slice(0, 6).map((t) => ({
+  href: `/topics/${t.slug}/`,
+  label: t.h1,
+  hint: t.keyword,
+}));
+
+const areaLinks = areas.slice(0, 6).map((a) => ({
+  href: `/areas/${a.slug}/`,
+  label: a.name,
+  hint: a.keyword,
+}));
 ---
 
-<BaseLayout>
-  <header class="wrap site-header">
-    <a class="brand-mark" href="/">
-      <img src="/logo.jpeg" alt="" width="48" height="48" />
-      <span class="brand-text">
-        <strong>{site.nameEn}</strong>
-        <span>{site.locality}</span>
-      </span>
-    </a>
-    <nav class="nav" aria-label="Primary">
-      <a href="#how">How it works</a>
-      <a href="#order">Order</a>
-      <a href="/privacy">Privacy</a>
-    </nav>
-  </header>
+<BaseLayout
+  title={site.defaultTitle}
+  description={site.defaultDescription}
+  canonicalPath="/"
+  jsonLd={[localBusinessSchema(), faqPageSchema(homeFaqs)]}
+>
+  <SiteHeader />
 
   <main id="main">
     <section class="hero" aria-label="Introduction">
@@ -28,7 +41,7 @@ import { site, waLink } from '../site.config';
         <p class="hero-tag">{site.tagline}</p>
         <p>{site.blurb}</p>
         <div class="cta-row">
-          <a class="btn btn-primary" href={waLink('Hi, I want today\'s menu')}>Order on WhatsApp</a>
+          <a class="btn btn-primary" href={waLink("Hi, I want today's menu")}>Order on WhatsApp</a>
           <a class="btn btn-ghost" href="#how">See how it works</a>
         </div>
       </div>
@@ -39,8 +52,8 @@ import { site, waLink } from '../site.config';
         <div class="section-head">
           <h2 id="order-heading">Order ahead. Eat well.</h2>
           <p>
-            We cook in limited batches with specialist home cooks — not restaurant rush.
-            Place your order before the cutoff so we can collect, pack, and deliver on time.
+            We cook in limited batches with specialist home cooks — not restaurant rush. Place your
+            order before the cutoff so we can collect, pack, and deliver on time across {site.locality}.
           </p>
         </div>
         <div class="split two">
@@ -83,29 +96,54 @@ import { site, waLink } from '../site.config';
       </div>
     </section>
 
-    <section class="cta-band" aria-labelledby="cta-heading">
-      <h2 id="cta-heading">Ready to taste home?</h2>
-      <p>
-        Message us on WhatsApp for today’s menu. Based in {site.locality} —
-        cooked with heart, delivered in your area.
-      </p>
-      <a class="btn btn-primary" href={waLink('Menu please')}>Chat on WhatsApp</a>
-      <p class="address-line">
-        <a href={`tel:+${site.whatsapp}`}>{site.whatsappDisplay}</a>
-        ·
-        <a href={`mailto:${site.email}`}>{site.email}</a>
-      </p>
+    <section class="section seo-copy" aria-labelledby="about-food-heading">
+      <div class="wrap prose">
+        <h2 id="about-food-heading">Home cooked food delivery in Guntur &amp; Tenali</h2>
+        <p>
+          <strong>{site.nameEn}</strong> ({site.nameTe}) is a local home-kitchen meal service for people
+          in Guntur and Tenali who want authentic Andhra flavours without cooking every day. Instead of
+          a hotel kitchen racing the clock, we work with specialist home cooks—people known for a few
+          signature dishes they actually cook well—and we run orders on a schedule.
+        </p>
+        <p>
+          That schedule is intentional. Lunch orders should land by <strong>10:00 AM</strong> for a midday
+          serve window; dinner orders by <strong>4:00 PM</strong> for the evening window. Ordering ahead
+          gives cooks time to prep properly, lets our hub pack cleanly, and helps riders hit a realistic
+          delivery slot. If you have been searching for <em>home cooked food delivery in Guntur</em>,
+          <em>homemade lunch delivery in Tenali</em>, or a simple <em>WhatsApp food order</em> without
+          another app download, this model is built for you.
+        </p>
+        <p>
+          Menus change with cook availability. Some days feature vegetarian Andhra meals; other days may
+          include rice specials, tiffin-style combinations, or dishes like pulihora and biryani when a
+          specialist lists them. Always ask WhatsApp for <strong>today’s menu</strong> before you pay. We
+          confirm whether your neighbourhood—Chenchupeta, wider Tenali, or selected Guntur areas—is on
+          the route for that slot. Honest coverage beats false promises.
+        </p>
+        <p>
+          Trust matters for home food. You will see clear cutoffs, a public contact path (
+          <a href={`mailto:${site.email}`}>{site.email}</a>
+          and WhatsApp {site.whatsappDisplay}), and pages that explain how ordering works for offices,
+          vegetarian households, and evening dinners. Explore our
+          <a href="/topics/">topic guides</a>
+          and
+          <a href="/areas/">areas we serve</a>
+          if you want search-friendly detail—or skip straight to chat and tell us what you feel like eating.
+        </p>
+        <p>
+          Whether you need office lunch in Guntur, a homemade dinner after a long day, or a dependable
+          Tenali tiffin-style meal, Amma Chethi Ruchulu keeps the promise simple: specialist home cooking,
+          packed with care, delivered on a schedule you can plan around.
+        </p>
+      </div>
     </section>
+
+    <RelatedLinks title="Popular searches we cover" links={topicLinks} />
+    <RelatedLinks title="Areas we often deliver" links={areaLinks} />
+
+    <FaqSection faqs={homeFaqs} />
+    <CtaBand />
   </main>
 
-  <footer class="site-footer">
-    <div class="wrap">
-      <p>© {new Date().getFullYear()} {site.nameEn}. {site.tagline}. · {site.locality}</p>
-      <nav aria-label="Footer">
-        <a href="/privacy">Privacy Policy</a>
-        <a href={`mailto:${site.email}`}>Contact</a>
-        <a href={waLink()}>WhatsApp</a>
-      </nav>
-    </div>
-  </footer>
+  <SiteFooter />
 </BaseLayout>

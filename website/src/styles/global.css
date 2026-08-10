@@ -131,6 +131,15 @@ a {
   color: var(--terracotta-deep);
 }
 
+.nav a[aria-current='page'] {
+  color: var(--terracotta-deep);
+}
+
+.nav-cta {
+  color: var(--terracotta) !important;
+  font-weight: 700;
+}
+
 /* —— Hero —— */
 .hero {
   position: relative;
@@ -454,6 +463,126 @@ a {
 .legal p,
 .legal li {
   color: var(--ink-soft);
+}
+
+.legal .cta-row {
+  margin-top: 1.5rem;
+}
+
+/* —— SEO prose / topic pages —— */
+.seo-copy .prose,
+.topic-prose {
+  max-width: 42rem;
+}
+
+.prose h1,
+.prose h2 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.prose h1 {
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  margin: 0 0 1rem;
+}
+
+.prose h2 {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  margin: 2rem 0 0.6rem;
+}
+
+.prose p,
+.prose li {
+  color: var(--ink-soft);
+}
+
+.prose .lede {
+  font-size: 1.12rem;
+  color: var(--ink);
+}
+
+.crumb {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin-bottom: 1rem !important;
+}
+
+.crumb a {
+  text-decoration: none;
+}
+
+.faq-list {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 42rem;
+}
+
+.faq-item {
+  border-top: 1px solid var(--stroke);
+  padding: 0.85rem 0;
+}
+
+.faq-item summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.faq-item p {
+  margin: 0.65rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.98rem;
+}
+
+.link-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 720px) {
+  .link-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+}
+
+.link-grid a {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  padding: 1rem 0;
+  border-top: 1px solid var(--stroke);
+}
+
+.link-grid a:hover strong {
+  color: var(--terracotta-deep);
+}
+
+.link-grid strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.link-grid span {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+
+.related-section .section-head {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 820px) {
+  .nav {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.65rem 1rem;
+  }
 }
 
 @keyframes rise {

@@ -1,0 +1,101 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import FaqSection from '../../components/FaqSection.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import RelatedLinks from '../../components/RelatedLinks.astro';
+import { topics, getTopicsBySlugs } from '../../data/topics';
+import { getAreasBySlugs } from '../../data/areas';
+import { homeFaqs } from '../../data/faqs';
+import {
+  breadcrumbSchema,
+  faqPageSchema,
+  localBusinessSchema,
+  webPageServiceSchema,
+} from '../../lib/schema';
+import { waLink } from '../../site.config';
+
+export function getStaticPaths() {
+  return topics.map((topic) => ({
+    params: { slug: topic.slug },
+    props: { topic },
+  }));
+}
+
+const { topic } = Astro.props;
+const relatedTopics = getTopicsBySlugs(topic.relatedSlugs);
+const relatedAreas = getAreasBySlugs(topic.relatedAreaSlugs ?? []);
+const pageFaqs = [...(topic.faqs ?? []), ...homeFaqs.slice(0, 3)];
+---
+
+<BaseLayout
+  title={topic.title}
+  description={topic.metaDescription}
+  canonicalPath={`/topics/${topic.slug}/`}
+  jsonLd={[
+    localBusinessSchema(),
+    webPageServiceSchema({
+      name: topic.h1,
+      description: topic.metaDescription,
+      path: `/topics/${topic.slug}/`,
+    }),
+    faqPageSchema(pageFaqs),
+    breadcrumbSchema([
+      { name: 'Home', path: '/' },
+      { name: 'Topics', path: '/topics/' },
+      { name: topic.h1, path: `/topics/${topic.slug}/` },
+    ]),
+  ]}
+>
+  <SiteHeader current="topics" />
+  <main id="main">
+    <article class="section">
+      <div class="wrap prose topic-prose">
+        <p class="crumb">
+          <a href="/">Home</a> / <a href="/topics/">Topics</a> / <span>{topic.keyword}</span>
+        </p>
+        <h1>{topic.h1}</h1>
+        <p class="lede">{topic.intro}</p>
+        <p>
+          <a class="btn btn-primary" href={waLink(`Hi, I am interested in ${topic.keyword}`)}
+            >Order on WhatsApp</a
+          >
+        </p>
+        {
+          topic.sections.map((s) => (
+            <>
+              <h2>{s.heading}</h2>
+              <p>{s.body}</p>
+            </>
+          ))
+        }
+        <h2>Ready to order?</h2>
+        <p>
+          Message Amma Chethi Ruchulu on WhatsApp for today’s menu, confirm your area, and place the order
+          before lunch or dinner cutoff.
+        </p>
+      </div>
+    </article>
+
+    <RelatedLinks
+      title="Related topics"
+      links={relatedTopics.map((t) => ({
+        href: `/topics/${t.slug}/`,
+        label: t.h1,
+        hint: t.keyword,
+      }))}
+    />
+    <RelatedLinks
+      title="Areas"
+      links={relatedAreas.map((a) => ({
+        href: `/areas/${a.slug}/`,
+        label: a.name,
+        hint: a.keyword,
+      }))}
+    />
+    <FaqSection faqs={pageFaqs} />
+    <CtaBand />
+  </main>
+  <SiteFooter />
+</BaseLayout>

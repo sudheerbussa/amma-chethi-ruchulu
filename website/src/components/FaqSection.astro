@@ -1,0 +1,29 @@
+---
+import type { FaqItem } from '../data/faqs';
+
+interface Props {
+  faqs: FaqItem[];
+  heading?: string;
+}
+
+const { faqs, heading = 'Frequently asked questions' } = Astro.props;
+---
+
+<section class="section faq-section" aria-labelledby="faq-heading">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 id="faq-heading">{heading}</h2>
+      <p>Straight answers for people ordering home-cooked meals in Guntur and Tenali.</p>
+    </div>
+    <div class="faq-list">
+      {
+        faqs.map((f) => (
+          <details class="faq-item">
+            <summary>{f.question}</summary>
+            <p>{f.answer}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>

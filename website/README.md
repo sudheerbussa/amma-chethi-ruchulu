@@ -1,6 +1,8 @@
 # Amma Chethi Ruchulu — website
 
-Astro 4 site for brand landing + privacy policy (Meta / WhatsApp readiness).
+Astro 4 MPA for brand + **pSEO** (topics/areas), trust pages, schema, sitemap — aligned with `local-biz-dev` SEO rules.
+
+Canonical domain: `https://ammachethiruchulu.co.in`
 
 ## Develop
 
@@ -19,13 +21,30 @@ npm run build
 npm run preview
 ```
 
+Build emits `/sitemap.xml` (from `src/pages/sitemap.xml.ts`) + `public/robots.txt`.
+
+## SEO / pSEO
+
+| Piece | Where |
+|-------|--------|
+| Keyword sheet | [`SEO-KEYWORDS.md`](./SEO-KEYWORDS.md) |
+| Topic pages | `src/data/topics.ts` → `/topics/[slug]/` |
+| Area pages | `src/data/areas.ts` → `/areas/[slug]/` |
+| FAQs | `src/data/faqs.ts` |
+| Schema helpers | `src/lib/schema.ts` |
+| Sitemap | `src/pages/sitemap.xml.ts` |
+| Site + GA4 id | `src/site.config.ts` |
+
+After deploy: Google Search Console domain property → submit `https://ammachethiruchulu.co.in/sitemap.xml` → Request indexing.
+
 ## Deploy
 
 **Full guide:** [DEPLOY.md](./DEPLOY.md)
 
-- **Vercel (recommended):** import GitHub repo → Root Directory = `website` → Deploy  
-- **GitHub Pages:** set `base` in `astro.config.mjs` if needed → use `.github/workflows/deploy-pages.yml`
+- **Vercel (recommended):** Root Directory = `website` · custom domain `ammachethiruchulu.co.in`
+- Preview host `*.vercel.app` is **noindex** via `vercel.json`
 
 ## Customize
 
-Edit `src/site.config.ts` (WhatsApp, email, locality).
+Edit `src/site.config.ts` (WhatsApp, email, locality, optional `ga4Id`).  
+Add keywords as new rows in `topics.ts` / `areas.ts` with unique copy — do not duplicate fluff.

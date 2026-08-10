@@ -1,0 +1,22 @@
+---
+import { site, waLink } from '../site.config';
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>
+      © {new Date().getFullYear()}
+      {site.nameEn}. {site.tagline}. · {site.locality}
+    </p>
+    <nav aria-label="Footer">
+      <a href="/about/">About</a>
+      <a href="/contact/">Contact</a>
+      <a href="/topics/">Topics</a>
+      <a href="/areas/">Areas</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
+      <a href={waLink()}>WhatsApp</a>
+      <a href={`mailto:${site.email}`}>Email</a>
+    </nav>
+  </div>
+</footer>

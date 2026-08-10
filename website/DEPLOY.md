@@ -106,10 +106,16 @@ Keep `base: '/'` if you use Vercel **or** a `USERNAME.github.io` user site.
 
 ## After deploy — checklist
 
-- [ ] Open live home + `/privacy` in a phone browser  
+- [ ] Open live home + `/privacy/` in a phone browser  
 - [ ] Test WhatsApp button  
 - [ ] Put both URLs in `CHRONOLOGICAL_CHECKLIST.md` Brand pack  
 - [ ] Use same URLs in Meta Business Manager  
+- [ ] Point custom domain **ammachethiruchulu.co.in** (and www → apex or vice versa)  
+- [ ] Confirm `robots.txt` lists sitemap; open `/sitemap.xml`  
+- [ ] Google Search Console: Domain property → submit sitemap → Request indexing  
+- [ ] Bing Webmaster: import from GSC  
+- [ ] Set `ga4Id` in `src/site.config.ts` once GA4 is ready  
+- [ ] Google Business Profile linked to the same domain + phone  
 
 ---
 

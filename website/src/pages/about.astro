@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { site } from '../site.config';
+import { breadcrumbSchema, localBusinessSchema } from '../lib/schema';
+---
+
+<BaseLayout
+  title={`About ${site.nameEn} — Home Kitchen Meals in ${site.locality}`}
+  description={`Learn about ${site.nameEn}: specialist home cooks, scheduled lunch & dinner delivery in Guntur and Tenali, WhatsApp ordering.`}
+  canonicalPath="/about/"
+  jsonLd={[
+    localBusinessSchema(),
+    breadcrumbSchema([
+      { name: 'Home', path: '/' },
+      { name: 'About', path: '/about/' },
+    ]),
+  ]}
+>
+  <SiteHeader current="about" />
+  <main id="main" class="wrap legal">
+    <h1>About {site.nameEn}</h1>
+    <p class="meta">{site.nameTe} · {site.locality}</p>
+
+    <p>
+      {site.nameEn} brings authentic home-cooked Andhra flavours to customers in Guntur and Tenali.
+      We partner with homemakers who specialise in signature dishes, take orders ahead on WhatsApp,
+      pack at our hub, and deliver in scheduled lunch and dinner windows.
+    </p>
+
+    <h2>What makes us different</h2>
+    <ul>
+      <li>Specialist home cooks—not a generic restaurant menu trying to do everything</li>
+      <li>Order-ahead cutoffs so food is cooked for confirmed batches</li>
+      <li>Hub packing for consistent handoff to riders</li>
+      <li>WhatsApp-first ordering that local customers already use</li>
+    </ul>
+
+    <h2>Where we operate</h2>
+    <p>
+      Public locality: <strong>{site.locality}</strong>. We regularly serve Tenali (including Chenchupeta)
+      and selected nearby Guntur areas inside our delivery radius. See
+      <a href="/areas/">areas</a> for locality pages, and always confirm your pin on WhatsApp.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      WhatsApp <a href={`tel:+${site.whatsapp}`}>{site.whatsappDisplay}</a>
+      · Email <a href={`mailto:${site.email}`}>{site.email}</a>
+      · <a href="/contact/">Contact page</a>
+    </p>
+  </main>
+  <CtaBand heading="Want today’s menu?" text="Message us on WhatsApp — we will confirm your area and slot." />
+  <SiteFooter />
+</BaseLayout>

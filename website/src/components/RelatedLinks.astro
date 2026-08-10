@@ -1,0 +1,30 @@
+---
+interface Props {
+  title: string;
+  links: { href: string; label: string; hint?: string }[];
+}
+
+const { title, links } = Astro.props;
+---
+
+{
+  links.length > 0 && (
+    <section class="section related-section" aria-labelledby="related-heading">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="related-heading">{title}</h2>
+        </div>
+        <ul class="link-grid">
+          {links.map((l) => (
+            <li>
+              <a href={l.href}>
+                <strong>{l.label}</strong>
+                {l.hint && <span>{l.hint}</span>}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}

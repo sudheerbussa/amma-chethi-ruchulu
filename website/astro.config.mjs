@@ -1,12 +1,8 @@
 import { defineConfig } from 'astro/config';
 
-// Vercel (recommended): keep base: '/'
-// GitHub Pages project site: set site + base, e.g.
-//   site: 'https://YOUR_USERNAME.github.io',
-//   base: '/YOUR_REPO_NAME/',
-// See website/DEPLOY.md
+// Canonical SEO domain. Preview hosts (*.vercel.app) should stay noindex via vercel.json.
 export default defineConfig({
-  site: 'https://amma-chethi-ruchulu.vercel.app',
+  site: 'https://ammachethiruchulu.co.in',
   base: '/',
-  trailingSlash: 'ignore',
+  trailingSlash: 'always',
 });

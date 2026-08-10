@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { areas } from '../../data/areas';
+import { breadcrumbSchema } from '../../lib/schema';
+import { site } from '../../site.config';
+---
+
+<BaseLayout
+  title={`Areas We Serve — ${site.nameEn}`}
+  description="Delivery area pages for Tenali, Chenchupeta, Guntur, and nearby localities served by Amma Chethi Ruchulu."
+  canonicalPath="/areas/"
+  jsonLd={[
+    breadcrumbSchema([
+      { name: 'Home', path: '/' },
+      { name: 'Areas', path: '/areas/' },
+    ]),
+  ]}
+>
+  <SiteHeader current="areas" />
+  <main id="main">
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <h1>Areas we serve</h1>
+          <p>
+            Locality pages for neighbourhoods we often deliver to. Always confirm your exact address on
+            WhatsApp—coverage can vary by day and slot.
+          </p>
+        </div>
+        <ul class="link-grid">
+          {
+            areas.map((a) => (
+              <li>
+                <a href={`/areas/${a.slug}/`}>
+                  <strong>{a.name}</strong>
+                  <span>{a.keyword}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+    <CtaBand />
+  </main>
+  <SiteFooter />
+</BaseLayout>
