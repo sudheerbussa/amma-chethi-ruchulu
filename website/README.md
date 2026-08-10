@@ -28,6 +28,7 @@ Build emits `/sitemap.xml` (from `src/pages/sitemap.xml.ts`) + `public/robots.tx
 | Piece | Where |
 |-------|--------|
 | Keyword sheet | [`SEO-KEYWORDS.md`](./SEO-KEYWORDS.md) |
+| **SEO launch checklist (GSC, GBP, Bing, GA4…)** | [`SEO-LAUNCH-CHECKLIST.md`](./SEO-LAUNCH-CHECKLIST.md) |
 | Topic pages | `src/data/topics.ts` → `/topics/[slug]/` |
 | Area pages | `src/data/areas.ts` → `/areas/[slug]/` |
 | FAQs | `src/data/faqs.ts` |
@@ -35,7 +36,7 @@ Build emits `/sitemap.xml` (from `src/pages/sitemap.xml.ts`) + `public/robots.tx
 | Sitemap | `src/pages/sitemap.xml.ts` |
 | Site + GA4 id | `src/site.config.ts` |
 
-After deploy: Google Search Console domain property → submit `https://ammachethiruchulu.co.in/sitemap.xml` → Request indexing.
+After deploy: follow [`SEO-LAUNCH-CHECKLIST.md`](./SEO-LAUNCH-CHECKLIST.md) — Google Search Console domain property → submit sitemap → Request indexing + Google Business Profile.
 
 ## Deploy
 
