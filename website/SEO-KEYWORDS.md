@@ -39,8 +39,23 @@ Channel: WhatsApp order-ahead lunch & dinner
 
 | Keyword | Target URL |
 |---------|------------|
-| home cooked food delivery Tenali | `/areas/tenali/` |
+| home cooked food delivery Tenali | `/areas/tenali/` (main town page) |
 | food delivery Chenchupeta Tenali | `/areas/chenchupeta/` |
+| food delivery Bosebomma Centre Tenali | `/areas/bosebomma-centre/` |
+| food delivery Morampudi Road Tenali | `/areas/morampudi-road/` |
+| food delivery Kothapet Tenali | `/areas/kothapet/` |
+| food delivery Ramalingeswara Pet Tenali | `/areas/ramalingeswara-pet/` |
+| food delivery Chinaravuru Tenali | `/areas/chinaravuru/` |
+| food delivery Angalakuduru Road Tenali | `/areas/angalakuduru-road/` |
+| food delivery Gandhi Chowk Tenali | `/areas/gandhi-chowk/` |
+| food delivery Tenali Railway Station | `/areas/railway-station/` |
+| food delivery Burripalem Road Tenali | `/areas/burripalem-road/` |
+| food delivery Katevaram Tenali | `/areas/katevaram/` |
+| food delivery Sri Ram Nagar Tenali | `/areas/sri-ram-nagar/` |
+| food delivery Vidya Nagar Tenali | `/areas/vidya-nagar/` |
+| food delivery Housing Board Colony Tenali | `/areas/housing-board-colony/` |
+| food delivery Nazarapet Tenali | `/areas/nazarapet/` |
+| food delivery Donka Road Tenali | `/areas/donka-road/` |
 
 ---
 

@@ -17,11 +17,17 @@ const topicLinks = topics.slice(0, 6).map((t) => ({
   hint: t.keyword,
 }));
 
-const areaLinks = areas.slice(0, 6).map((a) => ({
-  href: `/areas/${a.slug}/`,
-  label: a.name,
-  hint: a.keyword,
-}));
+const areaLinks = [
+  { href: '/areas/tenali/', label: 'Tenali', hint: 'Main town page' },
+  ...areas
+    .filter((a) => a.slug !== 'tenali')
+    .slice(0, 5)
+    .map((a) => ({
+      href: `/areas/${a.slug}/`,
+      label: a.name,
+      hint: a.keyword,
+    })),
+];
 ---
 
 <BaseLayout
@@ -138,7 +144,7 @@ const areaLinks = areas.slice(0, 6).map((a) => ({
     </section>
 
     <RelatedLinks title="Popular searches we cover" links={topicLinks} />
-    <RelatedLinks title="Areas we often deliver" links={areaLinks} />
+    <RelatedLinks title="Areas in Tenali" links={areaLinks} />
 
     <FaqSection faqs={homeFaqs} />
     <CtaBand />
