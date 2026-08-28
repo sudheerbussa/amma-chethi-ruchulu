@@ -6,6 +6,10 @@ interface Props {
   text?: string;
   waHref?: string;
   waLabel?: string;
+  /** Override footer line — defaults to main meal-order WhatsApp */
+  phone?: string;
+  phoneDisplay?: string;
+  email?: string;
 }
 
 const {
@@ -13,6 +17,9 @@ const {
   text = `Message us on WhatsApp for today’s menu. Based in ${site.locality} — cooked with heart, delivered in your area.`,
   waHref = waLink('Menu please'),
   waLabel = 'Chat on WhatsApp',
+  phone = site.whatsapp,
+  phoneDisplay = site.whatsappDisplay,
+  email = site.email,
 } = Astro.props;
 ---
 
@@ -21,8 +28,8 @@ const {
   <p>{text}</p>
   <a class="btn btn-primary" href={waHref}>{waLabel}</a>
   <p class="address-line">
-    <a href={`tel:+${site.whatsapp}`}>{site.whatsappDisplay}</a>
+    <a href={`tel:+${phone}`}>{phoneDisplay}</a>
     ·
-    <a href={`mailto:${site.email}`}>{site.email}</a>
+    <a href={`mailto:${email}`}>{email}</a>
   </p>
 </section>
