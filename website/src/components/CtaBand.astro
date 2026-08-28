@@ -4,18 +4,22 @@ import { site, waLink } from '../site.config';
 interface Props {
   heading?: string;
   text?: string;
+  waHref?: string;
+  waLabel?: string;
 }
 
 const {
   heading = 'Ready to taste home?',
   text = `Message us on WhatsApp for today’s menu. Based in ${site.locality} — cooked with heart, delivered in your area.`,
+  waHref = waLink('Menu please'),
+  waLabel = 'Chat on WhatsApp',
 } = Astro.props;
 ---
 
 <section class="cta-band" aria-labelledby="cta-heading">
   <h2 id="cta-heading">{heading}</h2>
   <p>{text}</p>
-  <a class="btn btn-primary" href={waLink('Menu please')}>Chat on WhatsApp</a>
+  <a class="btn btn-primary" href={waHref}>{waLabel}</a>
   <p class="address-line">
     <a href={`tel:+${site.whatsapp}`}>{site.whatsappDisplay}</a>
     ·

@@ -5,7 +5,7 @@ import SiteFooter from '../components/SiteFooter.astro';
 import FaqSection from '../components/FaqSection.astro';
 import CtaBand from '../components/CtaBand.astro';
 import RelatedLinks from '../components/RelatedLinks.astro';
-import { site, waLink } from '../site.config';
+import { acrFresh, site, waLink } from '../site.config';
 import { homeFaqs } from '../data/faqs';
 import { topics } from '../data/topics';
 import { areas } from '../data/areas';
@@ -50,6 +50,21 @@ const areaLinks = [
           <a class="btn btn-primary" href={waLink("Hi, I want today's menu")}>Order on WhatsApp</a>
           <a class="btn btn-ghost" href="#how">See how it works</a>
         </div>
+      </div>
+    </section>
+
+    <section class="section band acr-fresh-promo" aria-labelledby="acr-fresh-heading">
+      <div class="wrap">
+        <h2 id="acr-fresh-heading">
+          {acrFresh.brand} — fresh vegetables by {site.nameEn}
+        </h2>
+        <p>
+          Sister service for South Indian vegetables, milk, and staples — hourly delivery slots in
+          Tenali. Same verified business; separate WhatsApp line for produce.
+        </p>
+        <p class="cta-row">
+          <a class="btn btn-primary" href={acrFresh.path}>Learn about {acrFresh.brand}</a>
+        </p>
       </div>
     </section>
 

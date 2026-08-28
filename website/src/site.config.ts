@@ -35,8 +35,25 @@ export const site = {
   ga4Id: '',
 } as const;
 
+/** Sister produce service — same business as {site.nameEn} (Udyam verified) */
+export const acrFresh = {
+  brand: 'ACR Fresh',
+  tagline: 'Fresh vegetables by Amma Chethi Ruchulu',
+  blurb:
+    'South Indian vegetables in quarter-kg to 1 kg packs, plus milk, staples, and kitchen essentials — delivered in hourly slots across Tenali.',
+  whatsapp: '919392044833',
+  whatsappDisplay: '+91 93920 44833',
+  minOrder: '₹100',
+  delivery: 'Hourly delivery slots (8 AM–8 PM IST)',
+  path: '/acr-fresh/',
+} as const;
+
 export function waLink(text = 'Hi'): string {
   return `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(text)}`;
+}
+
+export function acrFreshWaLink(text = 'Hi'): string {
+  return `https://wa.me/${acrFresh.whatsapp}?text=${encodeURIComponent(text)}`;
 }
 
 export function absoluteUrl(path = '/'): string {

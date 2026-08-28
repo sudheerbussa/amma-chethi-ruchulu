@@ -1,5 +1,5 @@
 ---
-import { site, waLink } from '../site.config';
+import { acrFresh, site, waLink } from '../site.config';
 ---
 
 <footer class="site-footer">
@@ -10,6 +10,7 @@ import { site, waLink } from '../site.config';
     </p>
     <nav aria-label="Footer">
       <a href="/about/">About</a>
+      <a href={acrFresh.path}>{acrFresh.brand}</a>
       <a href="/contact/">Contact</a>
       <a href="/topics/">Topics</a>
       <a href="/areas/">Areas</a>

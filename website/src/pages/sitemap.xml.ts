@@ -6,6 +6,7 @@ import { absoluteUrl } from '../site.config';
 const staticPaths = [
   '/',
   '/about/',
+  '/acr-fresh/',
   '/contact/',
   '/privacy/',
   '/terms/',

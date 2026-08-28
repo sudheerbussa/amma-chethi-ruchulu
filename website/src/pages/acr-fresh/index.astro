@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { acrFresh, acrFreshWaLink, site } from '../../site.config';
+import { breadcrumbSchema, localBusinessSchema, webPageServiceSchema } from '../../lib/schema';
+
+const title = `${acrFresh.brand} — ${acrFresh.tagline}`;
+const description = `${acrFresh.brand} is the fresh produce service of ${site.nameEn} in Tenali — vegetables, milk, and staples via WhatsApp with hourly delivery slots.`;
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath={acrFresh.path}
+  jsonLd={[
+    localBusinessSchema(),
+    webPageServiceSchema({
+      name: acrFresh.brand,
+      description,
+      path: acrFresh.path,
+    }),
+    breadcrumbSchema([
+      { name: 'Home', path: '/' },
+      { name: acrFresh.brand, path: acrFresh.path },
+    ]),
+  ]}
+>
+  <SiteHeader />
+  <main id="main" class="wrap legal prose">
+    <p class="meta">
+      A service of <a href="/">{site.nameEn}</a> · {site.locality}
+    </p>
+    <h1>{acrFresh.brand} — fresh vegetables by {site.nameEn}</h1>
+    <p class="lede">{acrFresh.blurb}</p>
+
+    <p>
+      <strong>{acrFresh.brand}</strong> is operated by the same verified business as
+      <strong>{site.nameEn}</strong> ({site.nameTe}). If you already order our home-cooked lunch and
+      dinner, think of ACR Fresh as the sister line for daily produce — same hub, same care, a
+      separate WhatsApp number for vegetables and essentials.
+    </p>
+
+    <h2>What we deliver</h2>
+    <ul>
+      <li>South Indian vegetables — ¼ kg, ½ kg, and 1 kg packs</li>
+      <li>Milk, staples, and kitchen utilities when you need them in a hurry</li>
+      <li>Minimum order {acrFresh.minOrder}</li>
+      <li>{acrFresh.delivery}</li>
+    </ul>
+
+    <h2>How to order</h2>
+    <p>
+      Message us on WhatsApp at
+      <a href={`tel:+${acrFresh.whatsapp}`}>{acrFresh.whatsappDisplay}</a>
+      — say <strong>Hi</strong> or <strong>Order</strong> to see today’s list, pick your delivery
+      slot, and pay online like our meal orders.
+    </p>
+    <p class="cta-row">
+      <a class="btn btn-primary" href={acrFreshWaLink('Hi, I want to order vegetables')}>
+        Order on WhatsApp
+      </a>
+      <a class="btn btn-ghost" href="/">Back to {site.nameEn} meals</a>
+    </p>
+
+    <h2>Business details</h2>
+    <p>
+      Legal / registered business: <strong>{site.nameEn}</strong> (Udyam verified). Registered
+      address: {site.address}. For meal orders (lunch &amp; dinner), use our main line at
+      <a href={`tel:+${site.whatsapp}`}>{site.whatsappDisplay}</a>
+      or visit <a href="/contact/">contact</a>.
+    </p>
+  </main>
+  <CtaBand
+    heading={`Order ${acrFresh.brand} on WhatsApp`}
+    text={`Vegetables and essentials in ${site.locality}. ${acrFresh.minOrder} minimum · hourly slots.`}
+    waHref={acrFreshWaLink('Hi, I want to order vegetables')}
+    waLabel="Chat on ACR Fresh"
+  />
+  <SiteFooter />
+</BaseLayout>

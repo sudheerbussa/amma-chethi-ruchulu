@@ -15,10 +15,10 @@ Use this as the working checklist. Tick items as you finish them.
 | Phase | Focus | Status |
 |-------|--------|--------|
 | Done | Site + pSEO + Tenali areas | Done |
-| **A** | Google Search Console | **Do next** |
-| **B** | Google Business Profile | **Do next** |
-| C | Bing Webmaster | After A |
-| D | GA4 analytics | After A |
+| **A** | Google Search Console | **Mostly done** (verify + sitemap + indexing requested) |
+| **B** | Google Business Profile | **Likely done** — confirm Verified status |
+| C | Bing Webmaster | **Do next** |
+| D | GA4 analytics | **Do next** |
 | E | Ongoing local SEO (reviews, posts) | This month |
 | F | Content / pSEO expansion | As needed |
 | G | Later / optional | Only when ready |
@@ -45,55 +45,57 @@ Use this as the working checklist. Tick items as you finish them.
 **Goal:** Prove you own the domain, submit the sitemap, ask Google to index money pages.
 
 ### A1. Open Search Console
-- [ ] Go to [Google Search Console](https://search.google.com/search-console/about)
-- [ ] Sign in with the Google account you want as owner (prefer business Gmail: `order.ammachethiruchulu@gmail.com` or your main admin)
+- [x] Go to [Google Search Console](https://search.google.com/search-console/about)
+- [x] Sign in with the Google account you want as owner (prefer business Gmail: `order.ammachethiruchulu@gmail.com` or your main admin)
 
 ### A2. Add a Domain property (preferred)
-- [ ] Click **Add property**
-- [ ] Choose **Domain** (not “URL prefix”)
-- [ ] Enter exactly: `ammachethiruchulu.co.in`  
+- [x] Click **Add property**
+- [x] Choose **Domain** (not “URL prefix”)
+- [x] Enter exactly: `ammachethiruchulu.co.in`  
   - No `https://`  
   - No `www`  
   - No trailing slash
-- [ ] Click **Continue**
+- [x] Click **Continue**
 
 ### A3. Verify ownership via DNS TXT
 Google will show a **TXT record** to add at your DNS host (wherever `ammachethiruchulu.co.in` nameservers point — often Cloudflare, GoDaddy, BigRock, Hostinger, or Vercel DNS).
 
-- [ ] Copy the TXT name/host and value Google shows (often host `@` or the bare domain)
-- [ ] In DNS provider → **Add record**:
+- [x] Copy the TXT name/host and value Google shows (often host `@` or the bare domain)
+- [x] In DNS provider → **Add record**:
   - Type: `TXT`
   - Name/Host: `@` (or as Google instructs)
   - Value: the long `google-site-verification=...` string
   - TTL: default / auto
-- [ ] Save the DNS record
-- [ ] Wait 1–15 minutes (sometimes up to a few hours)
-- [ ] Back in Search Console → **Verify**
+- [x] Save the DNS record
+- [x] Wait 1–15 minutes (sometimes up to a few hours)
+- [x] Back in Search Console → **Verify**
 - [ ] If it fails: wait longer, confirm no typos, confirm you edited the DNS for the same domain that serves the site
 
 **Tip:** Keep the TXT record forever (do not delete after verify).
 
 ### A4. Submit sitemap
-- [ ] In the property → left menu **Sitemaps**
-- [ ] Under “Add a new sitemap”, enter: `sitemap.xml`
-- [ ] Submit
-- [ ] Confirm status becomes **Success** (may take minutes–hours; “Couldn’t fetch” often self-heals — refresh later)
-- [ ] Spot-check live URL: https://ammachethiruchulu.co.in/sitemap.xml
-- [ ] Spot-check robots: https://ammachethiruchulu.co.in/robots.txt (must list the sitemap)
+- [x] In the property → left menu **Sitemaps**
+- [x] Under “Add a new sitemap”, enter full URL if path-only fails: `https://ammachethiruchulu.co.in/sitemap.xml`
+- [x] Submit
+- [x] Confirm status becomes **Success** (36 pages discovered)
+- [x] Spot-check live URL: https://ammachethiruchulu.co.in/sitemap.xml
+- [x] Spot-check robots: https://ammachethiruchulu.co.in/robots.txt (must list the sitemap)
 
 ### A5. Request indexing (priority URLs)
 Use **URL Inspection** (top search bar in GSC) → paste URL → **Request indexing** for:
 
-- [ ] `https://ammachethiruchulu.co.in/`
+- [x] `https://ammachethiruchulu.co.in/`
 - [ ] `https://ammachethiruchulu.co.in/topics/`
 - [ ] `https://ammachethiruchulu.co.in/areas/`
-- [ ] `https://ammachethiruchulu.co.in/areas/tenali/`
-- [ ] `https://ammachethiruchulu.co.in/topics/home-cooked-food-delivery-tenali/`
-- [ ] `https://ammachethiruchulu.co.in/topics/homemade-lunch-delivery-tenali/`
-- [ ] `https://ammachethiruchulu.co.in/topics/whatsapp-food-order-tenali/`
-- [ ] `https://ammachethiruchulu.co.in/contact/`
+- [x] `https://ammachethiruchulu.co.in/areas/tenali/`
+- [x] `https://ammachethiruchulu.co.in/topics/home-cooked-food-delivery-tenali/`
+- [x] `https://ammachethiruchulu.co.in/topics/homemade-lunch-delivery-tenali/`
+- [x] `https://ammachethiruchulu.co.in/topics/whatsapp-food-order-tenali/`
+- [x] `https://ammachethiruchulu.co.in/contact/`
 
 Do a few per day if Google rate-limits requests. More pages will come via the sitemap over time.
+
+- [ ] Optional: add ACR business Gmail as GSC **Owner** under Users and permissions
 
 ### A6. Sanity checks after 2–7 days
 - [ ] **Pages** report shows discovered/indexed URLs climbing
@@ -242,4 +244,6 @@ You can use a storefront address **or** service-area business. Your Udyam/site a
 | Date | Done | Notes |
 |------|------|-------|
 | 2026-08-10 | Site pSEO + Tenali areas live | Ready for GSC + GBP |
+| 2026-08-10 | GSC domain verified + sitemap Success (36 URLs) + indexing requested | Used full sitemap URL |
+| 2026-08-10 | GBP setup (user reports done) | Confirm profile shows **Verified** |
 | | | |

@@ -375,6 +375,22 @@ a {
   border-block: 1px solid rgba(61, 107, 79, 0.18);
 }
 
+.acr-fresh-promo h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  margin: 0 0 0.75rem;
+}
+
+.acr-fresh-promo p {
+  margin: 0;
+  max-width: 40rem;
+  color: var(--ink-soft);
+}
+
+.acr-fresh-promo .cta-row {
+  margin-top: 1.25rem;
+}
+
 .cta-band {
   text-align: center;
   padding: clamp(3rem, 8vw, 4.5rem) var(--space);
