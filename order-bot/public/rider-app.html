@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rider jobs</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #eef2ef; --panel: #fff; --text: #13201a; --muted: #5c6f66;
+        --accent: #0d6e5a; --line: #d5e0da; --warn: #b45309; --ok: #027a48; --danger: #b42318;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: "DM Sans", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+      header {
+        position: sticky; top: 0; z-index: 5;
+        background: #11241e; color: #d7e8e0; padding: 0.85rem 1rem;
+        display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
+      }
+      header a { color: #9fdbc8; font-size: 0.85rem; }
+      main { max-width: 560px; margin: 0 auto; padding: 1rem; }
+      .job {
+        background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+        padding: 0.95rem; margin-bottom: 0.75rem;
+      }
+      .job h3 { margin: 0 0 0.35rem; font-size: 1.05rem; }
+      .meta { color: var(--muted); font-size: 0.86rem; margin: 0.2rem 0; }
+      .cod {
+        background: #fff7ed; color: var(--warn); border-radius: 8px;
+        padding: 0.45rem 0.6rem; font-weight: 600; font-size: 0.9rem; margin: 0.5rem 0;
+      }
+      .actions { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.65rem; }
+      .btn {
+        border: 0; border-radius: 10px; padding: 0.55rem 0.8rem; font: inherit; font-weight: 600;
+        cursor: pointer; background: var(--accent); color: #fff;
+      }
+      .btn.ghost { background: #fff; color: var(--text); border: 1px solid var(--line); }
+      .btn:disabled { opacity: 0.45; }
+      input.cash {
+        width: 7rem; padding: 0.45rem 0.5rem; border-radius: 8px; border: 1px solid var(--line); font: inherit;
+      }
+      .empty { color: var(--muted); padding: 1.5rem 0; text-align: center; }
+      .msg { font-size: 0.88rem; margin: 0.5rem 0; }
+      .msg.err { color: var(--danger); }
+      .msg.ok { color: var(--ok); }
+      h2 { font-size: 0.95rem; margin: 1rem 0 0.5rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <strong id="title">Rider jobs</strong>
+        <div style="font-size:0.8rem;opacity:0.8" id="who"></div>
+      </div>
+      <div>
+        <a href="/rider" id="hubLink">All apps</a>
+        ·
+        <a href="#" id="logout">Log out</a>
+      </div>
+    </header>
+    <main>
+      <p class="msg" id="banner"></p>
+      <h2>Open</h2>
+      <div id="openList"></div>
+      <h2>Recently delivered</h2>
+      <div id="doneList"></div>
+    </main>
+    <script>
+      const LS_TOKEN = 'acr_rider_token';
+      const LS_NAME = 'acr_rider_name';
+
+      function tokenFromHash() {
+        const h = location.hash.replace(/^#/, '');
+        const params = new URLSearchParams(h);
+        const t = params.get('acr_rider_token');
+        if (t) {
+          localStorage.setItem(LS_TOKEN, t);
+          history.replaceState(null, '', location.pathname + location.search);
+        }
+      }
+
+      function token() {
+        return localStorage.getItem(LS_TOKEN) || '';
+      }
+
+      async function api(path, opts = {}) {
+        const res = await fetch(path, {
+          ...opts,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token(),
+            ...(opts.headers || {}),
+          },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        return data;
+      }
+
+      function esc(s) {
+        return String(s || '').replace(/[&<>"']/g, (c) => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+        })[c]);
+      }
+
+      function jobHtml(j, done) {
+        const cod = j.cod_due_paise > 0
+          ? '<div class="cod">Collect cash ' + esc(j.cod_due_label) +
+            (j.cash_confirmed_at ? ' · confirmed' : '') + '</div>'
+          : '<div class="meta">Prepaid · no cash</div>';
+        let actions = '';
+        if (!done) {
+          if (j.status === 'paid' || j.status === 'preparing') {
+            actions += '<button class="btn" data-act="pickup" data-ref="' + esc(j.order_ref) + '">Picked up / Out</button>';
+          }
+          if (j.status === 'out_for_delivery' && j.needs_cash_confirm) {
+            actions +=
+              '<label class="meta">Cash ₹ <input class="cash" type="number" min="0" step="1" data-cash="' +
+              esc(j.order_ref) + '" value="' + Math.round(j.cod_due_paise / 100) + '" /></label>' +
+              '<button class="btn" data-act="cash" data-ref="' + esc(j.order_ref) + '">Confirm cash</button>';
+          }
+          if (j.status === 'out_for_delivery') {
+            actions +=
+              '<button class="btn" data-act="deliver" data-ref="' + esc(j.order_ref) + '"' +
+              (j.needs_cash_confirm ? ' disabled title="Confirm cash first"' : '') +
+              '>Delivered</button>';
+          }
+        }
+        actions += '<a class="btn ghost" href="tel:' + esc(j.phone) + '">Call</a>';
+        if (j.pin_url) actions += '<a class="btn ghost" target="_blank" rel="noopener" href="' + esc(j.pin_url) + '">Map</a>';
+        return (
+          '<article class="job">' +
+          '<h3>' + esc(j.order_ref) + ' · ' + esc(j.status) + '</h3>' +
+          '<div class="meta">' + esc(j.service_label || '') + '</div>' +
+          '<div class="meta"><strong>' + esc(j.items_text) + '</strong></div>' +
+          '<div class="meta">' + esc(j.customer_name ? j.customer_name + ' · ' : '') + esc(j.phone) + '</div>' +
+          '<div class="meta">' + esc(j.address) + '</div>' +
+          cod +
+          '<div class="meta">' + esc(j.total_label) + '</div>' +
+          '<div class="actions">' + actions + '</div></article>'
+        );
+      }
+
+      async function refresh() {
+        const banner = document.getElementById('banner');
+        banner.textContent = '';
+        try {
+          const me = await api('/rider/api/me');
+          document.getElementById('who').textContent = (me.rider?.name || '') + ' · ' + (me.product || '');
+          document.getElementById('title').textContent = (me.product === 'fresh' ? 'Fresh' : 'Food') + ' jobs';
+          const data = await api('/rider/api/jobs');
+          document.getElementById('openList').innerHTML =
+            data.open?.length ? data.open.map((j) => jobHtml(j, false)).join('') : '<div class="empty">No open jobs</div>';
+          document.getElementById('doneList').innerHTML =
+            data.recent_done?.length ? data.recent_done.map((j) => jobHtml(j, true)).join('') : '<div class="empty">—</div>';
+        } catch (e) {
+          banner.className = 'msg err';
+          banner.textContent = e.message || 'Could not load jobs';
+          if (/login|Unauthorized|401/i.test(e.message || '')) {
+            setTimeout(() => { location.href = '/rider'; }, 800);
+          }
+        }
+      }
+
+      document.getElementById('openList').onclick = async (ev) => {
+        const btn = ev.target.closest('button[data-act]');
+        if (!btn) return;
+        const ref = btn.dataset.ref;
+        const act = btn.dataset.act;
+        const banner = document.getElementById('banner');
+        btn.disabled = true;
+        try {
+          if (act === 'pickup') await api('/rider/api/jobs/' + encodeURIComponent(ref) + '/pickup', { method: 'POST', body: '{}' });
+          if (act === 'cash') {
+            const input = document.querySelector('input[data-cash="' + ref + '"]');
+            await api('/rider/api/jobs/' + encodeURIComponent(ref) + '/confirm-cash', {
+              method: 'POST',
+              body: JSON.stringify({ amount_rupees: input ? Number(input.value) : undefined }),
+            });
+          }
+          if (act === 'deliver') await api('/rider/api/jobs/' + encodeURIComponent(ref) + '/deliver', { method: 'POST', body: '{}' });
+          banner.className = 'msg ok';
+          banner.textContent = 'Updated ' + ref;
+          await refresh();
+        } catch (e) {
+          banner.className = 'msg err';
+          banner.textContent = e.message || 'Action failed';
+          btn.disabled = false;
+        }
+      };
+
+      document.getElementById('logout').onclick = (ev) => {
+        ev.preventDefault();
+        localStorage.removeItem(LS_TOKEN);
+        location.href = '/rider';
+      };
+
+      tokenFromHash();
+      if (!token()) location.href = '/rider';
+      else refresh();
+    </script>
+  </body>
+</html>

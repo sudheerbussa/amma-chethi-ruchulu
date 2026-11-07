@@ -1,0 +1,52 @@
+{
+  "name": "acr",
+  "display_name": "అమ్మ చేతి రుచులు",
+  "display_name_en": "Amma Chethi Ruchulu",
+  "handle": "@order.ammachethiruchulu",
+  "niche": "Andhra home-cooked food + healthy weekday food habits",
+  "geo": "Tenali / nearby",
+  "language": "te-en",
+  "copy_style": "tenglish",
+  "subline": "Healthy home habits",
+  "offer": "Scheduled home-cooked lunch & dinner via WhatsApp — order before cutoff",
+  "icp": "Working professionals and families who want real home food and steadier eating habits",
+  "pains": [
+    "No time to cook authentic meals",
+    "Restaurant / cloud-kitchen food feels oily and heavy",
+    "Eating habits collapse on busy weekdays"
+  ],
+  "outcomes": [
+    "A simple cutoff habit that keeps lunch sorted",
+    "Lighter, home-style plates vs deep-fried takeout",
+    "WhatsApp ordering without app chaos"
+  ],
+  "cta_keyword": "MENU",
+  "cta_url": "https://wa.me/9823583498",
+  "booking_or_order": "WhatsApp order bot",
+  "template": "tweet_card_healthy",
+  "colors": {
+    "bg": "#f4efe6",
+    "card": "#fffaf3",
+    "text": "#3d2b1f",
+    "accent": "#6b8e5a"
+  },
+  "profile_image": "profile.png",
+  "competitors": [],
+  "topic_blacklist": [
+    "guaranteed weight loss",
+    "medical claims",
+    "fake 20-minute delivery promises",
+    "banana leaf service / అరటాకు serving (logo only — not how food is delivered)"
+  ],
+  "voice_samples": [
+    "ఆరోగ్యకరమైన తిండి అలవాట్లు అమ్మ వంటింట్లోనే మొదలవుతాయి — క్లౌడ్ కిచెన్‌లో కాదు.",
+    "కటాఫ్ ముందే ఆర్డర్ పెట్టండి. సమయానికి తినండి. టేక్‌అవే కంటే తేలికగా అనిపిస్తుంది."
+  ],
+  "pillars": [
+    "Weekday food habits (cutoffs, routine)",
+    "Home food vs oily restaurant food",
+    "What a balanced Amma plate looks like",
+    "Busy-day lunch systems",
+    "Menu / WhatsApp CTA"
+  ]
+}

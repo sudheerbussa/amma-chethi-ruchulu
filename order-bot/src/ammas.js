@@ -3,8 +3,8 @@
  *
  * Architecture (MVP + payments path):
  *  - `ammas` entity: profile, payout share (bps), optional UPI, active flag
- *  - `dishes.amma_id` + denormalized `dishes.cook_name` for WhatsApp label
- *  - Cart/order lines snapshot `cook_name` / `amma_id` so historical payouts stay correct
+ *  - `dishes.amma_id` + denormalized `dishes.cook_name` for admin / payouts / Catalog
+ *  - Cart/order lines snapshot `cook_name` / `amma_id` (not repeated in WhatsApp copy)
  *  - Weekly earnings computed from paid orders (admin preview now; payout weeks later)
  *
  * See AMMAS.md for full design.
@@ -73,7 +73,7 @@ export const SEED_AMMAS = [
     active: true,
     payout_share_bps: 6800,
     upi_id: null,
-    notes: 'Rice, meals & combos',
+    notes: 'Rice, meals & party packs',
   },
   {
     id: 'venkatalakshmi',
@@ -92,12 +92,16 @@ export function isPlaceholderCook(name) {
   return PLACEHOLDER_COOKS.has(String(name || '').trim().toLowerCase());
 }
 
-/** WhatsApp / customer-facing dish line — USP: dish + Amma. */
-export function formatDishLabel(dishOrName, cookName) {
-  const name =
-    typeof dishOrName === 'string'
-      ? dishOrName
-      : String(dishOrName?.name || dishOrName?.base_name || '').trim();
+/** Customer-facing dish name only (no Amma suffix — Catalog / Flow picker show cook once). */
+export function formatDishLabel(dishOrName, _cookName) {
+  if (typeof dishOrName === 'string') return String(dishOrName || '').trim() || '—';
+  const name = String(dishOrName?.base_name || dishOrName?.name || dishOrName?.code || '').trim();
+  return name || '—';
+}
+
+/** Flow dish picker / qty — dish + Amma (single browse touchpoint per channel). */
+export function formatDishWithCook(dishOrName, cookName) {
+  const name = formatDishLabel(dishOrName);
   const cook = String(
     cookName != null
       ? cookName
@@ -105,10 +109,15 @@ export function formatDishLabel(dishOrName, cookName) {
         ? dishOrName?.cook_name || ''
         : '',
   ).trim();
-  if (!name) return cook || '—';
   if (!cook || isPlaceholderCook(cook)) return name;
-  // "Tomato Pappu · Lakshmi Amma"
   return `${name} · ${cook}`;
+}
+
+/** Strip legacy "Dish · Lakshmi Amma" lines stored on old cart/order rows. */
+export function stripCookFromLineName(name) {
+  const s = String(name || '').trim();
+  if (!s) return '';
+  return s.replace(/\s·\s[^·]+Amma\s*$/i, '').trim() || s;
 }
 
 /** Compact form for 24-char WhatsApp list titles — prefer dish name. */
@@ -116,12 +125,9 @@ export function formatDishListTitle(dish) {
   return String(dish?.name || dish?.code || 'Item').slice(0, 24);
 }
 
-/** 72-char WhatsApp list description — Amma first so USP is visible. */
+/** 72-char WhatsApp list description (price / note — cook shown in Catalog only). */
 export function formatDishListDescription(dish, bits = []) {
-  const cook = String(dish?.cook_name || '').trim();
-  const prefix =
-    cook && !isPlaceholderCook(cook) ? [`by ${cook}`] : [];
-  return [...prefix, ...bits].filter(Boolean).join(' · ').slice(0, 72);
+  return [...bits].filter(Boolean).join(' · ').slice(0, 72);
 }
 
 export function ammaSlugFromName(name) {

@@ -3,6 +3,7 @@
  * Kinds:
  *  - flat_discount: food ≥ above_paise → subtract discount_paise (stack multiple)
  *  - free_delivery: food ≥ above_paise → delivery fee 0 (stacks with discounts)
+ *  - qty_bundle: every N qty of dish_code → discount_paise (× floor(qty/N)); optional valid_date
  */
 
 import { DELIVERY_ZONES } from './menu.js';
@@ -29,48 +30,90 @@ export {
 
 export const OFFER_KINDS = {
   flat_discount: 'flat_discount',
+  first_order_discount: 'first_order_discount',
   free_delivery: 'free_delivery',
+  qty_bundle: 'qty_bundle',
 };
 
-/** Launch defaults — both enabled. */
+/** No default promos — new-customer discount comes from the referral program (referrals.js). */
 export function defaultOffers() {
-  return [
-    {
-      id: 'launch_discount',
-      kind: OFFER_KINDS.flat_discount,
-      enabled: true,
-      title: 'Launch offer — ₹50 off',
-      above_paise: 20000,
-      discount_paise: 5000,
-    },
-    {
-      id: 'launch_free_delivery',
-      kind: OFFER_KINDS.free_delivery,
-      enabled: true,
-      title: 'Launch offer — free delivery',
-      above_paise: 30000,
-      discount_paise: 0,
-    },
-  ];
+  return [];
+}
+
+/** Boot cleanup: drop the retired auto-seeded ₹50 first-order offer (replaced by referral welcome). */
+export function mergeBootstrapOffers(list) {
+  const rows = (Array.isArray(list) ? list : []).filter((o) => o?.id !== 'first_order_50');
+  return normalizeOffersList(rows);
 }
 
 function slugId(prefix = 'offer') {
   return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 }
 
+function cartQtyForCode(cart, dishCode) {
+  const code = String(dishCode || '').toUpperCase();
+  if (!code) return 0;
+  return (Array.isArray(cart) ? cart : []).reduce((sum, line) => {
+    if (String(line?.code || '').toUpperCase() !== code) return sum;
+    return sum + Math.max(0, Math.round(Number(line.qty) || 0));
+  }, 0);
+}
+
 export function normalizeOffer(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const kind = String(raw.kind || '').trim();
-  if (kind !== OFFER_KINDS.flat_discount && kind !== OFFER_KINDS.free_delivery) return null;
+  if (
+    kind !== OFFER_KINDS.flat_discount &&
+    kind !== OFFER_KINDS.first_order_discount &&
+    kind !== OFFER_KINDS.free_delivery &&
+    kind !== OFFER_KINDS.qty_bundle
+  ) {
+    return null;
+  }
+
+  if (kind === OFFER_KINDS.qty_bundle) {
+    const dishCode = String(raw.dish_code || raw.dishCode || '')
+      .trim()
+      .toUpperCase();
+    if (!dishCode) return null;
+    const everyQty = Math.max(2, Math.round(Number(raw.every_qty ?? raw.everyQty) || 2));
+    const discount = Math.max(0, Math.round(Number(raw.discount_paise) || 0));
+    if (discount <= 0) return null;
+    const validDate = String(raw.valid_date || raw.validDate || '')
+      .trim()
+      .slice(0, 10);
+    const title =
+      String(raw.title || '').trim() ||
+      `${formatPaise(discount)} off · every ${everyQty}× ${dishCode}`;
+    return {
+      id: String(raw.id || slugId(kind)).slice(0, 48),
+      kind,
+      enabled: raw.enabled !== false && raw.enabled !== 0 && raw.enabled !== '0',
+      title: title.slice(0, 80),
+      above_paise: 0,
+      discount_paise: discount,
+      dish_code: dishCode.slice(0, 16),
+      every_qty: everyQty,
+      valid_date: /^\d{4}-\d{2}-\d{2}$/.test(validDate) ? validDate : null,
+    };
+  }
+
   const above = Math.max(0, Math.round(Number(raw.above_paise) || 0));
   let discount = Math.max(0, Math.round(Number(raw.discount_paise) || 0));
   if (kind === OFFER_KINDS.free_delivery) discount = 0;
-  if (kind === OFFER_KINDS.flat_discount && discount <= 0) return null;
+  if (
+    (kind === OFFER_KINDS.flat_discount || kind === OFFER_KINDS.first_order_discount) &&
+    discount <= 0
+  ) {
+    return null;
+  }
   const title =
     String(raw.title || '').trim() ||
     (kind === OFFER_KINDS.free_delivery
       ? `Free delivery above ${formatPaise(above)}`
-      : `${formatPaise(discount)} off above ${formatPaise(above)}`);
+      : kind === OFFER_KINDS.first_order_discount
+        ? `First order — ${formatPaise(discount)} off above ${formatPaise(above)}`
+        : `${formatPaise(discount)} off above ${formatPaise(above)}`);
   return {
     id: String(raw.id || slugId(kind)).slice(0, 48),
     kind,
@@ -97,7 +140,7 @@ export function normalizeOffersList(list) {
 }
 
 export function freeDeliveryThresholdPaise(offers) {
-  const acts = (offers || [])
+  const acts = normalizeOffersList(offers || [])
     .filter((o) => o.enabled && o.kind === OFFER_KINDS.free_delivery)
     .map((o) => o.above_paise);
   if (!acts.length) return null;
@@ -110,13 +153,69 @@ export function qualifiesFreeDelivery(foodPaise, offers) {
 }
 
 /**
- * @param {{ foodPaise: number, zoneId?: string, offers: Array, deliverySettings?: object, dayIso?: string }} args
+ * Referred friend's first order: one deal dish at the deal price (no minimum) or the flat
+ * discount (food ≥ min) — whichever saves more. Never both.
  */
-export function applyOffers({ foodPaise, zoneId, offers, deliverySettings, dayIso }) {
+function referralWelcomeOffer(rw, food, cart) {
+  if (!rw) return null;
+  const flatAmount = Math.round(Number(rw.amount_paise) || 0);
+  const flat = flatAmount > 0 && food >= (Number(rw.min_paise) || 0) ? flatAmount : 0;
+  const deal = rw.dish_deal;
+  const dealPrice = Math.round(Number(deal?.price_paise) || 0);
+  let dealSave = 0;
+  let dealLine = null;
+  if (deal && Array.isArray(deal.codes)) {
+    for (const line of Array.isArray(cart) ? cart : []) {
+      if (!deal.codes.includes(String(line?.code || '').toUpperCase())) continue;
+      if (!(Number(line.qty) >= 1)) continue;
+      const save = Math.round(Number(line.unit_price_paise) || 0) - dealPrice;
+      if (save > dealSave) {
+        dealSave = save;
+        dealLine = line;
+      }
+    }
+  }
+  const tag = rw.code ? ` (${rw.code})` : '';
+  if (dealSave > flat) {
+    return {
+      id: 'referral_welcome',
+      kind: 'referral_welcome',
+      title: `Referral welcome${tag} — ${dealLine.base_name || dealLine.name || dealLine.code} @ ${formatPaise(dealPrice)}`,
+      amount_paise: dealSave,
+      code: rw.code || null,
+      dish_code: String(dealLine.code).toUpperCase(),
+    };
+  }
+  if (flat > 0) {
+    return {
+      id: 'referral_welcome',
+      kind: 'referral_welcome',
+      title: rw.title || `Referral welcome — ${formatPaise(flat)} off`,
+      amount_paise: flat,
+      code: rw.code || null,
+    };
+  }
+  return null;
+}
+
+/**
+ * @param {{ foodPaise: number, zoneId?: string, offers: Array, deliverySettings?: object, dayIso?: string, cart?: Array, isFirstOrderCustomer?: boolean, referralWelcome?: { amount_paise: number, min_paise: number, title: string, code?: string, dish_deal?: { codes: string[], price_paise: number } | null } | null }} args
+ */
+export function applyOffers({
+  foodPaise,
+  zoneId,
+  offers,
+  deliverySettings,
+  dayIso,
+  cart,
+  isFirstOrderCustomer = false,
+  referralWelcome = null,
+}) {
   const food = Math.max(0, Math.round(Number(foodPaise) || 0));
+  const day = String(dayIso || '').slice(0, 10);
   const effective = effectiveDeliverySettings(
     deliverySettings || defaultDeliverySettings(),
-    dayIso || '',
+    day || '',
   );
   const baseFee = baseDeliveryFeePaise(zoneId || 'z2', effective);
   let discount_paise = 0;
@@ -125,8 +224,37 @@ export function applyOffers({ foodPaise, zoneId, offers, deliverySettings, dayIs
 
   for (const o of normalizeOffersList(offers)) {
     if (!o.enabled) continue;
+
+    if (o.kind === OFFER_KINDS.qty_bundle) {
+      if (o.valid_date && day && o.valid_date !== day) continue;
+      if (o.valid_date && !day) continue;
+      const qty = cartQtyForCode(cart, o.dish_code);
+      const bundles = Math.floor(qty / (o.every_qty || 2));
+      if (bundles < 1) continue;
+      const amount = bundles * o.discount_paise;
+      discount_paise += amount;
+      applied.push({
+        id: o.id,
+        kind: o.kind,
+        title: o.title,
+        amount_paise: amount,
+        dish_code: o.dish_code,
+        bundles,
+      });
+      continue;
+    }
+
     if (food < o.above_paise) continue;
-    if (o.kind === OFFER_KINDS.flat_discount) {
+    if (o.kind === OFFER_KINDS.first_order_discount) {
+      if (!isFirstOrderCustomer) continue;
+      discount_paise += o.discount_paise;
+      applied.push({
+        id: o.id,
+        kind: o.kind,
+        title: o.title,
+        amount_paise: o.discount_paise,
+      });
+    } else if (o.kind === OFFER_KINDS.flat_discount) {
       discount_paise += o.discount_paise;
       applied.push({
         id: o.id,
@@ -143,6 +271,12 @@ export function applyOffers({ foodPaise, zoneId, offers, deliverySettings, dayIs
         amount_paise: baseFee,
       });
     }
+  }
+
+  const welcome = referralWelcomeOffer(referralWelcome, food, cart);
+  if (welcome) {
+    discount_paise += welcome.amount_paise;
+    applied.push(welcome);
   }
 
   discount_paise = Math.min(discount_paise, food);
@@ -173,17 +307,49 @@ export function applyOffers({ foodPaise, zoneId, offers, deliverySettings, dayIs
   };
 }
 
+/**
+ * ACR Credit (wallet) as the last discount line. Amount comes from referrals.walletUseFor
+ * (already capped); run after pickup / fee overrides so total stays consistent.
+ */
+export function applyWalletCredit(pricing, walletPaise) {
+  const food = Math.max(0, Number(pricing.food_paise) || 0);
+  const discount = Math.max(0, Number(pricing.discount_paise) || 0);
+  const amount = Math.min(Math.max(0, Math.round(Number(walletPaise) || 0)), Math.max(0, food - discount));
+  if (amount <= 0) return { ...pricing, wallet_paise: 0 };
+  return {
+    ...pricing,
+    discount_paise: discount + amount,
+    total_paise: Math.max(0, (Number(pricing.total_paise) || 0) - amount),
+    wallet_paise: amount,
+    applied: [
+      ...(pricing.applied || []),
+      { id: 'wallet_credit', kind: 'wallet_credit', title: `ACR Credit −${formatPaise(amount)}`, amount_paise: amount },
+    ],
+  };
+}
+
 /** Short lines for WhatsApp cart / welcome */
-export function formatOffersPublicLines(offers) {
+export function formatOffersPublicLines(offers, { dayIso, isFirstOrderCustomer = true } = {}) {
+  const day = String(dayIso || '').slice(0, 10);
   const lines = [];
   for (const o of normalizeOffersList(offers)) {
     if (!o.enabled) continue;
-    if (o.kind === OFFER_KINDS.flat_discount) {
+    if (o.kind === OFFER_KINDS.first_order_discount) {
+      if (!isFirstOrderCustomer) continue;
+      lines.push(
+        `• First order: ${formatPaise(o.discount_paise)} off food ≥ ${formatPaise(o.above_paise)}`,
+      );
+    } else if (o.kind === OFFER_KINDS.flat_discount) {
       lines.push(
         `• ${formatPaise(o.discount_paise)} off food ≥ ${formatPaise(o.above_paise)}`,
       );
     } else if (o.kind === OFFER_KINDS.free_delivery) {
       lines.push(`• Free delivery on food ≥ ${formatPaise(o.above_paise)}`);
+    } else if (o.kind === OFFER_KINDS.qty_bundle) {
+      if (o.valid_date && (!day || o.valid_date !== day)) continue;
+      lines.push(
+        `• ${o.title || `${formatPaise(o.discount_paise)} off every ${o.every_qty}× ${o.dish_code}`}`,
+      );
     }
   }
   return lines;

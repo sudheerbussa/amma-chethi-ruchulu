@@ -347,7 +347,7 @@ Order on WhatsApp
 
 **Chef CTA link (for Canva, not AI):**  
 `https://wa.me/918886128995?text=AMMA%20-%20I%20want%20to%20cook%20with%20you`  
-Digits only if this creative intentionally shows a number: `+91 88861 28995`
+Digits only if this creative intentionally shows a number: for **Amma recruit ads always show** `+91 88861 28995`
 
 ---
 

@@ -1,7 +1,13 @@
 import { getDb } from '../db.js';
 import { config } from '../config.js';
-import { applyOrderStatus } from '../orders/status.js';
+import { applyOrderStatus, paymentThanksMessage } from '../orders/status.js';
+import {
+  orderAcceptsOnlinePayment,
+  onlinePaymentAmountPaise,
+  orderHasOpenCod,
+} from '../orders/fulfillment-pay.js';
 import { resolveFromRoot } from '../paths.js';
+import { sendText } from '../whatsapp.js';
 import {
   createRazorpayOrder,
   isRazorpayReady,
@@ -11,12 +17,46 @@ import {
 
 /** Mark ACR order paid + WhatsApp thanks (idempotent if already paid). */
 async function markOrderPaidFromRazorpay(order, { razorpay_order_id, razorpay_payment_id }) {
+  const onlinePaidExtra = {
+    razorpay_order_id,
+    razorpay_payment_id,
+    paid_via: 'razorpay',
+    payment_method: 'online',
+    paid_at: new Date().toISOString(),
+    cod_due_paise: 0,
+    prepaid_paise: Math.max(0, Math.round(Number(order.total_paise) || 0)),
+    cash_confirmed_at: new Date().toISOString(),
+    cod_collected_paise: orderHasOpenCod(order)
+      ? Math.max(0, Math.round(Number(order.cod_due_paise) || 0))
+      : null,
+  };
   if (
     order.status === 'paid' ||
     order.status === 'preparing' ||
     order.status === 'out_for_delivery' ||
     order.status === 'delivered'
   ) {
+    // COD then paid online — clear door-cash due, keep kitchen status.
+    if (orderHasOpenCod(order)) {
+      const db = getDb();
+      const settled = await db.updateOrderStatus(order.order_ref, order.status, onlinePaidExtra);
+      if (settled?.phone) {
+        try {
+          await sendText(settled.phone, paymentThanksMessage(settled));
+        } catch (err) {
+          console.error('COD→online thank-you failed', err.message || err);
+        }
+      }
+      console.log('Settled COD via Razorpay', order.order_ref, razorpay_payment_id);
+      return {
+        ok: true,
+        already: true,
+        settled_cod: true,
+        order_ref: order.order_ref,
+        status: order.status,
+        order: settled,
+      };
+    }
     return { ok: true, already: true, order_ref: order.order_ref, status: order.status };
   }
   if (order.status !== 'pending_payment') {
@@ -27,12 +67,7 @@ async function markOrderPaidFromRazorpay(order, { razorpay_order_id, razorpay_pa
   }
   const result = await applyOrderStatus(order.order_ref, 'paid', {
     notifyCustomer: true,
-    extra: {
-      razorpay_order_id,
-      razorpay_payment_id,
-      paid_via: 'razorpay',
-      paid_at: new Date().toISOString(),
-    },
+    extra: onlinePaidExtra,
   });
   if (!result.ok) {
     return { ok: false, error: result.error || 'Could not mark paid' };
@@ -125,16 +160,25 @@ export function mountPayments(app) {
       res.status(404).json({ error: `Order ${orderRef} not found` });
       return;
     }
+    const payable = orderAcceptsOnlinePayment(order);
+    const amount_due_paise = payable ? onlinePaymentAmountPaise(order) : 0;
     res.json({
       business_name: config.businessName,
       razorpay: isRazorpayReady(),
+      payable,
+      amount_due_paise,
+      cod_open: orderHasOpenCod(order),
+      status: order.status,
       ...orderBreakdown(order),
+      // Prefer amount due for the pay button (COD remainder or full total)
+      total_paise: payable ? amount_due_paise : order.total_paise,
     });
   });
 
   /**
    * Create Razorpay order.
    * Body: { order_ref } for a WhatsApp order, OR { amount } paise for sandbox tests.
+   * Allows pending_payment OR COD-open kitchen orders (pay after choosing COD).
    */
   app.post('/api/create-order', async (req, res) => {
     if (!isRazorpayReady()) {
@@ -151,6 +195,7 @@ export function mountPayments(app) {
       let notes = {};
       let breakdown = null;
       let customerName = null;
+      let kitchenStatus = null;
 
       if (orderRef) {
         const order = await getDb().findOrderByRef(orderRef);
@@ -158,22 +203,33 @@ export function mountPayments(app) {
           res.status(404).json({ error: `Order ${orderRef} not found` });
           return;
         }
-        if (order.status === 'paid' || order.status === 'preparing' || order.status === 'out_for_delivery' || order.status === 'delivered') {
-          res.status(400).json({ error: `Order ${orderRef} is already ${order.status}` });
+        if (!orderAcceptsOnlinePayment(order)) {
+          if (
+            order.status === 'paid' ||
+            order.status === 'preparing' ||
+            order.status === 'out_for_delivery' ||
+            order.status === 'delivered'
+          ) {
+            res.status(400).json({
+              error: `Order ${orderRef} is already paid online (no COD due).`,
+            });
+            return;
+          }
+          res.status(400).json({
+            error: `Order ${orderRef} cannot be paid (status: ${order.status})`,
+          });
           return;
         }
-        if (order.status !== 'pending_payment') {
-          res.status(400).json({ error: `Order ${orderRef} cannot be paid (status: ${order.status})` });
-          return;
-        }
-        amountPaise = order.total_paise;
+        amountPaise = onlinePaymentAmountPaise(order);
         receipt = order.order_ref;
         breakdown = orderBreakdown(order);
         customerName = order.customer_name || null;
+        kitchenStatus = order.status;
         notes = {
           order_ref: order.order_ref,
           phone: order.phone || '',
           business: config.businessName,
+          settle_cod: orderHasOpenCod(order) ? '1' : '0',
         };
       } else if (rawAmount !== undefined && rawAmount !== null && rawAmount !== '') {
         amountPaise = Math.round(Number(rawAmount));
@@ -183,10 +239,16 @@ export function mountPayments(app) {
         return;
       }
 
+      if (!amountPaise || amountPaise < 100) {
+        res.status(400).json({ error: 'Payment amount too small' });
+        return;
+      }
+
       const created = await createRazorpayOrder({ amountPaise, receipt, notes });
 
-      if (orderRef) {
-        await getDb().updateOrderStatus(orderRef, 'pending_payment', {
+      if (orderRef && kitchenStatus) {
+        // Keep kitchen status (paid/preparing/…) when settling COD; only store Razorpay id.
+        await getDb().updateOrderStatus(orderRef, kitchenStatus, {
           razorpay_order_id: created.order_id,
         });
       }
@@ -208,6 +270,7 @@ export function mountPayments(app) {
         breakdown,
         customer_name: customerName,
         customer_phone: customerPhone,
+        settle_cod: notes.settle_cod === '1',
       });
     } catch (err) {
       console.error('create-order failed', err);

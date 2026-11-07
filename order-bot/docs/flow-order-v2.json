@@ -1,0 +1,478 @@
+{
+  "version": "7.1",
+  "data_api_version": "3.0",
+  "routing_model": {
+    "MEAL": ["CATEGORY"],
+    "CATEGORY": ["DISH"],
+    "DISH": ["QTY"],
+    "QTY": ["CART"],
+    "CART": ["CATEGORY", "FULFILLMENT"],
+    "FULFILLMENT": ["ADDRESS", "SLOT", "CONFIRM"],
+    "ADDRESS": ["SLOT", "CONFIRM"],
+    "SLOT": ["CONFIRM"],
+    "CONFIRM": []
+  },
+  "screens": [
+    {
+      "id": "MEAL",
+      "title": "Order",
+      "data": {
+        "default_meal": { "type": "string", "__example__": "lunch" },
+        "meal_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": { "id": { "type": "string" }, "title": { "type": "string" } }
+          },
+          "__example__": [
+            { "id": "lunch", "title": "Continue" }
+          ]
+        },
+        "heading": { "type": "string", "__example__": "Tuesday, 16/09/2026\nContinue for menu" },
+        "error_message": { "type": "string", "__example__": "" }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextHeading", "text": "${data.heading}" },
+          {
+            "type": "Form",
+            "name": "meal_form",
+            "children": [
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": { "meal": "${data.default_meal}" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CATEGORY",
+      "title": "Category",
+      "data": {
+        "meal": { "type": "string", "__example__": "lunch" },
+        "service_label": { "type": "string", "__example__": "Thursday" },
+        "heading": { "type": "string", "__example__": "Lunch" },
+        "category_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": { "id": { "type": "string" }, "title": { "type": "string" } }
+          },
+          "__example__": [
+            { "id": "veg", "title": "Veg" },
+            { "id": "nonveg", "title": "Non-veg" }
+          ]
+        },
+        "error_message": { "type": "string", "__example__": "" }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextHeading", "text": "${data.heading}" },
+          {
+            "type": "Form",
+            "name": "cat_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "category",
+                "label": "Category",
+                "required": true,
+                "data-source": "${data.category_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": { "meal": "${data.meal}", "category": "${form.category}" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "DISH",
+      "title": "Dish",
+      "data": {
+        "meal": { "type": "string", "__example__": "lunch" },
+        "category": { "type": "string", "__example__": "veg" },
+        "heading": { "type": "string", "__example__": "Veg" },
+        "error_message": { "type": "string", "__example__": "" },
+        "dish_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          },
+          "__example__": [
+            { "id": "A05", "title": "Veg Meal", "description": "₹100" },
+            { "id": "A08", "title": "Chapathi + veg curry + pappu", "description": "₹90" }
+          ]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextHeading", "text": "${data.heading}" },
+          {
+            "type": "Form",
+            "name": "dish_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "dish_code",
+                "label": "Dish",
+                "required": true,
+                "data-source": "${data.dish_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}",
+                    "category": "${data.category}",
+                    "dish_code": "${form.dish_code}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "QTY",
+      "title": "Quantity",
+      "data": {
+        "meal": { "type": "string", "__example__": "lunch" },
+        "category": { "type": "string", "__example__": "veg" },
+        "dish_code": { "type": "string", "__example__": "V01" },
+        "dish_label": { "type": "string", "__example__": "Tomato Pappu" },
+        "price_label": { "type": "string", "__example__": "₹30 each" },
+        "note": { "type": "string", "__example__": " " },
+        "max_qty": { "type": "number", "__example__": 30 },
+        "error_message": { "type": "string", "__example__": " " }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextHeading", "text": "${data.dish_label}" },
+          { "type": "TextBody", "text": "${data.price_label}" },
+          {
+            "type": "Form",
+            "name": "qty_form",
+            "children": [
+              {
+                "type": "TextInput",
+                "name": "qty",
+                "label": "Quantity",
+                "input-type": "number",
+                "required": true
+              },
+              {
+                "type": "Footer",
+                "label": "Add to cart",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}",
+                    "category": "${data.category}",
+                    "dish_code": "${data.dish_code}",
+                    "dish_label": "${data.dish_label}",
+                    "price_label": "${data.price_label}",
+                    "qty": "${form.qty}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CART",
+      "title": "Cart",
+      "data": {
+        "meal": { "type": "string", "__example__": "lunch" },
+        "heading": { "type": "string", "__example__": "Cart · 2 item(s)" },
+        "summary": { "type": "string", "__example__": "1x Tomato Pappu\n2x Chicken Curry\nFood ₹150" },
+        "next_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": { "id": { "type": "string" }, "title": { "type": "string" } }
+          },
+          "__example__": [
+            { "id": "add_more", "title": "Add another item" },
+            { "id": "checkout", "title": "Checkout" }
+          ]
+        },
+        "error_message": { "type": "string", "__example__": " " }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextHeading", "text": "${data.heading}" },
+          { "type": "TextBody", "text": "${data.summary}" },
+          {
+            "type": "Form",
+            "name": "cart_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "next_step",
+                "label": "Next",
+                "required": true,
+                "data-source": "${data.next_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}",
+                    "next_step": "${form.next_step}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "FULFILLMENT",
+      "title": "Delivery",
+      "data": {
+        "meal": { "type": "string", "__example__": "lunch" },
+        "heading": { "type": "string", "__example__": "Delivery or Pickup?" },
+        "helper": { "type": "string", "__example__": "Pickup = kitchen · Delivery = home" },
+        "cart_preview": { "type": "string", "__example__": "1x Veg Meal" },
+        "fulfillment_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          },
+          "__example__": [
+            { "id": "delivery", "title": "Delivery", "description": "Home delivery · fee by distance" },
+            { "id": "pickup", "title": "Pickup", "description": "Collect at kitchen · no fee" }
+          ]
+        },
+        "error_message": { "type": "string", "__example__": " " }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextHeading", "text": "${data.heading}" },
+          { "type": "TextBody", "text": "${data.cart_preview}" },
+          { "type": "TextBody", "text": "${data.helper}" },
+          {
+            "type": "Form",
+            "name": "fulfill_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "fulfillment",
+                "label": "How to fulfil?",
+                "required": true,
+                "data-source": "${data.fulfillment_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}",
+                    "fulfillment": "${form.fulfillment}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ADDRESS",
+      "title": "Address",
+      "data": {
+        "meal": { "type": "string", "__example__": "lunch" },
+        "fulfillment_type": { "type": "string", "__example__": "delivery" },
+        "heading": { "type": "string", "__example__": "Delivery address" },
+        "helper": { "type": "string", "__example__": "Pick saved or type new" },
+        "cart_preview": { "type": "string", "__example__": "1x Tomato Pappu" },
+        "address_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          },
+          "__example__": [
+            { "id": "saved_a1", "title": "Amaravathi flats", "description": "📍 Pin saved" },
+            { "id": "new", "title": "Type a new address", "description": "Enter below" }
+          ]
+        },
+        "error_message": { "type": "string", "__example__": " " },
+        "show_address_new": { "type": "boolean", "__example__": true }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextHeading", "text": "${data.heading}" },
+          { "type": "TextBody", "text": "${data.cart_preview}" },
+          { "type": "TextBody", "text": "${data.helper}" },
+          {
+            "type": "Form",
+            "name": "addr_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "address_choice",
+                "label": "Address",
+                "required": true,
+                "data-source": "${data.address_options}"
+              },
+              {
+                "type": "TextArea",
+                "name": "address_new",
+                "label": "New address (if Type new)",
+                "required": false,
+                "visible": "${data.show_address_new}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}",
+                    "fulfillment_type": "${data.fulfillment_type}",
+                    "address_choice": "${form.address_choice}",
+                    "address_new": "${form.address_new}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "SLOT",
+      "title": "Delivery time",
+      "data": {
+        "meal": { "type": "string", "__example__": "lunch" },
+        "address": { "type": "string", "__example__": "Tower A" },
+        "fulfillment_type": { "type": "string", "__example__": "delivery" },
+        "heading": { "type": "string", "__example__": "Pick delivery window" },
+        "slot_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          },
+          "__example__": [
+            { "id": "2026-09-12T1230", "title": "12:30–01:00 PM", "description": "Lunch · Saturday" }
+          ]
+        },
+        "error_message": { "type": "string", "__example__": " " }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextHeading", "text": "${data.heading}" },
+          {
+            "type": "Form",
+            "name": "slot_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "delivery_slot",
+                "label": "Delivery window",
+                "required": true,
+                "data-source": "${data.slot_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}",
+                    "address": "${data.address}",
+                    "fulfillment_type": "${data.fulfillment_type}",
+                    "delivery_slot": "${form.delivery_slot}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONFIRM",
+      "title": "Confirm",
+      "terminal": true,
+      "success": true,
+      "data": {
+        "meal": { "type": "string", "__example__": "lunch" },
+        "address": { "type": "string", "__example__": "Tower A" },
+        "fulfillment_type": { "type": "string", "__example__": "delivery" },
+        "delivery_slot": { "type": "string", "__example__": "2026-09-12T1230" },
+        "summary": { "type": "string", "__example__": "1x Tomato Pappu" }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextHeading", "text": "Confirm order" },
+          { "type": "TextBody", "text": "${data.summary}" },
+          {
+            "type": "Footer",
+            "label": "Place order",
+            "on-click-action": {
+              "name": "data_exchange",
+              "payload": {
+                "meal": "${data.meal}",
+                "address": "${data.address}",
+                "fulfillment_type": "${data.fulfillment_type}",
+                "delivery_slot": "${data.delivery_slot}"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

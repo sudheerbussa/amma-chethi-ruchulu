@@ -4,7 +4,23 @@
 			"path": "."
 		},
 		{
+			"name": "productized-content-engine",
+			"path": "productized-content-engine"
+		},
+		{
 			"path": "../../automation_youtube/local-biz-dev"
+		},
+		{
+			"path": "../pinterest-dev"
+		},
+		{
+			"path": "../../Downloads/acr-posters"
+		},
+		{
+			"path": "../../Downloads/Food App images"
+		},
+		{
+			"path": "../../Downloads/fresh app images"
 		}
 	],
 	"settings": {}

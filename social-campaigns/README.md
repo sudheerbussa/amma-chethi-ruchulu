@@ -52,6 +52,8 @@ Tools recommended in this pack:
 | `06-VIDEO-PROMPTS.md` | Ready prompts for every video base |
 | `07-PRODUCTION-WORKFLOW.md` | One poster / one video process |
 | `08-CAPTIONS-HASHTAGS.md` | FB / IG / YT copy per post |
+| `09-CHAPATHI-AMMA-AND-MONTHLY-PACK.md` | Specialist Amma recruit + monthly package — poster prompts, video beats, Telugu VO (attach reference poster) |
+| `10-ACR-AI-VIDEO-WORKFLOW.md` | Workshop-style AI video workflow adapted for ACR + sample JSON/VO for both ads |
 | `assets/` | Drop finals here (`customers/`, `chefs/`) |
 
 ## Brand (campaign defaults)

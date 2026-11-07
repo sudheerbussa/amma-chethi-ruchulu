@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MENU_DISHES, MENU_VERSION } from '../menu.js';
+import { MENU_DISHES, MENU_VERSION, resolveDishCode, sortDishesBySeed } from '../menu.js';
 import {
   SEED_AMMAS,
   isPlaceholderCook,
@@ -24,8 +24,8 @@ import {
   defaultOpsSettings,
   normalizeOpsSettings,
   effectiveMinOrderPaise,
-  setLaunchIsoCache,
 } from '../ops-settings.js';
+import { locationsNear } from '../geo.js';
 
 const KNOWN_ORDER_COLS = new Set([
   'id',
@@ -35,6 +35,7 @@ const KNOWN_ORDER_COLS = new Set([
   'meal',
   'service_date',
   'service_label',
+  'delivery_slot',
   'items',
   'dish_code',
   'dish_name',
@@ -64,14 +65,38 @@ function iso(v) {
   return String(v);
 }
 
+/** Calendar YYYY-MM-DD for PG DATE (node-pg Date ≠ String().slice(0,10)). */
+function dateOnlyIso(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'string') {
+    const m = v.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (m) return m[1];
+  }
+  if (v instanceof Date && !Number.isNaN(v.getTime())) {
+    // Local midnight for a DATE must use IST parts — toISOString() shifts to previous UTC day.
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(v);
+  }
+  const m = String(v).match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : null;
+}
+
+const SEED_BY_CODE = new Map(MENU_DISHES.map((d) => [d.code, d]));
+
 function mapDish(row) {
   if (!row) return null;
+  const seed = SEED_BY_CODE.get(row.code);
   return {
     code: row.code,
     name: row.name,
     category: row.category,
     meal: row.meal,
     price_paise: Number(row.price_paise),
+    mrp_paise: seed?.mrp_paise || undefined,
     cook_name: row.cook_name,
     amma_id: row.amma_id || null,
     max_portions: Number(row.max_portions),
@@ -106,10 +131,9 @@ function mapOrder(row) {
     phone: row.phone,
     customer_name: row.customer_name,
     meal: row.meal,
-    service_date: row.service_date
-      ? String(row.service_date).slice(0, 10)
-      : null,
+    service_date: dateOnlyIso(row.service_date),
     service_label: row.service_label,
+    delivery_slot: row.delivery_slot || null,
     items: Array.isArray(row.items) ? row.items : row.items || [],
     dish_code: row.dish_code,
     dish_name: row.dish_name,
@@ -132,6 +156,7 @@ function mapOrder(row) {
     updated_at: iso(row.updated_at),
     ...meta,
   };
+  if (!out.delivery_slot) out.delivery_slot = row.delivery_slot || meta.delivery_slot || null;
   return out;
 }
 
@@ -280,41 +305,83 @@ export async function createPgStore(databaseUrl) {
       return;
     }
 
-    // Add any new seed codes without overwriting admin-edited rows
+    const verRes = await q(`SELECT value FROM meta WHERE key = 'menu_version'`);
+    const prev = Number(verRes.rows[0]?.value || 0);
     const existing = await q(`SELECT code FROM dishes`);
     const have = new Set(existing.rows.map((r) => r.code));
     let added = 0;
+    let updated = 0;
+
     for (const d of MENU_DISHES) {
-      if (have.has(d.code)) continue;
-      await q(
-        `INSERT INTO dishes (
-          code, name, category, meal, price_paise, cook_name, amma_id,
-          max_portions, portions_sold, active, note, advance_only
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,$9,$10,$11)
-        ON CONFLICT (code) DO NOTHING`,
+      if (!have.has(d.code)) {
+        await q(
+          `INSERT INTO dishes (
+            code, name, category, meal, price_paise, cook_name, amma_id,
+            max_portions, portions_sold, active, note, advance_only
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,$9,$10,$11)
+          ON CONFLICT (code) DO NOTHING`,
+          [
+            d.code,
+            d.name,
+            d.category,
+            d.meal,
+            d.price_paise,
+            d.cook_name || null,
+            d.amma_id || null,
+            d.max_portions ?? 20,
+            d.active !== false,
+            d.note || null,
+            Boolean(d.advance_only),
+          ],
+        );
+        added += 1;
+        continue;
+      }
+      if (prev === MENU_VERSION) continue;
+      // Version bump: refresh catalog fields. Do not overwrite Amma names or sold counts.
+      const res = await q(
+        `UPDATE dishes SET
+           name = $2,
+           category = $3,
+           meal = $4,
+           price_paise = $5,
+           note = $6,
+           active = $7,
+           advance_only = $8
+         WHERE code = $1`,
         [
           d.code,
           d.name,
           d.category,
           d.meal,
           d.price_paise,
-          d.cook_name || null,
-          d.amma_id || null,
-          d.max_portions ?? 20,
-          d.active !== false,
           d.note || null,
+          d.active !== false,
           Boolean(d.advance_only),
         ],
       );
-      added += 1;
+      if (res.rowCount) updated += 1;
     }
     await backfillCookNamesFromSeed();
+
+    // Drop rows not in MENU_DISHES (legacy SKUs, removed family packs, etc.)
+    let purged = 0;
+    if (prev !== MENU_VERSION) {
+      const keep = MENU_DISHES.map((d) => d.code);
+      const del = await q(`DELETE FROM dishes WHERE NOT (code = ANY($1::text[]))`, [keep]);
+      purged = del.rowCount || 0;
+    }
+
     await q(
       `INSERT INTO meta (key, value) VALUES ('menu_version', $1)
        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
       [String(MENU_VERSION)],
     );
-    if (added) console.log(`Menu added ${added} new dish code(s) from seed [pg]`);
+    if (added || updated || purged) {
+      console.log(
+        `Menu catalog v${MENU_VERSION}: added ${added}, updated ${updated}, purged ${purged} dish(es) [pg]`,
+      );
+    }
   }
 
   const api = {
@@ -392,7 +459,16 @@ export async function createPgStore(databaseUrl) {
         return defaults;
       }
       try {
-        return normalizeOpsSettings(JSON.parse(raw));
+        const parsed = JSON.parse(raw);
+        const next = normalizeOpsSettings(parsed);
+        if (
+          parsed.lunch_cutoff_hour == null ||
+          parsed.dinner_cutoff_hour == null ||
+          parsed.launch_iso == null
+        ) {
+          await this.setMeta(META_KEY_OPS, JSON.stringify(next));
+        }
+        return next;
       } catch {
         const defaults = defaultOpsSettings();
         await this.saveOpsSettings(defaults);
@@ -401,7 +477,6 @@ export async function createPgStore(databaseUrl) {
     },
     async saveOpsSettings(settings) {
       const next = normalizeOpsSettings(settings);
-      setLaunchIsoCache(next.launch_iso);
       await this.setMeta(META_KEY_OPS, JSON.stringify(next));
       return next;
     },
@@ -427,16 +502,15 @@ export async function createPgStore(databaseUrl) {
         `SELECT * FROM dishes WHERE ${clauses.join(' AND ')} ORDER BY code`,
         params,
       );
-      return res.rows.map(mapDish);
+      return sortDishesBySeed(res.rows.map(mapDish));
     },
     async listAllDishes() {
       const res = await q(`SELECT * FROM dishes ORDER BY code`);
       return res.rows.map(mapDish);
     },
     async getDish(code) {
-      const res = await q(`SELECT * FROM dishes WHERE code = $1`, [
-        String(code || '').toUpperCase(),
-      ]);
+      const resolved = resolveDishCode(code);
+      const res = await q(`SELECT * FROM dishes WHERE code = $1`, [resolved]);
       return mapDish(res.rows[0]);
     },
     async setDishStock(code, maxPortions) {
@@ -688,7 +762,10 @@ export async function createPgStore(databaseUrl) {
     async saveCustomerAddress(phone, addr) {
       const p = String(phone || '');
       const text = String(addr?.text || '').trim();
-      if (text.length < 8) return null;
+      const lat = addr?.lat != null ? Number(addr.lat) : null;
+      const lng = addr?.lng != null ? Number(addr.lng) : null;
+      const hasPin = Number.isFinite(lat) && Number.isFinite(lng);
+      if (text.length < 8 && !hasPin) return null;
 
       const cur = (await this.getCustomer(p)) || {
         phone: p,
@@ -698,11 +775,28 @@ export async function createPgStore(databaseUrl) {
       };
       let addresses = Array.isArray(cur.addresses) ? [...cur.addresses] : [];
       const norm = text.toLowerCase();
-      let hit = addresses.find((a) => String(a.text).trim().toLowerCase() === norm);
+      let hit = null;
+      if (hasPin) {
+        hit = addresses.find(
+          (a) =>
+            a.lat != null &&
+            a.lng != null &&
+            locationsNear(Number(a.lat), Number(a.lng), lat, lng),
+        );
+      }
+      if (!hit && text.length >= 8) {
+        hit = addresses.find((a) => String(a.text).trim().toLowerCase() === norm);
+      }
       const now = new Date().toISOString();
       if (hit) {
         hit.last_used_at = now;
         if (addr.zone) hit.zone = addr.zone;
+        if (hasPin) {
+          hit.lat = lat;
+          hit.lng = lng;
+          if (addr.location_name) hit.location_name = addr.location_name;
+          if (text.length >= 8) hit.text = text.slice(0, 200);
+        }
       } else {
         if (addresses.length >= 5) {
           addresses.sort((a, b) =>
@@ -716,6 +810,11 @@ export async function createPgStore(databaseUrl) {
           zone: addr.zone || null,
           last_used_at: now,
         };
+        if (hasPin) {
+          hit.lat = lat;
+          hit.lng = lng;
+          if (addr.location_name) hit.location_name = String(addr.location_name).slice(0, 80);
+        }
         addresses.push(hit);
       }
       const defaultZone = addr.zone || hit.zone || cur.default_zone || null;
@@ -753,27 +852,41 @@ export async function createPgStore(databaseUrl) {
         [p],
       );
     },
+    async customerHasPaidOrder(phone) {
+      const p = String(phone || '').replace(/\D/g, '');
+      if (!p) return false;
+      const res = await q(
+        `SELECT 1 FROM orders
+         WHERE phone = $1 AND status = ANY($2::text[])
+         LIMIT 1`,
+        [p, ['paid', 'preparing', 'out_for_delivery', 'delivered']],
+      );
+      return res.rows.length > 0;
+    },
     async createOrder(order) {
       const items = Array.isArray(order.items) ? order.items : [];
       const meta =
         order.meta && typeof order.meta === 'object'
-          ? order.meta
+          ? { ...order.meta }
           : {
               ...(order.discount_paise != null ? { discount_paise: order.discount_paise } : {}),
               ...(order.offers_applied ? { offers_applied: order.offers_applied } : {}),
               ...(order.free_delivery != null ? { free_delivery: order.free_delivery } : {}),
             };
+      const deliverySlot =
+        order.delivery_slot || meta.delivery_slot || null;
+      if (deliverySlot && !meta.delivery_slot) meta.delivery_slot = deliverySlot;
       const res = await q(
         `INSERT INTO orders (
-          order_ref, phone, customer_name, meal, service_date, service_label,
+          order_ref, phone, customer_name, meal, service_date, service_label, delivery_slot,
           items, dish_code, dish_name, category, qty, unit_price_paise,
           food_paise, delivery_zone, delivery_fee_paise, total_paise,
           address, status, source, meta, created_at
         ) VALUES (
-          $1,$2,$3,$4,$5,$6,
-          $7::jsonb,$8,$9,$10,$11,$12,
-          $13,$14,$15,$16,
-          $17,$18,$19,$20::jsonb,NOW()
+          $1,$2,$3,$4,$5,$6,$7,
+          $8::jsonb,$9,$10,$11,$12,$13,
+          $14,$15,$16,$17,
+          $18,$19,$20,$21::jsonb,NOW()
         ) RETURNING *`,
         [
           order.order_ref,
@@ -782,6 +895,7 @@ export async function createPgStore(databaseUrl) {
           order.meal,
           order.service_date || null,
           order.service_label || null,
+          deliverySlot,
           JSON.stringify(items),
           order.dish_code || null,
           order.dish_name || null,
@@ -800,6 +914,24 @@ export async function createPgStore(databaseUrl) {
       );
       return mapOrder(res.rows[0]);
     },
+    async countOrdersByDeliverySlot(slotIds, statuses = ['pending_payment', 'paid', 'preparing', 'out_for_delivery']) {
+      const ids = (Array.isArray(slotIds) ? slotIds : []).map(String).filter(Boolean);
+      const out = Object.fromEntries(ids.map((id) => [id, 0]));
+      if (!ids.length) return out;
+      const res = await q(
+        `SELECT COALESCE(delivery_slot, meta->>'delivery_slot') AS slot_id,
+                COUNT(*)::int AS cnt
+         FROM orders
+         WHERE status = ANY($1::text[])
+           AND COALESCE(delivery_slot, meta->>'delivery_slot') = ANY($2::text[])
+         GROUP BY 1`,
+        [statuses, ids],
+      );
+      for (const row of res.rows) {
+        if (row.slot_id) out[row.slot_id] = Number(row.cnt) || 0;
+      }
+      return out;
+    },
     async adjustStock(code, deltaQty) {
       if (!code || !deltaQty) return null;
       const res = await q(
@@ -810,6 +942,13 @@ export async function createPgStore(databaseUrl) {
         [String(code).toUpperCase(), Number(deltaQty)],
       );
       return mapDish(res.rows[0]);
+    },
+    /** Zero daily sold counters (max_portions kept). Used by IST day rollover. */
+    async resetAllPortionsSold() {
+      const res = await q(
+        `UPDATE dishes SET portions_sold = 0 WHERE portions_sold <> 0`,
+      );
+      return res.rowCount || 0;
     },
     async listOrders(limit = 50) {
       const res = await q(
@@ -959,6 +1098,10 @@ export async function createPgStore(databaseUrl) {
     },
     async saveHelpTicket(entry) {
       const { phone, topic, message, order_ref, order_status, ...rest } = entry;
+      const payload = {
+        ticket_status: rest.ticket_status || 'open',
+        ...rest,
+      };
       const res = await q(
         `INSERT INTO help_tickets (phone, topic, message, order_ref, order_status, payload, created_at)
          VALUES ($1,$2,$3,$4,$5,$6::jsonb,NOW())
@@ -969,7 +1112,7 @@ export async function createPgStore(databaseUrl) {
           message || null,
           order_ref || null,
           order_status || null,
-          JSON.stringify(rest),
+          JSON.stringify(payload),
         ],
       );
       return mapTicket(res.rows[0]);
@@ -980,6 +1123,22 @@ export async function createPgStore(databaseUrl) {
         [Math.max(1, Number(limit) || 30)],
       );
       return res.rows.map(mapTicket);
+    },
+    async updateHelpTicket(id, patch = {}) {
+      const cur = await q(`SELECT * FROM help_tickets WHERE id = $1`, [Number(id)]);
+      if (!cur.rows[0]) return null;
+      const prev =
+        cur.rows[0].payload && typeof cur.rows[0].payload === 'object' ? cur.rows[0].payload : {};
+      const payload = {
+        ...prev,
+        ...patch,
+        updated_at: new Date().toISOString(),
+      };
+      const res = await q(
+        `UPDATE help_tickets SET payload = $2::jsonb WHERE id = $1 RETURNING *`,
+        [Number(id), JSON.stringify(payload)],
+      );
+      return mapTicket(res.rows[0]);
     },
     async logWaMessage(entry) {
       const phone = String(entry.phone || '').replace(/\D/g, '');
@@ -997,7 +1156,9 @@ export async function createPgStore(databaseUrl) {
             `SELECT * FROM wa_messages WHERE wa_message_id = $1 LIMIT 1`,
             [waId],
           );
-          if (existing.rows[0]) return mapWaMessage(existing.rows[0]);
+          if (existing.rows[0]) {
+            return { ...mapWaMessage(existing.rows[0]), _duplicate: true };
+          }
         }
         const res = await q(
           `INSERT INTO wa_messages (
@@ -1014,7 +1175,9 @@ export async function createPgStore(databaseUrl) {
               `SELECT * FROM wa_messages WHERE wa_message_id = $1 LIMIT 1`,
               [waId],
             );
-            if (existing.rows[0]) return mapWaMessage(existing.rows[0]);
+            if (existing.rows[0]) {
+              return { ...mapWaMessage(existing.rows[0]), _duplicate: true };
+            }
           } catch {
             /* ignore */
           }
@@ -1024,7 +1187,7 @@ export async function createPgStore(databaseUrl) {
       }
     },
     async listConversations(limit = 100) {
-      const lim = Math.max(1, Math.min(500, Number(limit) || 100));
+      const lim = Math.max(1, Math.min(5000, Number(limit) || 100));
       try {
         const res = await q(
           `SELECT DISTINCT ON (m.phone)
@@ -1044,7 +1207,7 @@ export async function createPgStore(databaseUrl) {
         // DISTINCT ON needs order by phone first — then sort by last_at outside
         const rows = res.rows.map((r) => ({
           phone: r.phone,
-          last_at: r.last_at,
+          last_at: iso(r.last_at),
           last_direction: r.last_direction,
           last_body: r.last_body || '',
           last_kind: r.last_kind,
@@ -1053,7 +1216,11 @@ export async function createPgStore(databaseUrl) {
           order_count: Number(r.order_count) || 0,
           message_count: Number(r.message_count) || 0,
         }));
-        rows.sort((a, b) => String(b.last_at || '').localeCompare(String(a.last_at || '')));
+        rows.sort((a, b) => {
+          const tb = Date.parse(b.last_at || '') || 0;
+          const ta = Date.parse(a.last_at || '') || 0;
+          return tb - ta;
+        });
         return rows.slice(0, lim);
       } catch (err) {
         console.warn('[pg] listConversations', err.message);
@@ -1076,6 +1243,256 @@ export async function createPgStore(databaseUrl) {
         return [];
       }
     },
+    async getLastInboundAt(phone) {
+      const p = String(phone || '').replace(/\D/g, '');
+      if (!p) return null;
+      try {
+        const res = await q(
+          `SELECT created_at FROM wa_messages
+           WHERE phone = $1 AND direction = 'in'
+           ORDER BY created_at DESC LIMIT 1`,
+          [p],
+        );
+        return res.rows[0] ? iso(res.rows[0].created_at) : null;
+      } catch (err) {
+        console.warn('[pg] getLastInboundAt', err.message);
+        return null;
+      }
+    },
+
+    async listRiders({ activeOnly = false } = {}) {
+      try {
+        const res = await q(
+          activeOnly
+            ? `SELECT id, name, phone, active, notes, created_at, updated_at FROM riders WHERE active = TRUE ORDER BY name`
+            : `SELECT id, name, phone, active, notes, created_at, updated_at FROM riders ORDER BY active DESC, name`,
+        );
+        return res.rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          phone: r.phone,
+          active: r.active !== false,
+          notes: r.notes || null,
+          created_at: iso(r.created_at),
+          updated_at: iso(r.updated_at),
+        }));
+      } catch (err) {
+        console.warn('[pg] listRiders — run db:migrate?', err.message);
+        return [];
+      }
+    },
+
+    async findRiderById(id) {
+      try {
+        const res = await q(`SELECT * FROM riders WHERE id = $1`, [String(id || '')]);
+        const r = res.rows[0];
+        if (!r) return null;
+        return {
+          id: r.id,
+          name: r.name,
+          phone: r.phone,
+          pin_hash: r.pin_hash,
+          active: r.active !== false,
+          notes: r.notes || null,
+          created_at: iso(r.created_at),
+          updated_at: iso(r.updated_at),
+        };
+      } catch (err) {
+        console.warn('[pg] findRiderById', err.message);
+        return null;
+      }
+    },
+
+    async findRiderByPhone(phone) {
+      const p = String(phone || '').replace(/\D/g, '');
+      if (p.length < 10) return null;
+      try {
+        const res = await q(
+          `SELECT * FROM riders WHERE regexp_replace(phone, '\\D', '', 'g') = $1
+             OR phone LIKE '%' || $1 OR $1 LIKE '%' || regexp_replace(phone, '\\D', '', 'g')
+           LIMIT 1`,
+          [p],
+        );
+        let r = res.rows[0];
+        if (!r) {
+          const all = await q(`SELECT * FROM riders`);
+          r = all.rows.find((row) => {
+            const rp = String(row.phone || '').replace(/\D/g, '');
+            return rp === p || rp.endsWith(p) || p.endsWith(rp);
+          });
+        }
+        if (!r) return null;
+        return {
+          id: r.id,
+          name: r.name,
+          phone: r.phone,
+          pin_hash: r.pin_hash,
+          active: r.active !== false,
+          notes: r.notes || null,
+        };
+      } catch (err) {
+        console.warn('[pg] findRiderByPhone', err.message);
+        return null;
+      }
+    },
+
+    async upsertRider(rider) {
+      const id = String(rider.id || '').trim();
+      const name = String(rider.name || '').trim();
+      const phone = String(rider.phone || '').replace(/\D/g, '');
+      if (!id || !name || phone.length < 10) throw new Error('Rider id, name, phone required');
+      const active = rider.active !== false;
+      const notes = rider.notes != null ? String(rider.notes) : null;
+      if (rider.pin_hash) {
+        await q(
+          `INSERT INTO riders (id, name, phone, pin_hash, active, notes, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,NOW(),NOW())
+           ON CONFLICT (id) DO UPDATE SET
+             name = EXCLUDED.name,
+             phone = EXCLUDED.phone,
+             pin_hash = EXCLUDED.pin_hash,
+             active = EXCLUDED.active,
+             notes = EXCLUDED.notes,
+             updated_at = NOW()`,
+          [id, name, phone, rider.pin_hash, active, notes],
+        );
+      } else {
+        await q(
+          `INSERT INTO riders (id, name, phone, pin_hash, active, notes, created_at, updated_at)
+           VALUES ($1,$2,$3,'', $4,$5,NOW(),NOW())
+           ON CONFLICT (id) DO UPDATE SET
+             name = EXCLUDED.name,
+             phone = EXCLUDED.phone,
+             active = EXCLUDED.active,
+             notes = EXCLUDED.notes,
+             updated_at = NOW()`,
+          [id, name, phone, active, notes],
+        );
+      }
+      return this.findRiderById(id);
+    },
+
+    async listOrdersForRider(riderId, { statuses = null, limit = 80 } = {}) {
+      const rid = String(riderId || '');
+      if (!rid) return [];
+      const lim = Math.min(Math.max(Number(limit) || 80, 1), 200);
+      try {
+        let sql = `SELECT * FROM orders WHERE meta->>'rider_id' = $1`;
+        const params = [rid];
+        if (Array.isArray(statuses) && statuses.length) {
+          sql += ` AND status = ANY($2::text[])`;
+          params.push(statuses);
+          sql += ` ORDER BY updated_at DESC NULLS LAST, created_at DESC LIMIT $3`;
+          params.push(lim);
+        } else {
+          sql += ` ORDER BY updated_at DESC NULLS LAST, created_at DESC LIMIT $2`;
+          params.push(lim);
+        }
+        const res = await q(sql, params);
+        return res.rows.map(mapOrder);
+      } catch (err) {
+        console.warn('[pg] listOrdersForRider', err.message);
+        return [];
+      }
+    },
+
+    async insertCashbookEntry(entry) {
+      try {
+        const res = await q(
+          `INSERT INTO cashbook_entries
+             (entry_date, kind, amount_paise, note, order_ref, created_by)
+           VALUES ($1::date, $2, $3, $4, $5, $6)
+           RETURNING *`,
+          [
+            String(entry.entry_date).slice(0, 10),
+            entry.kind,
+            Math.round(Number(entry.amount_paise) || 0),
+            entry.note || null,
+            entry.order_ref || null,
+            entry.created_by || 'admin',
+          ],
+        );
+        return mapCashbookEntry(res.rows[0]);
+      } catch (err) {
+        console.warn('[pg] insertCashbookEntry — run db:migrate?', err.message);
+        throw err;
+      }
+    },
+
+    async listCashbookEntries(entryDate) {
+      const day = String(entryDate || '').slice(0, 10);
+      try {
+        const res = await q(
+          `SELECT * FROM cashbook_entries
+           WHERE entry_date = $1::date
+           ORDER BY id DESC`,
+          [day],
+        );
+        return res.rows.map(mapCashbookEntry);
+      } catch (err) {
+        console.warn('[pg] listCashbookEntries — run db:migrate?', err.message);
+        return [];
+      }
+    },
+
+    async listCashbookEntriesRange(fromDate, toDate) {
+      const from = String(fromDate || '').slice(0, 10);
+      const to = String(toDate || from).slice(0, 10);
+      try {
+        const res = await q(
+          `SELECT * FROM cashbook_entries
+           WHERE entry_date BETWEEN $1::date AND $2::date
+           ORDER BY entry_date DESC, id DESC`,
+          [from, to],
+        );
+        return res.rows.map(mapCashbookEntry);
+      } catch (err) {
+        console.warn('[pg] listCashbookEntriesRange', err.message);
+        return [];
+      }
+    },
+
+    async deleteCashbookEntry(id) {
+      const n = Math.round(Number(id) || 0);
+      if (!n) return false;
+      try {
+        const res = await q(`DELETE FROM cashbook_entries WHERE id = $1 RETURNING id`, [n]);
+        return Boolean(res.rowCount);
+      } catch (err) {
+        console.warn('[pg] deleteCashbookEntry', err.message);
+        return false;
+      }
+    },
+
+    /** Orders for a cashbook day: service day, paid day (IST), or COD cash confirmed (IST). */
+    async listOrdersForCashbookDay(entryDate) {
+      const day = String(entryDate || '').slice(0, 10);
+      return this.listOrdersForCashbookRange(day, day);
+    },
+
+    async listOrdersForCashbookRange(fromDate, toDate) {
+      const from = String(fromDate || '').slice(0, 10);
+      const to = String(toDate || from).slice(0, 10);
+      try {
+        const res = await q(
+          `SELECT * FROM orders
+           WHERE (service_date BETWEEN $1::date AND $2::date)
+              OR ((paid_at AT TIME ZONE 'Asia/Kolkata')::date BETWEEN $1::date AND $2::date)
+              OR COALESCE(
+                   ((NULLIF(meta->>'cash_confirmed_at',''))::timestamptz
+                      AT TIME ZONE 'Asia/Kolkata')::date,
+                   NULL
+                 ) BETWEEN $1::date AND $2::date
+           ORDER BY id DESC
+           LIMIT 2000`,
+          [from, to],
+        );
+        return res.rows.map(mapOrder);
+      } catch (err) {
+        console.warn('[pg] listOrdersForCashbookRange', err.message);
+        return [];
+      }
+    },
   };
 
   return api;
@@ -1093,6 +1510,20 @@ function mapWaMessage(row) {
     wa_message_id: row.wa_message_id || null,
     profile_name: row.profile_name || null,
     meta: row.meta || {},
+    created_at: iso(row.created_at),
+  };
+}
+
+function mapCashbookEntry(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    entry_date: row.entry_date ? String(row.entry_date).slice(0, 10) : null,
+    kind: row.kind,
+    amount_paise: Math.round(Number(row.amount_paise) || 0),
+    note: row.note || null,
+    order_ref: row.order_ref || null,
+    created_by: row.created_by || null,
     created_at: iso(row.created_at),
   };
 }

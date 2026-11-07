@@ -7,6 +7,8 @@
 
 import { DELIVERY_ZONES } from './menu.js';
 import { formatPaise } from './orders/cart.js';
+import { config } from './config.js';
+import { DEFAULT_ETA } from './delivery-track.js';
 
 export const META_KEY_DELIVERY = 'delivery_settings_v1';
 
@@ -18,10 +20,24 @@ export const DELIVERY_MODES = {
 export function defaultDeliverySettings() {
   return {
     mode: DELIVERY_MODES.distance,
-    flat_paise: 4000, // ₹40 default if admin switches to flat
+    flat_paise: 2900, // ₹29 default if admin switches to flat
     /** @type {{ date: string, mode: string, flat_paise: number } | null} */
     day_override: null,
+    /** Google Maps / live share URL sent when order goes out for delivery */
+    track_map_url: config.deliveryTrackMapUrl || '',
+    /** Phone customers can call while food is on the way */
+    delivery_contact: String(config.supportPhone || '').replace(/\D/g, ''),
+    eta_minutes_z1: DEFAULT_ETA.z1,
+    eta_minutes_z2: DEFAULT_ETA.z2,
+    eta_minutes_z3: DEFAULT_ETA.z3,
+    eta_minutes_flat: DEFAULT_ETA.flat,
   };
+}
+
+function clampEta(n, fallback) {
+  const v = Math.round(Number(n));
+  if (!Number.isFinite(v)) return fallback;
+  return Math.min(180, Math.max(5, v));
 }
 
 export function normalizeDeliverySettings(raw) {
@@ -48,7 +64,24 @@ export function normalizeDeliverySettings(raw) {
       };
     }
   }
-  return { mode, flat_paise, day_override };
+  const track_map_url = String(
+    raw.track_map_url != null ? raw.track_map_url : base.track_map_url || '',
+  ).trim();
+  const delivery_contact = String(
+    raw.delivery_contact != null ? raw.delivery_contact : base.delivery_contact || '',
+  ).replace(/\D/g, '');
+
+  return {
+    mode,
+    flat_paise,
+    day_override,
+    track_map_url,
+    delivery_contact,
+    eta_minutes_z1: clampEta(raw.eta_minutes_z1 ?? base.eta_minutes_z1, DEFAULT_ETA.z1),
+    eta_minutes_z2: clampEta(raw.eta_minutes_z2 ?? base.eta_minutes_z2, DEFAULT_ETA.z2),
+    eta_minutes_z3: clampEta(raw.eta_minutes_z3 ?? base.eta_minutes_z3, DEFAULT_ETA.z3),
+    eta_minutes_flat: clampEta(raw.eta_minutes_flat ?? base.eta_minutes_flat, DEFAULT_ETA.flat),
+  };
 }
 
 /** Effective mode for a given IST YYYY-MM-DD (service day or today). */

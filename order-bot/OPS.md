@@ -4,12 +4,13 @@
 
 Full catalog lives in `src/menu.js` (versioned). On bot start, dishes sync automatically.
 
-**Order cutoffs (IST) — finalized:**
+**Order cutoffs / delivery (IST):**
 
-| Meal | Order by (same day) | Serve / delivery |
-|------|---------------------|------------------|
-| **Lunch** | **10:00 AM** | **12:00–3:00 PM** |
-| **Dinner** | **4:00 PM** | **7:00–10:00 PM** |
+| | Time |
+|--|------|
+| Delivery slots | **12:30 PM–11:30 PM** continuous (last window **11:00–11:30 PM**) |
+| **Last WA/web order** | **9:30 PM** (90 min lead → still reaches 11:00 PM start) |
+| **Lead time** | **90 min** before slot start |
 
 Welcome shows **today’s date + weekday** and each meal OPEN/CLOSED.  
 If closed, bot states **cutoff passed for today (date)** and **next open day (date + weekday)** with order-by + serve times.
@@ -59,8 +60,7 @@ npm run db:migrate
 | `ORDERS` / `PENDING` | Lists |
 | `PAID\|READY\|OUT\|DONE\|CANCELORD <ref>` | Status + notify customer |
 | `COOK` / `COOK DINNER` | Kitchen + packing summary |
-| `MENU` | All dishes + stock |
-| `STOCK V01 20` | Set max portions |
+| `MENU` | All dishes |
 | `OFF V01` / `ON V01` | Hide / show dish |
 
 `ADMIN_PHONES` = ops WhatsApp numbers (91…).
@@ -70,7 +70,7 @@ npm run db:migrate
 ## Local dashboard
 
 http://127.0.0.1:3000/admin — token = `ADMIN_TOKEN`  
-Tabs: **Orders** · **Menu / stock** · **Feedbacks** (+ help tickets)
+Tabs: **Orders** · **Menu** · **Feedbacks** (+ help tickets)
 
 ---
 

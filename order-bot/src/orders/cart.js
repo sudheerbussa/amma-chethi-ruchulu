@@ -1,9 +1,20 @@
 /** Multi-item cart helpers for WhatsApp order flow */
 
-import { formatDishLabel } from '../ammas.js';
+import { stripCookFromLineName } from '../ammas.js';
 
 export function formatPaise(paise) {
   return `₹${(Number(paise || 0) / 100).toFixed(0)}`;
+}
+
+/** Show offer price with struck-off MRP when mrp_paise > price_paise.
+ *  WhatsApp doesn't render HTML <s>, but Unicode strikethrough (̶) works. */
+export function formatPriceWithMrp(dish) {
+  const price = formatPaise(dish.price_paise);
+  const mrp = Number(dish.mrp_paise || 0);
+  if (!mrp || mrp <= dish.price_paise) return price;
+  const mrpStr = `₹${(mrp / 100).toFixed(0)}`;
+  const struck = [...mrpStr].map((ch) => ch + '\u0336').join('');
+  return `${price} ${struck}`;
 }
 
 /** Normalize order → line items (supports legacy single-dish orders) */
@@ -35,10 +46,18 @@ export function getOrderLines(order) {
   ];
 }
 
+/** Dish name for customer messages (no Amma suffix). */
+export function lineDisplayName(line) {
+  if (!line) return '—';
+  if (line.base_name) return String(line.base_name).trim();
+  const raw = String(line.name || line.code || '').trim();
+  return stripCookFromLineName(raw) || raw || '—';
+}
+
 export function formatLinesText(lines, { maxLines = 12 } = {}) {
   const list = Array.isArray(lines) ? lines : [];
   if (!list.length) return '—';
-  const shown = list.slice(0, maxLines).map((i) => `${i.qty}x ${i.name || i.code}`);
+  const shown = list.slice(0, maxLines).map((i) => `${i.qty}x ${lineDisplayName(i)}`);
   if (list.length > maxLines) shown.push(`…+${list.length - maxLines} more`);
   return shown.join('\n');
 }
@@ -57,25 +76,28 @@ export function cartTotalQty(cart) {
 export function dishSummaryName(cart) {
   const lines = Array.isArray(cart) ? cart : [];
   if (!lines.length) return 'Empty cart';
-  if (lines.length === 1) return lines[0].name || lines[0].code;
-  return `${lines[0].name || lines[0].code} +${lines.length - 1} more`;
+  if (lines.length === 1) return lineDisplayName(lines[0]);
+  return `${lineDisplayName(lines[0])} +${lines.length - 1} more`;
 }
 
-/** Stock left after counting same code already in cart */
+/** Max qty for one dish line (typo / spam guard). Availability is cutoffs + active flag only. */
+export const MAX_LINE_QTY = 30;
+
+/** How many more of this dish can be added to the cart (not inventory). */
 export function remainingForDish(dish, cart) {
   if (!dish) return 0;
   const reserved = (Array.isArray(cart) ? cart : [])
     .filter((i) => String(i.code).toUpperCase() === String(dish.code).toUpperCase())
     .reduce((s, i) => s + (Number(i.qty) || 0), 0);
-  return Math.max(0, (dish.max_portions || 0) - (dish.portions_sold || 0) - reserved);
+  return Math.max(0, MAX_LINE_QTY - reserved);
 }
 
-/** Build cart line from a dish (Amma name baked into display name). */
+/** Build cart line from a dish (display name = dish only; cook_name kept for admin/payout). */
 export function cartLineFromDish(dish, qty) {
   const base = dish?.name || dish?.code;
   return {
     code: String(dish.code).toUpperCase(),
-    name: formatDishLabel(dish),
+    name: base,
     base_name: base,
     qty: Number(qty) || 1,
     unit_price_paise: Number(dish.price_paise) || 0,
@@ -83,6 +105,15 @@ export function cartLineFromDish(dish, qty) {
     cook_name: dish.cook_name || null,
     amma_id: dish.amma_id || null,
   };
+}
+
+/** Qty of a dish code already in cart (0 if none). */
+export function cartQtyForDish(cart, code) {
+  const c = String(code || '').toUpperCase();
+  const line = (Array.isArray(cart) ? cart : []).find(
+    (i) => String(i.code).toUpperCase() === c,
+  );
+  return line ? Number(line.qty) || 0 : 0;
 }
 
 /** Merge qty if same code already in cart */
@@ -140,13 +171,12 @@ export function setCartLineQty(cart, code, qty) {
   return { cart: next };
 }
 
-/** Max qty allowed for an existing cart line (stock + not counting this line’s current qty) */
-export function maxQtyForCartLine(dish, cart, code) {
-  if (!dish) return 0;
+/** Max qty allowed when editing an existing cart line (line cap; not inventory). */
+export function maxQtyForCartLine(_dish, cart, code) {
   const others = (Array.isArray(cart) ? cart : []).filter(
     (i) => String(i.code).toUpperCase() !== String(code || '').toUpperCase(),
   );
-  return Math.min(30, remainingForDish(dish, others));
+  return remainingForDish({ code: code || 'X' }, others);
 }
 
 export function formatCartMessage(cart, { minOrderPaise = 0, numbered = false, offerLines = [] } = {}) {
@@ -154,7 +184,7 @@ export function formatCartMessage(cart, { minOrderPaise = 0, numbered = false, o
   const food = cartFoodPaise(lines);
   const listText = numbered
     ? lines
-        .map((i, n) => `${n + 1}. ${i.qty}x ${i.name || i.code}`)
+        .map((i, n) => `${n + 1}. ${i.qty}x ${lineDisplayName(i)}`)
         .join('\n') || '—'
     : formatLinesText(lines);
   let body =

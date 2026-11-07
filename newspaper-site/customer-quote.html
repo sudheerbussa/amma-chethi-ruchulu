@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Korvia — Newspaper website packages</title>
+  <style>
+    :root {
+      --navy: #112145;
+      --navy-2: #1a2d5c;
+      --orange: #ff7718;
+      --orange-soft: #fff4eb;
+      --ink: #1c1c1c;
+      --muted: #4a4a4a;
+    }
+    @page { size: A4; margin: 11mm 12mm 12mm; }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: "Noto Sans", "DejaVu Sans", Arial, sans-serif;
+      font-size: 9.1pt;
+      line-height: 1.35;
+      color: var(--ink);
+      background: #fff;
+    }
+    h1 {
+      font-size: 16.5pt;
+      font-weight: 700;
+      margin: 0 0 2px;
+      color: var(--navy);
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      font-size: 9.2pt;
+      font-weight: 700;
+      margin: 10px 0 5px;
+      padding-bottom: 3px;
+      border-bottom: 2px solid var(--navy);
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    p { margin: 0 0 6px; }
+    .brandbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 8px;
+      border-bottom: 3px solid var(--navy);
+      margin-bottom: 0;
+    }
+    .brandbar img { height: 38px; width: auto; display: block; }
+    .brand-right { text-align: right; }
+    .tagline {
+      font-size: 8pt;
+      font-weight: 700;
+      color: var(--navy);
+      margin: 0 0 2px;
+    }
+    .phones {
+      font-size: 8pt;
+      color: var(--muted);
+      margin: 0;
+    }
+    .phones a { color: var(--navy); text-decoration: none; }
+    .orange-rule {
+      height: 4px;
+      background: var(--orange);
+      margin: 0 0 10px;
+    }
+    .kicker {
+      font-size: 7.8pt;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      font-weight: 700;
+      margin: 0 0 3px;
+    }
+    .lead { font-size: 9.3pt; color: #333; }
+    .rec {
+      background: var(--orange-soft);
+      border-left: 4px solid var(--orange);
+      padding: 6px 10px;
+      margin: 8px 0 0;
+      font-size: 9pt;
+    }
+    .rec strong { color: var(--navy); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 4px;
+    }
+    th, td {
+      border: 1px solid #d5d8e0;
+      padding: 5px 7px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: var(--navy);
+      color: #fff;
+      font-weight: 600;
+      font-size: 8.5pt;
+    }
+    th.star { background: var(--orange); color: #fff; }
+    td.price, th.price { white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .label {
+      width: 16%;
+      background: #f3f5f9;
+      font-weight: 700;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--navy);
+    }
+    .miss { color: var(--muted); }
+    .tag {
+      display: inline-block;
+      font-size: 7.4pt;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: var(--navy);
+      color: #fff;
+      padding: 1px 6px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+    .note { font-size: 8pt; color: #444; margin: 4px 0 0; }
+    .two { display: flex; gap: 10px; }
+    .two > div { flex: 1; }
+    ul { margin: 4px 0 0; padding-left: 16px; }
+    li { margin-bottom: 2px; }
+    .foot {
+      margin-top: 10px;
+      padding: 8px 10px;
+      background: var(--navy);
+      color: #e8ecf4;
+      font-size: 7.6pt;
+    }
+    .foot strong { color: #fff; }
+    .foot .cta {
+      color: var(--orange);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .fine { font-size: 7.6pt; color: #555; }
+    .page { page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    .hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 8px;
+    }
+    .hdr-meta { text-align: right; font-size: 8pt; color: var(--muted); }
+    .why {
+      display: flex;
+      gap: 6px;
+      margin: 8px 0 0;
+    }
+    .why span {
+      flex: 1;
+      background: #f3f5f9;
+      border-top: 3px solid var(--orange);
+      padding: 5px 7px;
+      font-size: 7.6pt;
+      color: var(--navy);
+    }
+    .why b { display: block; font-size: 8pt; margin-bottom: 1px; }
+  </style>
+</head>
+<body>
+
+<section class="page">
+  <div class="brandbar">
+    <img src="korvia-logo.png" alt="Korvia" />
+    <div class="brand-right">
+      <p class="tagline">Your Problem. Our Solution.</p>
+      <p class="phones">
+        <a href="tel:+918055292935">8055292935</a>
+      </p>
+    </div>
+  </div>
+  <div class="orange-rule"></div>
+
+  <div class="hdr">
+    <div>
+      <p class="kicker">Customer proposal · Newspaper website</p>
+      <h1>Your newspaper on the internet</h1>
+    </div>
+    <div class="hdr-meta">
+      Packages A · B · C · D<br />
+      August 2026 · Prices in ₹, ex-GST
+    </div>
+  </div>
+
+  <p class="lead">Today you send the day’s <strong>PDF in WhatsApp groups</strong>. That file <em>is</em> the paper — there is no print copy. A website can hold that PDF, turn clippings into story pages, or both. <strong>You upload.</strong> Korvia builds, hosts, and stays on WhatsApp if the site or login breaks.</p>
+
+  <p class="rec"><strong>Recommended: Package C (C1).</strong> You already make a digital PDF <em>and</em> you send story clippings. A or B each covers only half of how you work today.</p>
+
+  <h2>A vs B — two different products, not cheap vs costly</h2>
+  <p class="note">A is the PDF on a public link. B is each news item as a web page. Neither replaces the other.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:16%"></th>
+        <th>A · ePaper</th>
+        <th>B · News Portal</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="label">You get</td>
+        <td>The <strong>same PDF</strong> you already send in groups, on your own website. Public <strong>link</strong> (share the link instead of the heavy file). <strong>Old dates</strong> still open. 1 login; upload from the phone.</td>
+        <td>A <strong>news website</strong>: Telugu story + photo, categories, search. <strong>3 reporter logins.</strong> First <strong>10 clippings</strong> put on the site. Training to post from the phone.</td>
+      </tr>
+      <tr>
+        <td class="label">You still miss</td>
+        <td class="miss"><strong>No story pages.</strong> Headlines are not easy to find on Google. Reporters cannot post a clipping as an article. No “today’s news” list — only the full PDF. Shops cannot easily book a web ad. Groups remain the only way people see individual news.</td>
+        <td class="miss"><strong>No ePaper.</strong> The daily PDF has <strong>no home</strong>. You must <strong>keep sending the PDF in WhatsApp groups</strong>. No date archive of the full paper. A reader who missed the group cannot open yesterday’s paper.</td>
+      </tr>
+      <tr>
+        <td class="label">You do</td>
+        <td>Upload the PDF you already make</td>
+        <td>Post each story (photo + text)</td>
+      </tr>
+      <tr>
+        <td class="label">Setup</td>
+        <td class="price">₹12,000</td>
+        <td class="price">₹16,000</td>
+      </tr>
+      <tr>
+        <td class="label">Monthly</td>
+        <td class="price">₹1,999 <span class="fine">(12-month plan)</span></td>
+        <td class="price">₹2,999 <span class="fine">(12-month plan)</span></td>
+      </tr>
+      <tr>
+        <td class="label">Year 1</td>
+        <td class="price">₹35,988</td>
+        <td class="price">₹51,988</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note"><strong>A</strong> = stop losing the PDF in the group. <strong>B</strong> = each news item is a page.</p>
+
+  <h2>C and D — full digital paper, then growth</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:16%"></th>
+        <th class="star">C · Digital Paper <span class="tag">Recommended</span></th>
+        <th>D · Growth</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="label">You get</td>
+        <td><strong>A + B.</strong> Homepage opens <strong>today’s PDF</strong>. Story pages for clippings. Advertise-with-us page (shops pay <em>you</em>). Basic SEO so your town can find the paper. One sitting: Meta ads to invite local businesses to advertise.</td>
+        <td><strong>Everything in C.</strong> Post a story by WhatsApp (photo + text → website). Push alerts. Clip a box from the PDF page to share. Video section. Monthly ads + SEO check-in.</td>
+      </tr>
+      <tr>
+        <td class="label">Vs D you miss</td>
+        <td class="miss">No WhatsApp posting bot, push alerts, or page-clip tool.</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td class="label">You do</td>
+        <td>Post stories <strong>and</strong> upload the PDF</td>
+        <td>Same, or send WhatsApp</td>
+      </tr>
+      <tr>
+        <td class="label">Setup</td>
+        <td class="price"><strong>₹18,000</strong></td>
+        <td class="price">₹28,000</td>
+      </tr>
+      <tr>
+        <td class="label">Monthly</td>
+        <td class="price"><strong>₹4,999</strong> <span class="fine">(12-month plan)</span></td>
+        <td class="price">₹6,999 <span class="fine">(12-month plan)</span></td>
+      </tr>
+      <tr>
+        <td class="label">Year 1</td>
+        <td class="price"><strong>₹77,988</strong></td>
+        <td class="price">₹1,11,988</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page">
+  <div class="brandbar">
+    <img src="korvia-logo.png" alt="Korvia" />
+    <div class="brand-right">
+      <p class="tagline">You focus on your paper. We handle the technology.</p>
+      <p class="phones">
+        <a href="tel:+918055292935">8055292935</a>
+      </p>
+    </div>
+  </div>
+  <div class="orange-rule"></div>
+
+  <div class="hdr">
+    <div>
+      <p class="kicker">Korvia · continued</p>
+      <h1>How to pay for C · monthly value</h1>
+    </div>
+    <div class="hdr-meta">Same website on C1 / C2 / C3<br />Lower monthly = less ongoing help</div>
+  </div>
+
+  <h2>If C monthly (₹4,999) feels high</h2>
+  <p class="lead">This is still <strong>Package C</strong> — PDF ePaper + story website. Year 1 stays about <strong>₹78,000</strong>. You pay more now so the month is smaller. You do not get a smaller site.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:16%"></th>
+        <th class="star">C1 · Easy start</th>
+        <th>C2 · Balanced</th>
+        <th>C3 · Lower monthly</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="label">Setup</td>
+        <td class="price"><strong>₹18,000</strong></td>
+        <td class="price">₹35,000</td>
+        <td class="price">₹50,000</td>
+      </tr>
+      <tr>
+        <td class="label">Monthly</td>
+        <td class="price"><strong>₹4,999</strong></td>
+        <td class="price">₹3,499</td>
+        <td class="price">₹2,499</td>
+      </tr>
+      <tr>
+        <td class="label">Year 1</td>
+        <td class="price">₹77,988</td>
+        <td class="price">₹76,988</td>
+        <td class="price">₹79,988</td>
+      </tr>
+      <tr>
+        <td class="label">Year 2</td>
+        <td class="price">₹59,988</td>
+        <td class="price">₹41,988</td>
+        <td class="price">₹29,988</td>
+      </tr>
+      <tr>
+        <td class="label">Inside monthly</td>
+        <td>Hosting + Korvia WhatsApp + small edits + <strong>SEO + advertiser help + Meta guidance</strong></td>
+        <td>Hosting + Korvia WhatsApp + small edits + light SEO</td>
+        <td>Hosting + break-fix only</td>
+      </tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>Cannot put ₹35,000+ down now → <strong>C1</strong> (recommended with C).</li>
+    <li>Monthly feels high, can pay more setup → <strong>C2</strong> or <strong>C3</strong>.</li>
+    <li>C3 is the cheapest month. After year 1 you only get “keep the lights on.”</li>
+  </ul>
+
+  <h2>What the monthly charge is for</h2>
+  <div class="two">
+    <div>
+      <p><strong>On every package</strong></p>
+      <ul>
+        <li>Server, HTTPS, backups — yesterday’s PDF is not stuck in a group if a phone is lost</li>
+        <li>Korvia on WhatsApp if login fails or the link is down</li>
+        <li>Security updates so the site is not hacked</li>
+        <li>Small changes: banner, new reporter, phone number</li>
+      </ul>
+    </div>
+    <div>
+      <p><strong>Also in C1 (₹4,999) and D</strong></p>
+      <ul>
+        <li><strong>SEO:</strong> so your town can find stories — not a promise to rank like a big daily</li>
+        <li><strong>Advertise-with-us</strong> page so shops pay <em>you</em></li>
+        <li><strong>Meta ads guidance:</strong> how to invite local businesses to advertise. <strong>You pay Facebook/Instagram.</strong> Korvia does not run ads every week as an agency</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note" style="margin-top:8px"><strong>Monthly is not:</strong> Korvia writing news, sending your PDF to groups, Meta’s ad bill, or a new design every month.</p>
+
+  <div class="why">
+    <span><b>One team</b> Website, hosting, WhatsApp support — one partner.</span>
+    <span><b>Affordable</b> Start with C1. Pay more setup later if you want a lighter month.</span>
+    <span><b>Dedicated support</b> WhatsApp / call: 8055292935.</span>
+    <span><b>Long-term</b> Not a one-week project. We stay with the paper.</span>
+  </div>
+
+  <h2>Add later (if you take A, B, or C)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Optional extra</th>
+        <th class="price">Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>WhatsApp posting bot — photo + caption to WhatsApp becomes a story on the site (draft, then you publish)</td>
+        <td class="price">₹22,000 + ₹999/mo<br /><span class="fine">Already included in D</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="foot">
+    Setup is paid before work starts. Monthly is billed <strong>each month</strong> — not 12 months in one shot. You commit for <strong>12 months</strong>, then month-to-month with 30 days’ notice.
+    Domain in your name. GST extra if applicable.
+    Website code and files are handed over <strong>only after 12 months</strong>, if you then choose to stop Korvia services (you run hosting yourself from that point).
+    <strong>Not included:</strong> Korvia writing or sending the daily PDF · look like Eenadu · phone app / live TV · Meta ad spend · unlimited redesign.<br /><br />
+    <span class="cta">REPLY WITH: A · B · C1 · C2 · C3 · D &nbsp;·&nbsp; RECOMMENDED: C1</span>
+    &nbsp;·&nbsp; Book a consultation: 8055292935
+  </div>
+</section>
+
+</body>
+</html>

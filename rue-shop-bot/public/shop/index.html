@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shop Decorative Lights | Rare & Unique Electronics</title>
+  <meta name="description" content="Buy decorative LED wall lights, pendants, solar wall lights and pillar lights online. Pickup in Bhor or delivery across India." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:#111a44; --accent:#ff8a1f; --accent-2:#ffab45; --accent-ink:#1a1405;
+      --bg:#fcfcfe; --surface:#f3f5fa; --fg:#18213f; --muted:#5d6582; --border:#e1e5ef; --card:#fff;
+      --radius:14px; --wrap:1100px;
+      --font-head:"Plus Jakarta Sans",system-ui,sans-serif; --font-body:Inter,system-ui,sans-serif;
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:var(--font-body);color:var(--fg);background:var(--bg);line-height:1.5}
+    a{color:inherit} img{max-width:100%;display:block}
+    .wrap{width:min(100% - 32px,var(--wrap));margin-inline:auto}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 22px;border-radius:999px;border:0;font:700 15px/1 var(--font-head);cursor:pointer;text-decoration:none}
+    .btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:var(--accent-ink);box-shadow:0 8px 28px -6px rgb(255 138 31 /.45)}
+    .btn-outline{background:transparent;border:1.5px solid var(--navy);color:var(--navy)}
+    .btn-ghost{background:rgb(255 255 255 /.1);color:#fff;border:1px solid rgb(255 255 255 /.25)}
+    .btn-block{width:100%}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    header{position:sticky;top:0;z-index:40;background:rgb(10 16 54 /.94);backdrop-filter:blur(10px);color:#fff;border-bottom:1px solid rgb(255 255 255 /.08)}
+    .header-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px}
+    .brand{display:flex;flex-direction:column;text-decoration:none;color:#fff;font-family:var(--font-head)}
+    .brand strong{font-size:17px;font-weight:800}
+    .brand span{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);font-weight:700}
+    .cart-btn{position:relative}
+    .cart-count{position:absolute;top:-6px;right:-6px;background:var(--accent);color:var(--accent-ink);font:800 11px/1 var(--font-head);min-width:18px;height:18px;border-radius:999px;display:grid;place-items:center;padding:0 4px}
+    .hero{background:linear-gradient(165deg,#0a1036,#141d4a 50%,#0d1540);color:#fff;padding:48px 0 56px}
+    .hero h1{font:800 clamp(28px,4vw,44px)/1.15 var(--font-head);margin:0 0 12px;letter-spacing:-.02em}
+    .hero h1 em{font-style:normal;color:var(--accent)}
+    .hero p{color:rgb(255 255 255 /.78);max-width:560px;margin:0 0 8px}
+    .eyebrow{font:700 12px/1 var(--font-head);letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:36px 0 100px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1px 2px rgb(17 26 68 /.05),0 8px 24px -8px rgb(17 26 68 /.12)}
+    .card .media{aspect-ratio:1;background:#fff;padding:12px;border-bottom:1px solid var(--border)}
+    .card .media img{width:100%;height:100%;object-fit:contain}
+    .card .body{padding:14px 16px 16px;display:flex;flex-direction:column;flex:1;gap:6px}
+    .tag{font:700 10px/1 var(--font-head);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+    .card h2{font:700 16px/1.25 var(--font-head);margin:0}
+    .price{font:800 18px/1 var(--font-head);color:var(--navy);margin-top:4px}
+    .card .actions{margin-top:auto;padding-top:10px;display:flex;gap:8px}
+    .qty{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:4px 8px}
+    .qty button{border:0;background:transparent;font-size:16px;cursor:pointer;width:28px;height:28px}
+    .drawer-bg{position:fixed;inset:0;background:rgb(10 16 54 /.45);z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
+    .drawer-bg.open{opacity:1;pointer-events:auto}
+    .drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);background:var(--card);z-index:51;transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgb(17 26 68 /.2)}
+    .drawer.open{transform:none}
+    .drawer header{padding:16px 18px;background:var(--navy);color:#fff;display:flex;justify-content:space-between;align-items:center}
+    .drawer .content{flex:1;overflow:auto;padding:16px 18px}
+    .drawer .footer{padding:14px 18px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface)}
+    .line{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+    .line img{width:56px;height:56px;object-fit:contain;background:#fff;border:1px solid var(--border);border-radius:10px}
+    .line .name{font-weight:600;font-size:14px}
+    .line .meta{font-size:13px;color:var(--muted)}
+    .field{display:grid;gap:6px;margin-bottom:12px;font-size:14px;font-weight:600}
+    .field input,.field select,.textarea{width:100%;font:400 15px/1.3 var(--font-body);padding:11px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface)}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .ship-opts{display:grid;gap:8px;margin-bottom:14px}
+    .ship-opt{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;background:#fff}
+    .ship-opt.selected{border-color:var(--accent);background:rgb(255 138 31 /.06)}
+    .ship-opt input{margin-top:3px}
+    .totals{font-size:14px}
+    .totals .row{display:flex;justify-content:space-between;padding:4px 0;color:var(--muted)}
+    .totals .row.grand{font:800 18px/1.2 var(--font-head);color:var(--navy);padding-top:8px;margin-top:6px;border-top:1px solid var(--border)}
+    .err{color:#c62828;font-size:13px;margin:0 0 8px}
+    .sticky-bar{position:fixed;left:0;right:0;bottom:0;display:none;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgb(243 245 250 /.96);border-top:1px solid var(--border);z-index:30}
+    @media(max-width:640px){.sticky-bar{display:flex}.field-row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap header-row">
+      <a class="brand" href="/shop/"><strong>Rare &amp; Unique</strong><span>Electronics</span></a>
+      <div style="display:flex;gap:10px;align-items:center">
+        <a class="btn btn-ghost" href="https://rareuniqueelectronics.com/" style="padding:10px 14px;font-size:13px">Website</a>
+        <button type="button" class="btn btn-accent cart-btn" id="openCart" style="padding:10px 16px">Cart <span class="cart-count" id="cartCount">0</span></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Online shop · Bhor, Pune</p>
+      <h1>Decorative Lights <em>ready to buy</em></h1>
+      <p>Wall lights, pendants, solar wall lights, pillar lights and more. Pickup at our Bhor shop, local delivery nearby, or courier across India. Pay securely with Razorpay.</p>
+    </div>
+  </section>
+
+  <main class="wrap">
+    <div class="grid" id="grid"><p class="muted">Loading products…</p></div>
+  </main>
+
+  <div class="sticky-bar">
+    <button type="button" class="btn btn-accent btn-block" id="openCartMobile">View cart</button>
+  </div>
+
+  <div class="drawer-bg" id="drawerBg"></div>
+  <aside class="drawer" id="drawer" aria-label="Cart and checkout">
+    <header>
+      <strong id="drawerTitle">Your cart</strong>
+      <button type="button" class="btn btn-ghost" id="closeCart" style="padding:8px 12px">Close</button>
+    </header>
+    <div class="content" id="drawerContent"></div>
+    <div class="footer" id="drawerFooter"></div>
+  </aside>
+
+<script>
+(function () {
+  const state = { products: [], cart: {}, shipping: null, step: 'cart', fulfillment: 'pickup', quote: null };
+  const els = {
+    grid: document.getElementById('grid'),
+    cartCount: document.getElementById('cartCount'),
+    drawer: document.getElementById('drawer'),
+    drawerBg: document.getElementById('drawerBg'),
+    drawerContent: document.getElementById('drawerContent'),
+    drawerFooter: document.getElementById('drawerFooter'),
+    drawerTitle: document.getElementById('drawerTitle'),
+  };
+
+  function money(paise) {
+    return '₹' + (Math.round(Number(paise) || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  }
+  function cartEntries() {
+    return Object.entries(state.cart).filter(([, q]) => q > 0).map(([code, qty]) => {
+      const p = state.products.find((x) => x.code === code);
+      return p ? { ...p, qty } : null;
+    }).filter(Boolean);
+  }
+  function subtotal() {
+    return cartEntries().reduce((s, i) => s + i.price_paise * i.qty, 0);
+  }
+  function cartQty() {
+    return Object.values(state.cart).reduce((s, q) => s + q, 0);
+  }
+  function updateBadge() {
+    els.cartCount.textContent = String(cartQty());
+  }
+  function setQty(code, qty) {
+    qty = Math.max(0, Math.min(99, qty));
+    if (qty === 0) delete state.cart[code];
+    else state.cart[code] = qty;
+    updateBadge();
+    renderGrid();
+    if (els.drawer.classList.contains('open')) renderDrawer();
+  }
+
+  function renderGrid() {
+    els.grid.innerHTML = state.products.map((p) => {
+      const q = state.cart[p.code] || 0;
+      return `<article class="card" data-code="${p.code}">
+        <div class="media"><img src="${p.image}" alt="${p.name}" loading="lazy" width="400" height="400" /></div>
+        <div class="body">
+          <span class="tag">${p.product_type || 'Decorative'}</span>
+          <h2>${p.name}</h2>
+          <div class="price">${p.price_label || money(p.price_paise)}</div>
+          <div class="actions">
+            ${q === 0
+              ? `<button type="button" class="btn btn-accent btn-block add" data-code="${p.code}">Add</button>`
+              : `<div class="qty"><button type="button" class="dec" data-code="${p.code}">−</button><span>${q}</span><button type="button" class="inc" data-code="${p.code}">+</button></div>`}
+          </div>
+        </div>
+      </article>`;
+    }).join('');
+  }
+
+  function openDrawer(step) {
+    state.step = step || 'cart';
+    els.drawer.classList.add('open');
+    els.drawerBg.classList.add('open');
+    renderDrawer();
+  }
+  function closeDrawer() {
+    els.drawer.classList.remove('open');
+    els.drawerBg.classList.remove('open');
+  }
+
+  async function refreshQuote() {
+    const mode = state.fulfillment;
+    const townEl = document.getElementById('city');
+    const town = townEl ? townEl.value : '';
+    try {
+      const res = await fetch('/api/storefront/quote-shipping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode, town, subtotal_paise: subtotal() }),
+      });
+      const data = await res.json();
+      state.quote = data.ok === false ? { ok: false, error: data.error } : data;
+    } catch (e) {
+      state.quote = { ok: false, error: 'Could not calculate shipping' };
+    }
+  }
+
+  function totalsHtml() {
+    const sub = subtotal();
+    const fee = state.quote && state.quote.ok ? state.quote.delivery_fee_paise : 0;
+    const label = state.quote && state.quote.ok ? state.quote.label : 'Shipping';
+    const total = sub + (state.quote && state.quote.ok ? fee : 0);
+    return `<div class="totals">
+      <div class="row"><span>Items</span><span>${money(sub)}</span></div>
+      <div class="row"><span>${label}</span><span>${money(state.quote && state.quote.ok ? fee : 0)}</span></div>
+      <div class="row grand"><span>Total</span><span>${money(total)}</span></div>
+    </div>`;
+  }
+
+  function renderDrawer() {
+    const items = cartEntries();
+    if (state.step === 'cart') {
+      els.drawerTitle.textContent = 'Your cart';
+      if (!items.length) {
+        els.drawerContent.innerHTML = '<p class="muted">Your cart is empty. Add decorative lights to continue.</p>';
+        els.drawerFooter.innerHTML = '';
+        return;
+      }
+      els.drawerContent.innerHTML = items.map((i) => `
+        <div class="line">
+          <img src="${i.image}" alt="" />
+          <div><div class="name">${i.name}</div><div class="meta">${money(i.price_paise)} each</div>
+            <div class="qty" style="margin-top:6px;width:fit-content">
+              <button type="button" class="dec" data-code="${i.code}">−</button><span>${i.qty}</span><button type="button" class="inc" data-code="${i.code}">+</button>
+            </div>
+          </div>
+          <strong>${money(i.price_paise * i.qty)}</strong>
+        </div>`).join('') + `<p style="margin-top:14px;font-size:13px;color:var(--muted)">Free delivery/courier on orders ₹${((state.shipping && state.shipping.free_above_paise) || 200000) / 100}+</p>`;
+      els.drawerFooter.innerHTML = totalsHtml() + `<button type="button" class="btn btn-accent btn-block" id="toCheckout" style="margin-top:12px">Checkout</button>`;
+      document.getElementById('toCheckout').onclick = async () => {
+        state.step = 'checkout';
+        await refreshQuote();
+        renderDrawer();
+      };
+      return;
+    }
+
+    // checkout
+    els.drawerTitle.textContent = 'Checkout';
+    const s = state.shipping || {};
+    const err = state.quote && state.quote.ok === false ? state.quote.error : (state.checkoutError || '');
+    els.drawerContent.innerHTML = `
+      ${err ? `<p class="err">${err}</p>` : ''}
+      <div class="ship-opts">
+        <label class="ship-opt ${state.fulfillment==='pickup'?'selected':''}"><input type="radio" name="ful" value="pickup" ${state.fulfillment==='pickup'?'checked':''}/><div><strong>Pickup</strong><div class="meta">${s.shop_address || 'Bhor shop'} · ${money(s.pickup_paise||0)}</div></div></label>
+        <label class="ship-opt ${state.fulfillment==='local'?'selected':''}"><input type="radio" name="ful" value="local" ${state.fulfillment==='local'?'checked':''}/><div><strong>Local delivery</strong><div class="meta">${(s.local_towns||[]).join(', ')} · ${money(s.local_paise||0)}</div></div></label>
+        <label class="ship-opt ${state.fulfillment==='courier'?'selected':''}"><input type="radio" name="ful" value="courier" ${state.fulfillment==='courier'?'checked':''}/><div><strong>Courier (India)</strong><div class="meta">${money(s.courier_paise||0)}</div></div></label>
+      </div>
+      <label class="field">Your name<input id="name" autocomplete="name" required /></label>
+      <label class="field">Mobile<input id="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="10-digit number" required /></label>
+      <div id="addrBlock" style="display:${state.fulfillment==='pickup'?'none':'block'}">
+        <label class="field">Address<textarea class="textarea" id="address" rows="2" placeholder="House / street / landmark"></textarea></label>
+        <div class="field-row">
+          <label class="field">Town / city<input id="city" autocomplete="address-level2" /></label>
+          <label class="field">PIN code<input id="pincode" inputmode="numeric" maxlength="6" /></label>
+        </div>
+        <label class="field">State<input id="state" value="${state.fulfillment==='local'?'Maharashtra':''}" /></label>
+      </div>
+      ${totalsHtml()}
+    `;
+    els.drawerFooter.innerHTML = `
+      <button type="button" class="btn btn-outline btn-block" id="backCart" style="margin-bottom:8px">Back to cart</button>
+      <button type="button" class="btn btn-accent btn-block" id="placeOrder">Pay securely</button>
+    `;
+    document.getElementById('backCart').onclick = () => { state.step = 'cart'; state.checkoutError = ''; renderDrawer(); };
+    document.querySelectorAll('input[name=ful]').forEach((r) => {
+      r.onchange = async () => {
+        state.fulfillment = r.value;
+        await refreshQuote();
+        renderDrawer();
+      };
+    });
+    const city = document.getElementById('city');
+    if (city) city.addEventListener('change', async () => { await refreshQuote(); renderDrawer(); });
+    document.getElementById('placeOrder').onclick = placeOrder;
+  }
+
+  async function placeOrder() {
+    state.checkoutError = '';
+    const name = (document.getElementById('name') || {}).value || '';
+    const phone = (document.getElementById('phone') || {}).value || '';
+    const payload = {
+      name, phone,
+      fulfillment: state.fulfillment,
+      items: cartEntries().map((i) => ({ code: i.code, qty: i.qty })),
+    };
+    if (state.fulfillment !== 'pickup') {
+      payload.address = (document.getElementById('address') || {}).value || '';
+      payload.city = (document.getElementById('city') || {}).value || '';
+      payload.town = payload.city;
+      payload.pincode = (document.getElementById('pincode') || {}).value || '';
+      payload.state = (document.getElementById('state') || {}).value || '';
+    }
+    const btn = document.getElementById('placeOrder');
+    if (btn) { btn.disabled = true; btn.textContent = 'Creating order…'; }
+    try {
+      const res = await fetch('/api/storefront/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        state.checkoutError = data.error || 'Checkout failed';
+        renderDrawer();
+        return;
+      }
+      window.location.href = data.pay_url;
+    } catch (e) {
+      state.checkoutError = e.message || 'Network error';
+      renderDrawer();
+    }
+  }
+
+  document.getElementById('openCart').onclick = () => openDrawer('cart');
+  document.getElementById('openCartMobile').onclick = () => openDrawer('cart');
+  document.getElementById('closeCart').onclick = closeDrawer;
+  document.getElementById('drawerBg').onclick = closeDrawer;
+  document.addEventListener('click', (e) => {
+    const add = e.target.closest('.add');
+    const inc = e.target.closest('.inc');
+    const dec = e.target.closest('.dec');
+    if (add) setQty(add.dataset.code, (state.cart[add.dataset.code] || 0) + 1);
+    if (inc) setQty(inc.dataset.code, (state.cart[inc.dataset.code] || 0) + 1);
+    if (dec) setQty(dec.dataset.code, (state.cart[dec.dataset.code] || 0) - 1);
+  });
+
+  fetch('/api/storefront/menu')
+    .then((r) => r.json())
+    .then((data) => {
+      state.products = data.products || [];
+      state.shipping = data.shipping || null;
+      renderGrid();
+      updateBadge();
+      if (!data.razorpay) {
+        console.warn('Razorpay not configured — checkout will fail until keys are set');
+      }
+    })
+    .catch(() => { els.grid.innerHTML = '<p class="err">Could not load products. Please refresh.</p>'; });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "client": "acr",
+  "ig_user_id": "17841442342112674",
+  "page_id": "1196567856881791",
+  "keywords": [
+    {
+      "match": "MENU",
+      "mode": "exact",
+      "case_insensitive": true,
+      "reply": "Thanks! Today's menu + ordering is on WhatsApp:\n\nhttps://wa.me/9823583498\n\nOpen the chat and place your lunch or dinner order before cutoff."
+    }
+  ],
+  "ignore_usernames": ["order.ammachethiruchulu"]
+}

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
-import { MENU_DISHES, MENU_VERSION } from '../menu.js';
+import { MENU_DISHES, MENU_VERSION, resolveDishCode, sortDishesBySeed } from '../menu.js';
 import {
   SEED_AMMAS,
   isPlaceholderCook,
@@ -26,8 +26,8 @@ import {
   defaultOpsSettings,
   normalizeOpsSettings,
   effectiveMinOrderPaise,
-  setLaunchIsoCache,
 } from '../ops-settings.js';
+import { locationsNear } from '../geo.js';
 
 function dbFilePath() {
   const p = config.databasePath.replace(/\.db$/i, '.json');
@@ -46,11 +46,27 @@ function emptyStore() {
     feedbacks: [],
     help_tickets: [],
     messages: [],
+    cashbook_entries: [],
     nextOrderId: 1,
     nextFeedbackId: 1,
     nextHelpId: 1,
     nextMessageId: 1,
+    nextCashbookId: 1,
   };
+}
+
+function istDayFromIso(isoStr) {
+  if (!isoStr) return null;
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date(isoStr));
+  } catch {
+    return String(isoStr).slice(0, 10);
+  }
 }
 
 /** JSON file backend (local / fallback). All methods async for shared DB API. */
@@ -113,8 +129,6 @@ export function createJsonStore() {
 
   async function ensureMenu() {
     const s = load();
-    // Seed only when empty — preserves admin edits to price/name/stock forever.
-    // Bumping MENU_VERSION in code will still ADD missing seed codes only.
     if (!Array.isArray(s.dishes)) s.dishes = [];
     if (!s.dishes.length) {
       s.dishes = MENU_DISHES.map((d) => ({ ...d, portions_sold: 0 }));
@@ -123,18 +137,43 @@ export function createJsonStore() {
       console.log(`Menu seeded version ${MENU_VERSION} (${s.dishes.length} dishes)`);
       return;
     }
-    const have = new Set(s.dishes.map((d) => d.code));
+    const prev = Number(s.menu_version || 0);
+    const byCode = new Map(s.dishes.map((d) => [d.code, d]));
     let added = 0;
+    let updated = 0;
     for (const d of MENU_DISHES) {
-      if (have.has(d.code)) continue;
-      s.dishes.push({ ...d, portions_sold: 0 });
-      added += 1;
+      const existing = byCode.get(d.code);
+      if (!existing) {
+        s.dishes.push({ ...d, portions_sold: 0 });
+        added += 1;
+        continue;
+      }
+      if (prev === MENU_VERSION) continue;
+      existing.name = d.name;
+      existing.category = d.category;
+      existing.meal = d.meal;
+      existing.price_paise = d.price_paise;
+      existing.note = d.note || null;
+      existing.active = d.active !== false;
+      existing.advance_only = Boolean(d.advance_only);
+      updated += 1;
     }
     backfillCookNamesFromSeed();
-    if (added || s.menu_version !== MENU_VERSION) {
+    let purged = 0;
+    if (prev !== MENU_VERSION) {
+      const keep = new Set(MENU_DISHES.map((d) => d.code));
+      const before = s.dishes.length;
+      s.dishes = s.dishes.filter((d) => keep.has(d.code));
+      purged = before - s.dishes.length;
+    }
+    if (added || updated || purged || s.menu_version !== MENU_VERSION) {
       s.menu_version = MENU_VERSION;
       save();
-      if (added) console.log(`Menu added ${added} new dish code(s) from seed`);
+      if (added || updated || purged) {
+        console.log(
+          `Menu catalog v${MENU_VERSION}: added ${added}, updated ${updated}, purged ${purged} dish(es)`,
+        );
+      }
     }
   }
 
@@ -216,7 +255,17 @@ export function createJsonStore() {
         return defaults;
       }
       try {
-        return normalizeOpsSettings(JSON.parse(raw));
+        const parsed = JSON.parse(raw);
+        const next = normalizeOpsSettings(parsed);
+        // Persist new fields (cutoffs) if this meta predates them
+        if (
+          parsed.lunch_cutoff_hour == null ||
+          parsed.dinner_cutoff_hour == null ||
+          parsed.launch_iso == null
+        ) {
+          await this.setMeta(META_KEY_OPS, JSON.stringify(next));
+        }
+        return next;
       } catch {
         const defaults = defaultOpsSettings();
         await this.saveOpsSettings(defaults);
@@ -225,7 +274,6 @@ export function createJsonStore() {
     },
     async saveOpsSettings(settings) {
       const next = normalizeOpsSettings(settings);
-      setLaunchIsoCache(next.launch_iso);
       await this.setMeta(META_KEY_OPS, JSON.stringify(next));
       return next;
     },
@@ -235,18 +283,21 @@ export function createJsonStore() {
     },
     async listDishes(meal, category) {
       const s = load();
-      return s.dishes.filter((d) => {
-        if (!d.active) return false;
-        if (meal && d.meal !== meal && d.meal !== 'both') return false;
-        if (category && d.category !== category) return false;
-        return true;
-      });
+      return sortDishesBySeed(
+        s.dishes.filter((d) => {
+          if (!d.active) return false;
+          if (meal && d.meal !== meal && d.meal !== 'both') return false;
+          if (category && d.category !== category) return false;
+          return true;
+        }),
+      );
     },
     async listAllDishes() {
       return load().dishes.slice();
     },
     async getDish(code) {
-      return load().dishes.find((d) => d.code === String(code || '').toUpperCase()) || null;
+      const resolved = resolveDishCode(code);
+      return load().dishes.find((d) => d.code === resolved) || null;
     },
     async setDishStock(code, maxPortions) {
       const s = load();
@@ -470,18 +521,38 @@ export function createJsonStore() {
       const s = load();
       const p = String(phone || '');
       const text = String(addr?.text || '').trim();
-      if (text.length < 8) return null;
+      const lat = addr?.lat != null ? Number(addr.lat) : null;
+      const lng = addr?.lng != null ? Number(addr.lng) : null;
+      const hasPin = Number.isFinite(lat) && Number.isFinite(lng);
+      if (text.length < 8 && !hasPin) return null;
       const cur = s.customers[p] || { phone: p, created_at: new Date().toISOString() };
       let addresses = Array.isArray(cur.addresses) ? [...cur.addresses] : [];
       if (!addresses.length && cur.last_address) {
         addresses = [{ id: 'a1', text: cur.last_address, zone: cur.default_zone || null }];
       }
       const norm = text.toLowerCase();
-      let hit = addresses.find((a) => String(a.text).trim().toLowerCase() === norm);
+      let hit = null;
+      if (hasPin) {
+        hit = addresses.find(
+          (a) =>
+            a.lat != null &&
+            a.lng != null &&
+            locationsNear(Number(a.lat), Number(a.lng), lat, lng),
+        );
+      }
+      if (!hit && text.length >= 8) {
+        hit = addresses.find((a) => String(a.text).trim().toLowerCase() === norm);
+      }
       const now = new Date().toISOString();
       if (hit) {
         hit.last_used_at = now;
         if (addr.zone) hit.zone = addr.zone;
+        if (hasPin) {
+          hit.lat = lat;
+          hit.lng = lng;
+          if (addr.location_name) hit.location_name = addr.location_name;
+          if (text.length >= 8) hit.text = text.slice(0, 200);
+        }
       } else {
         if (addresses.length >= 5) {
           addresses.sort((a, b) =>
@@ -495,6 +566,11 @@ export function createJsonStore() {
           zone: addr.zone || null,
           last_used_at: now,
         };
+        if (hasPin) {
+          hit.lat = lat;
+          hit.lng = lng;
+          if (addr.location_name) hit.location_name = String(addr.location_name).slice(0, 80);
+        }
         addresses.push(hit);
       }
       s.customers[p] = {
@@ -524,20 +600,29 @@ export function createJsonStore() {
       };
       save();
     },
+    async customerHasPaidOrder(phone) {
+      const p = String(phone || '');
+      if (!p) return false;
+      const paidLike = new Set(['paid', 'preparing', 'out_for_delivery', 'delivered']);
+      return (load().orders || []).some((o) => o.phone === p && paidLike.has(o.status));
+    },
     async createOrder(order) {
       const s = load();
       if (!Array.isArray(s.feedbacks)) s.feedbacks = [];
       const meta =
         order.meta && typeof order.meta === 'object'
-          ? order.meta
+          ? { ...order.meta }
           : {
               ...(order.discount_paise != null ? { discount_paise: order.discount_paise } : {}),
               ...(order.offers_applied ? { offers_applied: order.offers_applied } : {}),
               ...(order.free_delivery != null ? { free_delivery: order.free_delivery } : {}),
             };
+      const deliverySlot = order.delivery_slot || meta.delivery_slot || null;
+      if (deliverySlot && !meta.delivery_slot) meta.delivery_slot = deliverySlot;
       const row = {
         id: s.nextOrderId++,
         ...order,
+        delivery_slot: deliverySlot,
         discount_paise: order.discount_paise ?? meta.discount_paise ?? 0,
         offers_applied: order.offers_applied || meta.offers_applied || [],
         free_delivery: order.free_delivery ?? meta.free_delivery ?? false,
@@ -548,6 +633,19 @@ export function createJsonStore() {
       save();
       return row;
     },
+    async countOrdersByDeliverySlot(slotIds, statuses = ['pending_payment', 'paid', 'preparing', 'out_for_delivery']) {
+      const ids = (Array.isArray(slotIds) ? slotIds : []).map(String).filter(Boolean);
+      const out = Object.fromEntries(ids.map((id) => [id, 0]));
+      if (!ids.length) return out;
+      const idSet = new Set(ids);
+      const statusSet = new Set(statuses);
+      for (const o of load().orders || []) {
+        if (!statusSet.has(o.status)) continue;
+        const sid = String(o.delivery_slot || o.meta?.delivery_slot || '');
+        if (sid && idSet.has(sid)) out[sid] = (out[sid] || 0) + 1;
+      }
+      return out;
+    },
     async adjustStock(code, deltaQty) {
       if (!code || !deltaQty) return null;
       const s = load();
@@ -556,6 +654,15 @@ export function createJsonStore() {
       dish.portions_sold = Math.max(0, (dish.portions_sold || 0) + Number(deltaQty));
       save();
       return { ...dish };
+    },
+    /** Zero daily sold counters (max_portions kept). Used by IST day rollover. */
+    async resetAllPortionsSold() {
+      const s = load();
+      for (const d of s.dishes || []) {
+        d.portions_sold = 0;
+      }
+      save();
+      return (s.dishes || []).length;
     },
     async listOrders(limit = 50) {
       return load().orders.slice().reverse().slice(0, limit);
@@ -654,6 +761,7 @@ export function createJsonStore() {
       if (!s.nextHelpId) s.nextHelpId = 1;
       const row = {
         id: s.nextHelpId++,
+        ticket_status: entry.ticket_status || 'open',
         ...entry,
         created_at: new Date().toISOString(),
       };
@@ -666,6 +774,15 @@ export function createJsonStore() {
       if (!Array.isArray(s.help_tickets)) return [];
       return s.help_tickets.slice().reverse().slice(0, limit);
     },
+    async updateHelpTicket(id, patch = {}) {
+      const s = load();
+      if (!Array.isArray(s.help_tickets)) return null;
+      const row = s.help_tickets.find((t) => Number(t.id) === Number(id));
+      if (!row) return null;
+      Object.assign(row, patch, { updated_at: new Date().toISOString() });
+      save();
+      return { ...row };
+    },
     async logWaMessage(entry) {
       const s = load();
       if (!Array.isArray(s.messages)) s.messages = [];
@@ -674,7 +791,8 @@ export function createJsonStore() {
       if (!phone) return null;
       const waId = entry.wa_message_id ? String(entry.wa_message_id) : null;
       if (waId && s.messages.some((m) => m.wa_message_id === waId)) {
-        return s.messages.find((m) => m.wa_message_id === waId);
+        const hit = s.messages.find((m) => m.wa_message_id === waId);
+        return { ...hit, _duplicate: true };
       }
       const row = {
         id: s.nextMessageId++,
@@ -725,7 +843,11 @@ export function createJsonStore() {
           order_count: Number(cust?.order_count) || 0,
         };
       });
-      rows.sort((a, b) => String(b.last_at || '').localeCompare(String(a.last_at || '')));
+      rows.sort((a, b) => {
+        const tb = Date.parse(b.last_at || '') || 0;
+        const ta = Date.parse(a.last_at || '') || 0;
+        return tb - ta;
+      });
       return rows.slice(0, Math.max(1, Number(limit) || 100));
     },
     async listMessagesForPhone(phone, limit = 200) {
@@ -737,6 +859,183 @@ export function createJsonStore() {
         .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)) || a.id - b.id);
       const lim = Math.max(1, Math.min(500, Number(limit) || 200));
       return msgs.slice(-lim);
+    },
+    async getLastInboundAt(phone) {
+      const p = String(phone || '').replace(/\D/g, '');
+      if (!p) return null;
+      const s = load();
+      let best = null;
+      for (const m of Array.isArray(s.messages) ? s.messages : []) {
+        if (m.phone !== p || m.direction !== 'in') continue;
+        if (!best || String(m.created_at) > String(best)) best = m.created_at;
+      }
+      return best;
+    },
+
+    async listRiders({ activeOnly = false } = {}) {
+      const s = load();
+      let rows = Array.isArray(s.riders) ? s.riders.slice() : [];
+      if (activeOnly) rows = rows.filter((r) => r.active !== false);
+      rows.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      return rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        phone: r.phone,
+        active: r.active !== false,
+        notes: r.notes || null,
+        created_at: r.created_at || null,
+        updated_at: r.updated_at || null,
+      }));
+    },
+
+    async findRiderById(id) {
+      const s = load();
+      const r = (s.riders || []).find((x) => x.id === String(id || ''));
+      return r ? { ...r } : null;
+    },
+
+    async findRiderByPhone(phone) {
+      const p = String(phone || '').replace(/\D/g, '');
+      if (p.length < 10) return null;
+      const s = load();
+      const r = (s.riders || []).find((row) => {
+        const rp = String(row.phone || '').replace(/\D/g, '');
+        return rp === p || rp.endsWith(p) || p.endsWith(rp);
+      });
+      return r ? { ...r } : null;
+    },
+
+    async upsertRider(rider) {
+      const s = load();
+      if (!Array.isArray(s.riders)) s.riders = [];
+      const id = String(rider.id || '').trim();
+      const name = String(rider.name || '').trim();
+      const phone = String(rider.phone || '').replace(/\D/g, '');
+      if (!id || !name || phone.length < 10) throw new Error('Rider id, name, phone required');
+      const idx = s.riders.findIndex((x) => x.id === id);
+      const prev = idx >= 0 ? s.riders[idx] : {};
+      const next = {
+        ...prev,
+        id,
+        name,
+        phone,
+        pin_hash: rider.pin_hash != null ? rider.pin_hash : prev.pin_hash || '',
+        active: rider.active !== false,
+        notes: rider.notes != null ? rider.notes : prev.notes || null,
+        created_at: prev.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      if (idx >= 0) s.riders[idx] = next;
+      else s.riders.push(next);
+      save();
+      return { ...next };
+    },
+
+    async listOrdersForRider(riderId, { statuses = null, limit = 80 } = {}) {
+      const rid = String(riderId || '');
+      const s = load();
+      let rows = (s.orders || []).filter((o) => o.rider_id === rid || o.meta?.rider_id === rid);
+      if (Array.isArray(statuses) && statuses.length) {
+        const set = new Set(statuses);
+        rows = rows.filter((o) => set.has(o.status));
+      }
+      rows.sort((a, b) => String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || '')));
+      return rows.slice(0, Math.min(Math.max(Number(limit) || 80, 1), 200)).map((o) => ({ ...o }));
+    },
+
+    async insertCashbookEntry(entry) {
+      const s = load();
+      if (!Array.isArray(s.cashbook_entries)) s.cashbook_entries = [];
+      if (!s.nextCashbookId) s.nextCashbookId = 1;
+      const row = {
+        id: s.nextCashbookId++,
+        entry_date: String(entry.entry_date).slice(0, 10),
+        kind: entry.kind,
+        amount_paise: Math.round(Number(entry.amount_paise) || 0),
+        note: entry.note || null,
+        order_ref: entry.order_ref || null,
+        created_by: entry.created_by || 'admin',
+        created_at: new Date().toISOString(),
+      };
+      s.cashbook_entries.push(row);
+      save();
+      return { ...row };
+    },
+
+    async listCashbookEntries(entryDate) {
+      const day = String(entryDate || '').slice(0, 10);
+      const s = load();
+      return (s.cashbook_entries || [])
+        .filter((e) => String(e.entry_date).slice(0, 10) === day)
+        .slice()
+        .reverse()
+        .map((e) => ({ ...e }));
+    },
+
+    async listCashbookEntriesRange(fromDate, toDate) {
+      const from = String(fromDate || '').slice(0, 10);
+      const to = String(toDate || from).slice(0, 10);
+      const s = load();
+      return (s.cashbook_entries || [])
+        .filter((e) => {
+          const d = String(e.entry_date).slice(0, 10);
+          return d >= from && d <= to;
+        })
+        .slice()
+        .sort((a, b) => {
+          const da = String(b.entry_date).localeCompare(String(a.entry_date));
+          if (da) return da;
+          return (b.id || 0) - (a.id || 0);
+        })
+        .map((e) => ({ ...e }));
+    },
+
+    async deleteCashbookEntry(id) {
+      const s = load();
+      const n = Math.round(Number(id) || 0);
+      if (!n || !Array.isArray(s.cashbook_entries)) return false;
+      const before = s.cashbook_entries.length;
+      s.cashbook_entries = s.cashbook_entries.filter((e) => e.id !== n);
+      if (s.cashbook_entries.length === before) return false;
+      save();
+      return true;
+    },
+
+    async listOrdersForCashbookDay(entryDate) {
+      const day = String(entryDate || '').slice(0, 10);
+      return this.listOrdersForCashbookRange(day, day);
+    },
+
+    async listOrdersForCashbookRange(fromDate, toDate) {
+      const from = String(fromDate || '').slice(0, 10);
+      const to = String(toDate || from).slice(0, 10);
+      const s = load();
+      const istDay = (iso) => {
+        if (!iso) return null;
+        try {
+          return new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          }).format(new Date(iso));
+        } catch {
+          return String(iso).slice(0, 10);
+        }
+      };
+      return (s.orders || [])
+        .filter((o) => {
+          const service = String(o.service_date || '').slice(0, 10);
+          const paid = istDay(o.paid_at);
+          const cash = istDay(o.cash_confirmed_at || o.meta?.cash_confirmed_at);
+          return (
+            (service && service >= from && service <= to) ||
+            (paid && paid >= from && paid <= to) ||
+            (cash && cash >= from && cash <= to)
+          );
+        })
+        .slice(0, 2000)
+        .map((o) => ({ ...o }));
     },
   };
 }

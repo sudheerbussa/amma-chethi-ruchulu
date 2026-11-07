@@ -1,0 +1,16 @@
+{
+  "client_id": "acr",
+  "platform": "instagram",
+  "type": "carousel",
+  "theme": "tweet_card_healthy",
+  "publish_at": null,
+  "status": "ready",
+  "slide_count": 6,
+  "cta_keyword": "MENU",
+  "hashtags": [
+    "TenaliFood",
+    "HomeFood",
+    "AndhraFood",
+    "AmmaChethiRuchulu"
+  ]
+}

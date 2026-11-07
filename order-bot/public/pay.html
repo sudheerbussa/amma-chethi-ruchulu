@@ -210,10 +210,18 @@
         async function loadInfo() {
           const infoRes = await fetch('/api/pay-info/' + encodeURIComponent(orderRef));
           const info = await infoRes.json().catch(function () { return {}; });
-          if (infoRes.ok) {
-            if (info.business_name) brandEl.textContent = info.business_name;
-            amountEl.textContent = formatInr(info.total_paise);
-            renderBreakdown(info);
+          if (!infoRes.ok) throw new Error(info.error || 'Order not found');
+          if (info.business_name) brandEl.textContent = info.business_name;
+          amountEl.textContent = formatInr(info.amount_due_paise != null ? info.amount_due_paise : info.total_paise);
+          renderBreakdown(info);
+          if (info.payable === false) {
+            setMsg('This order is already paid. You can return to WhatsApp.', 'ok');
+            btn.disabled = true;
+            btn.textContent = 'Paid';
+            return info;
+          }
+          if (info.cod_open) {
+            setMsg('Pay online to clear COD due on this order.');
           }
           return info;
         }
@@ -232,7 +240,8 @@
           amountEl.textContent = formatInr(data.amount);
           if (data.business_name) brandEl.textContent = data.business_name;
           if (data.breakdown) renderBreakdown(data.breakdown);
-          setMsg('');
+          if (data.settle_cod) setMsg('Paying online clears COD for this order.');
+          else setMsg('');
           btn.disabled = false;
           return data;
         }
@@ -313,7 +322,10 @@
         btn.addEventListener('click', openCheckout);
 
         loadInfo()
-          .then(function () { return createOrder(); })
+          .then(function (info) {
+            if (info && info.payable === false) return null;
+            return createOrder();
+          })
           .catch(function (err) { setMsg(err.message || 'Could not load order', 'err'); });
       })();
     </script>

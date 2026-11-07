@@ -36,3 +36,67 @@ coverage/
 # Optional local tooling
 *.local
 .cache/
+
+# Public-repository safety: credentials, private local state and generated artifacts
+*.pem
+**/.flow-keys/
+flow_private.pem
+**/release/
+*.tar.gz
+*.tgz
+*.zip
+**/backup-before-*/
+**/backups/
+**/data/
+**/exports/
+*.dump
+*.sqlite
+*.sqlite3
+*.db
+.env*
+**/.env*
+!.env.example
+!**/.env.example
+**/terminals/
+**/.cursor/
+**/tmp-posters/
+# Documents/media may contain customer PII, payment details or registration IDs.
+# Existing tracked assets are unaffected; untracked media are intentionally not published.
+*.mp4
+*.mov
+*.pptx
+*.pdf
+*.csv
+*.xls
+*.xlsx
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.gif
+*.mp3
+*.wav
+social-campaigns/assets/customers/
+
+# Additional files over 5 MiB excluded from public sync
+/bin/cloudflared
+/order-bot/.deploy-venv/bin/python
+/order-bot/.deploy-venv/bin/python3
+/order-bot/.deploy-venv/bin/python3.12
+/order-bot/.deploy-venv/lib/python3.12/site-packages/cryptography/hazmat/bindings/_rust.abi3.so
+/rare-and-unique-electronics/Decorative Lights.docx
+
+# Local Python environments and registration worksheets are never public source
+**/.deploy-venv/
+**/.venv/
+**/venv/
+**/__pycache__/
+*.pyc
+*.pyo
+*.so
+/FSSAI_FILL_SHEET.md
+/UDYAM_FILL_SHEET.md
+
+# Independent nested repositories are not imported by this bot-source sync
+/rareuniqueelectronics-web/
+/pathology-lab-bot/

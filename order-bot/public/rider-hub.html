@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ACR Rider</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0f1f1a;
+        --panel: #163029;
+        --text: #e8f2ee;
+        --muted: #8eaea2;
+        --accent: #2dd4a8;
+        --food: #f0a05a;
+        --fresh: #5ec8ff;
+        --line: rgba(255,255,255,0.08);
+        --danger: #f87171;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; min-height: 100vh;
+        font-family: "DM Sans", system-ui, sans-serif;
+        background: radial-gradient(1200px 600px at 10% -10%, #1a3d32, var(--bg));
+        color: var(--text);
+      }
+      .wrap { max-width: 420px; margin: 0 auto; padding: 1.5rem 1.1rem 2.5rem; }
+      h1 { font-size: 1.55rem; margin: 0 0 0.25rem; }
+      .sub { color: var(--muted); font-size: 0.92rem; margin: 0 0 1.25rem; }
+      .card {
+        background: var(--panel); border: 1px solid var(--line);
+        border-radius: 16px; padding: 1.1rem 1rem; margin-bottom: 1rem;
+      }
+      label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.35rem; }
+      input {
+        width: 100%; padding: 0.7rem 0.75rem; border-radius: 10px;
+        border: 1px solid var(--line); background: #0c1a16; color: var(--text);
+        font: inherit; margin-bottom: 0.75rem;
+      }
+      .btn {
+        width: 100%; border: 0; border-radius: 12px; padding: 0.8rem 1rem;
+        font: inherit; font-weight: 600; cursor: pointer;
+        background: var(--accent); color: #06241c;
+      }
+      .btn:disabled { opacity: 0.5; }
+      .msg { font-size: 0.88rem; margin-top: 0.65rem; color: var(--danger); min-height: 1.2em; }
+      .msg.ok { color: var(--accent); }
+      .tiles { display: grid; gap: 0.75rem; }
+      .tile {
+        display: flex; gap: 0.85rem; align-items: center; text-align: left;
+        width: 100%; padding: 1rem; border-radius: 14px; cursor: pointer;
+        border: 1px solid var(--line); background: #102821; color: inherit; font: inherit;
+      }
+      .tile:hover { border-color: rgba(45,212,168,0.45); }
+      .tile .ico {
+        width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+        font-size: 1.25rem; flex-shrink: 0;
+      }
+      .tile.food .ico { background: rgba(240,160,90,0.2); }
+      .tile.fresh .ico { background: rgba(94,200,255,0.18); }
+      .tile strong { display: block; }
+      .tile span { color: var(--muted); font-size: 0.85rem; }
+      [hidden] { display: none !important; }
+      .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+      .ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); width: auto; padding: 0.45rem 0.7rem; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>ACR Rider</h1>
+      <p class="sub">One login for Food and Fresh deliveries.</p>
+
+      <div class="card" id="loginCard">
+        <label for="phone">WhatsApp phone</label>
+        <input id="phone" inputmode="numeric" placeholder="8055292935 or 918055292935" autocomplete="username" />
+        <label for="pin">PIN</label>
+        <input id="pin" type="password" inputmode="numeric" placeholder="4+ digits" autocomplete="current-password" />
+        <button class="btn" type="button" id="loginBtn">Sign in</button>
+        <p class="msg" id="loginMsg"></p>
+        <p class="sub" style="margin:0.75rem 0 0">Use this page (not WhatsApp). 10-digit Indian mobile is fine.</p>
+      </div>
+
+      <div id="hubCard" hidden>
+        <div class="top">
+          <div>
+            <strong id="riderName">Rider</strong>
+            <div class="sub" id="riderPhone" style="margin:0"></div>
+          </div>
+          <button type="button" class="btn ghost" id="logoutBtn">Log out</button>
+        </div>
+        <p class="sub">Choose an app for today’s jobs</p>
+        <div class="tiles">
+          <button type="button" class="tile food" id="openFood">
+            <div class="ico">🍛</div>
+            <div><strong>Food</strong><span>Amma Chethi Ruchulu · meals</span></div>
+          </button>
+          <button type="button" class="tile fresh" id="openFresh">
+            <div class="ico">🥬</div>
+            <div><strong>Fresh</strong><span>Produce · hourly slots</span></div>
+          </button>
+        </div>
+        <p class="sub" style="margin-top:1rem">
+          <button type="button" class="btn ghost" id="switchAccountBtn" style="width:auto">Sign in as another rider</button>
+        </p>
+      </div>
+    </div>
+    <script>
+      const LS_TOKEN = 'acr_rider_token';
+      const LS_NAME = 'acr_rider_name';
+      const LS_PHONE = 'acr_rider_phone';
+      let hub = {
+        foodRiderAppUrl: '/rider/app',
+        freshRiderAppUrl: 'https://fresh.ammachethiruchulu.co.in/rider/app',
+      };
+
+      function clearSession() {
+        localStorage.removeItem(LS_TOKEN);
+        localStorage.removeItem(LS_NAME);
+        localStorage.removeItem(LS_PHONE);
+      }
+
+      async function loadHubConfig() {
+        try {
+          const res = await fetch('/rider/api/hub-config');
+          const data = await res.json();
+          if (data.ok) hub = { ...hub, ...data };
+        } catch (_) {}
+      }
+
+      async function sessionStillValid(token) {
+        if (!token) return false;
+        try {
+          const res = await fetch('/rider/api/me', {
+            headers: { Authorization: 'Bearer ' + token },
+          });
+          if (!res.ok) return false;
+          const data = await res.json();
+          if (data.rider?.name) localStorage.setItem(LS_NAME, data.rider.name);
+          if (data.rider?.phone) localStorage.setItem(LS_PHONE, data.rider.phone);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function showHub() {
+        document.getElementById('loginCard').hidden = true;
+        document.getElementById('hubCard').hidden = false;
+        document.getElementById('riderName').textContent = localStorage.getItem(LS_NAME) || 'Rider';
+        document.getElementById('riderPhone').textContent = localStorage.getItem(LS_PHONE) || '';
+      }
+
+      function showLogin() {
+        document.getElementById('loginCard').hidden = false;
+        document.getElementById('hubCard').hidden = true;
+        document.getElementById('loginMsg').textContent = '';
+      }
+
+      function openApp(url) {
+        const token = localStorage.getItem(LS_TOKEN);
+        if (!token || !url) return;
+        const u = new URL(url, window.location.origin);
+        u.hash = 'acr_rider_token=' + encodeURIComponent(token);
+        window.location.href = u.toString();
+      }
+
+      document.getElementById('loginBtn').onclick = async () => {
+        const msg = document.getElementById('loginMsg');
+        const btn = document.getElementById('loginBtn');
+        msg.textContent = '';
+        btn.disabled = true;
+        try {
+          const res = await fetch('/rider/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: document.getElementById('phone').value,
+              pin: document.getElementById('pin').value,
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || 'Login failed');
+          localStorage.setItem(LS_TOKEN, data.token);
+          localStorage.setItem(LS_NAME, data.rider?.name || 'Rider');
+          localStorage.setItem(LS_PHONE, data.rider?.phone || '');
+          if (data.foodRiderAppUrl) hub.foodRiderAppUrl = data.foodRiderAppUrl;
+          if (data.freshRiderAppUrl) hub.freshRiderAppUrl = data.freshRiderAppUrl;
+          msg.className = 'msg ok';
+          msg.textContent = 'Signed in';
+          showHub();
+        } catch (e) {
+          msg.className = 'msg';
+          msg.textContent = e.message || 'Login failed';
+        } finally {
+          btn.disabled = false;
+        }
+      };
+
+      function doLogout() {
+        clearSession();
+        showLogin();
+      }
+
+      document.getElementById('logoutBtn').onclick = doLogout;
+      document.getElementById('switchAccountBtn').onclick = doLogout;
+      document.getElementById('openFood').onclick = () => openApp(hub.foodRiderAppUrl);
+      document.getElementById('openFresh').onclick = () => openApp(hub.freshRiderAppUrl);
+
+      loadHubConfig().then(async () => {
+        const token = localStorage.getItem(LS_TOKEN);
+        if (!token) {
+          showLogin();
+          return;
+        }
+        const ok = await sessionStillValid(token);
+        if (ok) showHub();
+        else {
+          clearSession();
+          showLogin();
+          document.getElementById('loginMsg').textContent =
+            'Previous session expired — sign in again';
+        }
+      });
+    </script>
+  </body>
+</html>

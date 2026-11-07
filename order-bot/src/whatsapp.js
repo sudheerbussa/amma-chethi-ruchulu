@@ -81,13 +81,19 @@ async function logOutbound(to, payload, sendResult) {
 
 export async function logInbound(msg) {
   try {
-    const body =
+    let body =
       msg.kind === 'button' || msg.kind === 'list'
         ? msg.title
           ? `${msg.title} (${msg.text})`
           : msg.text
         : msg.text;
-    await getDb().logWaMessage({
+    if (msg.kind === 'location' && msg.location) {
+      const loc = msg.location;
+      body =
+        `📍 ${loc.name || loc.address || 'Location pin'} ` +
+        `(${Number(loc.latitude).toFixed(5)}, ${Number(loc.longitude).toFixed(5)})`;
+    }
+    const row = await getDb().logWaMessage({
       phone: msg.from,
       direction: 'in',
       kind: msg.kind || 'text',
@@ -96,8 +102,10 @@ export async function logInbound(msg) {
       wa_message_id: msg.id || null,
       profile_name: msg.profileName || null,
     });
+    return row?._duplicate === true;
   } catch (err) {
     console.error('Inbound message log failed', err.message || err);
+    return false;
   }
 }
 
@@ -136,6 +144,34 @@ export async function sendText(to, body) {
     type: 'text',
     text: { preview_url: false, body },
   });
+}
+
+/**
+ * Native WhatsApp Catalog storefront message ("View catalog" button in chat).
+ * Customer browses catalog → cart → Place order; webhook continues as catalog_order.
+ *
+ * @param {string} to
+ * @param {{ body?: string, footer?: string, thumbnailProductRetailerId?: string }} [opts]
+ */
+export async function sendCatalogMessage(to, opts = {}) {
+  const interactive = {
+    type: 'catalog_message',
+    body: {
+      text: String(
+        opts.body ||
+          'Browse the menu, add items to your cart, then tap Place order.',
+      ).slice(0, 1024),
+    },
+    action: { name: 'catalog_message' },
+  };
+  const thumb = String(opts.thumbnailProductRetailerId || '').trim().toUpperCase();
+  if (thumb) {
+    interactive.action.parameters = { thumbnail_product_retailer_id: thumb.slice(0, 100) };
+  }
+  if (opts.footer) {
+    interactive.footer = { text: String(opts.footer).slice(0, 60) };
+  }
+  return sendPayload(to, { type: 'interactive', interactive });
 }
 
 /**
@@ -220,6 +256,73 @@ export async function sendList(to, { body, button, sections, header, footer }) {
   return sendPayload(to, { type: 'interactive', interactive });
 }
 
+/**
+ * Ask customer to share current location (WhatsApp native location picker).
+ * User reply arrives as type=location webhook.
+ */
+export async function sendLocationRequest(to, bodyText, _opts = {}) {
+  // Cloud API rejects footer (and header) on location_request_message
+  const interactive = {
+    type: 'location_request_message',
+    body: { text: String(bodyText).slice(0, 1024) },
+    action: { name: 'send_location' },
+  };
+  return sendPayload(to, { type: 'interactive', interactive });
+}
+
+/**
+ * Open a published WhatsApp Flow (navigate).
+ * @param {string} to
+ * @param {{
+ *   body: string,
+ *   flowId?: string,
+ *   flowToken: string,
+ *   flowCta?: string,
+ *   screen?: string,
+ *   payload?: Record<string, unknown>,
+ *   header?: string,
+ *   footer?: string,
+ * }} opts
+ */
+export async function sendFlow(to, opts) {
+  const flowId = String(opts.flowId || config.whatsappFlowId || '').trim();
+  if (!flowId) throw new Error('WHATSAPP_FLOW_ID is not configured');
+
+  // data_exchange → Meta calls our /flows endpoint with action INIT (required for dynamic menus).
+  // navigate → client renders a static entry screen; only use when screen + full data are supplied.
+  const flowAction = opts.flowAction === 'navigate' ? 'navigate' : 'data_exchange';
+  const parameters = {
+    flow_message_version: '3',
+    flow_id: flowId,
+    flow_token: String(opts.flowToken || `acr_${Date.now()}`),
+    flow_cta: String(opts.flowCta || 'Place order').slice(0, 30),
+    flow_action: flowAction,
+    mode: config.whatsappFlowMode || 'published',
+  };
+  if (flowAction === 'navigate' && (opts.screen || opts.payload)) {
+    parameters.flow_action_payload = {
+      ...(opts.screen ? { screen: opts.screen } : {}),
+      ...(opts.payload ? { data: opts.payload } : {}),
+    };
+  }
+
+  const interactive = {
+    type: 'flow',
+    body: { text: String(opts.body || 'Tap Place order to continue').slice(0, 1024) },
+    action: {
+      name: 'flow',
+      parameters,
+    },
+  };
+  if (opts.header) {
+    interactive.header = { type: 'text', text: String(opts.header).slice(0, 60) };
+  }
+  if (opts.footer) {
+    interactive.footer = { text: String(opts.footer).slice(0, 60) };
+  }
+  return sendPayload(to, { type: 'interactive', interactive });
+}
+
 export async function uploadLocalImage(filePath) {
   if (!config.accessToken || !config.phoneNumberId) {
     console.log(`[dry-run] upload image ${filePath}`);
@@ -230,10 +333,13 @@ export async function uploadLocalImage(filePath) {
   if (!fs.existsSync(abs)) throw new Error(`Image not found: ${abs}`);
 
   const bytes = fs.readFileSync(abs);
+  const ext = path.extname(abs).toLowerCase();
+  const mime =
+    ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
   const form = new FormData();
   form.append('messaging_product', 'whatsapp');
-  form.append('type', 'image/jpeg');
-  form.append('file', new Blob([bytes], { type: 'image/jpeg' }), path.basename(abs));
+  form.append('type', mime);
+  form.append('file', new Blob([bytes], { type: mime }), path.basename(abs));
 
   const res = await fetch(`${GRAPH}/${config.phoneNumberId}/media`, {
     method: 'POST',
@@ -257,6 +363,36 @@ export async function sendImage(to, { mediaId, link, caption }) {
   if (caption) image.caption = String(caption).slice(0, 1024);
 
   return sendPayload(to, { type: 'image', image });
+}
+
+/**
+ * Download inbound WhatsApp media (admin poster uploads, etc.).
+ * @returns {Promise<{ buffer: Buffer, mime: string }>}
+ */
+export async function downloadWhatsAppMedia(mediaId) {
+  const id = String(mediaId || '').trim();
+  if (!id) throw new Error('media id required');
+  if (config.dryRun) {
+    return { buffer: Buffer.from(''), mime: 'image/jpeg' };
+  }
+  const metaRes = await fetch(`${GRAPH}/${id}`, {
+    headers: { Authorization: `Bearer ${config.accessToken}` },
+  });
+  const meta = await metaRes.json().catch(() => ({}));
+  if (!metaRes.ok) {
+    throw new Error(meta?.error?.message || `Media meta ${metaRes.status}`);
+  }
+  const url = meta.url;
+  if (!url) throw new Error('Media URL missing');
+  const binRes = await fetch(url, {
+    headers: { Authorization: `Bearer ${config.accessToken}` },
+  });
+  if (!binRes.ok) throw new Error(`Media download ${binRes.status}`);
+  const buffer = Buffer.from(await binRes.arrayBuffer());
+  const mime = String(meta.mime_type || binRes.headers.get('content-type') || 'image/jpeg')
+    .split(';')[0]
+    .trim();
+  return { buffer, mime };
 }
 
 /** Upload once per process, then reuse media id for UPI QR */
@@ -303,6 +439,31 @@ export function extractInboundMessages(payload) {
         const from = String(msg.from || '').replace(/\D/g, '');
         const profileName = profileByWaId.get(from) || null;
 
+        const referred =
+          msg.context?.referred_product ||
+          msg.referral?.product ||
+          null;
+        const catalogCode = String(
+          referred?.product_retailer_id || referred?.retailer_id || '',
+        )
+          .trim()
+          .toUpperCase();
+
+        // Catalog product tap → treat as catalog enquiry (not free-form text)
+        if (catalogCode && (msg.type === 'text' || msg.type === 'interactive')) {
+          out.push({
+            from,
+            text: `catalog_${catalogCode}`,
+            id: msg.id,
+            kind: 'catalog',
+            title: catalogCode,
+            profileName,
+            catalogCode,
+            catalogId: referred.catalog_id || null,
+          });
+          continue;
+        }
+
         if (msg.type === 'text') {
           out.push({
             from,
@@ -313,9 +474,77 @@ export function extractInboundMessages(payload) {
           });
           continue;
         }
+        if (msg.type === 'image' && msg.image?.id) {
+          out.push({
+            from,
+            text: String(msg.image.caption || '').trim(),
+            id: msg.id,
+            kind: 'image',
+            profileName,
+            image: {
+              id: String(msg.image.id),
+              mime: String(msg.image.mime_type || 'image/jpeg'),
+              caption: String(msg.image.caption || '').trim(),
+            },
+          });
+          continue;
+        }
+        // Admin may send as document/file; treat image/* as poster-capable
+        if (msg.type === 'document' && msg.document?.id) {
+          const docMime = String(msg.document.mime_type || '').toLowerCase();
+          if (docMime.startsWith('image/')) {
+            out.push({
+              from,
+              text: String(msg.document.caption || '').trim(),
+              id: msg.id,
+              kind: 'image',
+              profileName,
+              image: {
+                id: String(msg.document.id),
+                mime: docMime || 'image/jpeg',
+                caption: String(msg.document.caption || '').trim(),
+              },
+            });
+            continue;
+          }
+        }
+        // Catalog shopping cart → Place order
+        if (msg.type === 'order' && msg.order) {
+          const items = Array.isArray(msg.order.product_items) ? msg.order.product_items : [];
+          out.push({
+            from,
+            text: 'catalog_order',
+            id: msg.id,
+            kind: 'catalog_order',
+            title: 'catalog_order',
+            profileName,
+            catalogId: msg.order.catalog_id || null,
+            productItems: items,
+            orderText: msg.order.text || null,
+          });
+          continue;
+        }
+        if (msg.type === 'location' && msg.location) {
+          const loc = msg.location;
+          out.push({
+            from,
+            text: '',
+            id: msg.id,
+            kind: 'location',
+            profileName,
+            location: {
+              latitude: Number(loc.latitude),
+              longitude: Number(loc.longitude),
+              name: loc.name || null,
+              address: loc.address || null,
+            },
+          });
+          continue;
+        }
         if (msg.type === 'interactive') {
           const btn = msg.interactive?.button_reply;
           const list = msg.interactive?.list_reply;
+          const nfm = msg.interactive?.nfm_reply;
           if (btn) {
             out.push({
               from,
@@ -333,6 +562,24 @@ export function extractInboundMessages(payload) {
               kind: 'list',
               title: list.title || '',
               profileName,
+            });
+          } else if (nfm) {
+            let flowResponse = {};
+            try {
+              flowResponse = JSON.parse(nfm.response_json || '{}');
+            } catch {
+              flowResponse = {};
+            }
+            out.push({
+              from,
+              text: 'flow_complete',
+              id: msg.id,
+              kind: 'flow',
+              title: nfm.name || 'flow',
+              profileName,
+              flowResponse,
+              flowName: nfm.name || null,
+              flowBody: nfm.body || null,
             });
           }
         }

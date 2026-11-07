@@ -1,0 +1,15 @@
+{
+  "name": "content-engine-mvp",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "render:sample": "node scripts/render-carousel.mjs --input clients/acr/sample-carousel.json --client acr",
+    "pack:vps": "node scripts/pack-for-vps.mjs --client acr"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}

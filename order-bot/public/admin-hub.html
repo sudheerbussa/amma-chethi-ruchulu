@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ACR Admin — Apps</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --panel: #1a222c;
+        --line: #2a3544;
+        --text: #e8eef4;
+        --muted: #8b9aab;
+        --accent: #3ecf9a;
+        --food: #f0a05a;
+        --fresh: #5ecf8a;
+        --err: #f07178;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background:
+          radial-gradient(ellipse 80% 50% at 20% -10%, rgba(62, 207, 154, 0.18), transparent),
+          radial-gradient(ellipse 60% 40% at 90% 10%, rgba(240, 160, 90, 0.12), transparent),
+          var(--bg);
+        color: var(--text);
+      }
+      .wrap {
+        max-width: 520px;
+        margin: 0 auto;
+        padding: 2.5rem 1.25rem 3rem;
+      }
+      h1 {
+        margin: 0 0 0.35rem;
+        font-size: 1.55rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .sub { margin: 0 0 1.5rem; color: var(--muted); font-size: 0.92rem; line-height: 1.45; }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 1.35rem 1.25rem;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+      }
+      .field { margin-bottom: 0.9rem; }
+      label {
+        display: block;
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin-bottom: 0.35rem;
+      }
+      input {
+        width: 100%;
+        padding: 0.65rem 0.75rem;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #12181f;
+        color: var(--text);
+        font: inherit;
+      }
+      input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .pw-wrap { position: relative; }
+      .pw-toggle {
+        position: absolute;
+        right: 0.45rem;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        font-size: 0.78rem;
+        cursor: pointer;
+        padding: 0.35rem 0.5rem;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        width: 100%;
+        margin-top: 0.35rem;
+        padding: 0.7rem 1rem;
+        border: none;
+        border-radius: 10px;
+        background: var(--accent);
+        color: #0a1210;
+        font: inherit;
+        font-weight: 650;
+        cursor: pointer;
+      }
+      .btn:hover { filter: brightness(1.06); }
+      .btn.ghost {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        font-weight: 500;
+      }
+      .btn.ghost:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+      .msg { min-height: 1.25rem; margin: 0.65rem 0 0; font-size: 0.85rem; }
+      .msg.err { color: var(--err); }
+      .msg.ok { color: var(--accent); }
+      .apps { display: grid; gap: 0.85rem; }
+      .app-tile {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+        text-align: left;
+        padding: 1.05rem 1.1rem;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: #12181f;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+        transition: border-color 0.15s, transform 0.12s;
+      }
+      .app-tile:hover {
+        transform: translateY(-1px);
+        border-color: rgba(62, 207, 154, 0.45);
+      }
+      .app-tile.food:hover { border-color: rgba(240, 160, 90, 0.55); }
+      .app-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        font-size: 1.55rem;
+        flex-shrink: 0;
+      }
+      .app-tile.food .app-icon { background: rgba(240, 160, 90, 0.18); }
+      .app-tile.fresh .app-icon { background: rgba(94, 207, 138, 0.18); }
+      .app-copy strong { display: block; font-size: 1.05rem; margin-bottom: 0.15rem; }
+      .app-copy span { color: var(--muted); font-size: 0.82rem; line-height: 1.35; }
+      .hub-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.15rem;
+      }
+      .hub-head .who { color: var(--muted); font-size: 0.82rem; margin: 0.25rem 0 0; }
+      .hub-actions { display: flex; flex-direction: column; gap: 0.45rem; min-width: 6.5rem; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div id="loginView" class="card">
+        <h1>ACR Admin</h1>
+        <p class="sub">One login for Food and Fresh ops. Choose an app after sign-in.</p>
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" type="text" value="superadmin" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="pw-wrap">
+            <input id="password" type="password" placeholder="ADMIN_TOKEN" autocomplete="current-password" />
+            <button type="button" class="pw-toggle" id="togglePasswordBtn" aria-label="Show password">Show</button>
+          </div>
+        </div>
+        <button class="btn" id="loginBtn" type="button">Log in</button>
+        <p class="msg" id="loginMsg"></p>
+      </div>
+
+      <div id="hubView" hidden>
+        <div class="hub-head">
+          <div>
+            <h1>Apps</h1>
+            <p class="who" id="sessionWho"></p>
+          </div>
+          <div class="hub-actions">
+            <button type="button" class="btn ghost" id="logoutBtn">Log out</button>
+          </div>
+        </div>
+        <div class="card apps" role="navigation" aria-label="Admin apps">
+          <button type="button" class="app-tile food" id="openFoodBtn" data-app="food">
+            <span class="app-icon" aria-hidden="true">🍛</span>
+            <span class="app-copy">
+              <strong>Amma Chethi Ruchulu</strong>
+              <span>Food orders · lunch / dinner · kitchen</span>
+            </span>
+          </button>
+          <button type="button" class="app-tile fresh" id="openFreshBtn" data-app="fresh">
+            <span class="app-icon" aria-hidden="true">🥬</span>
+            <span class="app-copy">
+              <strong>ACR-Fresh</strong>
+              <span>Produce · hourly slots · packs</span>
+            </span>
+          </button>
+        </div>
+        <p class="sub" style="margin-top:1.25rem;">Use <strong>All apps</strong> inside either dashboard to return here and switch.</p>
+        <p class="msg" id="hubMsg"></p>
+      </div>
+    </div>
+
+    <script>
+      const TOKEN_KEY = 'acr_admin_token';
+      const USER_KEY = 'acr_admin_user';
+
+      function token() {
+        try {
+          return localStorage.getItem(TOKEN_KEY) || '';
+        } catch {
+          return '';
+        }
+      }
+      function setToken(v) {
+        try {
+          if (v) localStorage.setItem(TOKEN_KEY, v);
+          else localStorage.removeItem(TOKEN_KEY);
+        } catch {
+          /* ignore */
+        }
+      }
+      function setUser(u) {
+        try {
+          if (u) localStorage.setItem(USER_KEY, u);
+          else localStorage.removeItem(USER_KEY);
+        } catch {
+          /* ignore */
+        }
+      }
+      function user() {
+        try {
+          return localStorage.getItem(USER_KEY) || 'superadmin';
+        } catch {
+          return 'superadmin';
+        }
+      }
+
+      /** Accept token handoff when arriving from the sister domain. */
+      (function consumeHubHandoff() {
+        try {
+          const raw = (location.hash || '').replace(/^#/, '');
+          if (!raw) return;
+          const params = new URLSearchParams(raw);
+          const t = params.get('acr_hub_token');
+          const u = params.get('acr_hub_user');
+          if (t) setToken(t);
+          if (u) setUser(u);
+          history.replaceState(null, '', location.pathname + location.search);
+        } catch {
+          /* ignore */
+        }
+      })();
+
+      let hubConfig = {
+        foodAppUrl: '/admin/app',
+        freshAppUrl: '/admin/app',
+        hubUrl: '/admin',
+        product: '',
+      };
+
+      async function loadHubConfig() {
+        try {
+          const res = await fetch('/admin/api/hub-config');
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.ok) {
+            hubConfig = {
+              foodAppUrl: data.foodAppUrl || hubConfig.foodAppUrl,
+              freshAppUrl: data.freshAppUrl || hubConfig.freshAppUrl,
+              hubUrl: data.hubUrl || hubConfig.hubUrl,
+              product: data.product || '',
+            };
+          }
+        } catch {
+          /* keep defaults */
+        }
+      }
+
+      function showHub() {
+        document.getElementById('loginView').hidden = true;
+        document.getElementById('hubView').hidden = false;
+        document.getElementById('sessionWho').textContent = 'Signed in as ' + user();
+      }
+
+      function showLogin() {
+        document.getElementById('loginView').hidden = false;
+        document.getElementById('hubView').hidden = true;
+      }
+
+      function openApp(which) {
+        const url = which === 'fresh' ? hubConfig.freshAppUrl : hubConfig.foodAppUrl;
+        const t = token();
+        if (!t) {
+          showLogin();
+          return;
+        }
+        let target;
+        try {
+          target = new URL(url, location.origin);
+        } catch {
+          document.getElementById('hubMsg').textContent = 'Invalid app URL';
+          document.getElementById('hubMsg').className = 'msg err';
+          return;
+        }
+        if (target.origin === location.origin) {
+          location.href = target.pathname + target.search;
+          return;
+        }
+        const params = new URLSearchParams();
+        params.set('acr_hub_token', t);
+        params.set('acr_hub_user', user());
+        target.hash = params.toString();
+        location.href = target.toString();
+      }
+
+      async function doLogin() {
+        const loginMsg = document.getElementById('loginMsg');
+        loginMsg.textContent = '';
+        loginMsg.className = 'msg';
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        try {
+          const res = await fetch('/admin/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || 'Login failed');
+          setToken(data.token);
+          setUser(data.username || username);
+          document.getElementById('password').value = '';
+          showHub();
+        } catch (e) {
+          setToken('');
+          setUser('');
+          loginMsg.textContent = e.message;
+          loginMsg.className = 'msg err';
+        }
+      }
+
+      async function resume() {
+        await loadHubConfig();
+        if (!token()) {
+          showLogin();
+          return;
+        }
+        try {
+          const res = await fetch('/admin/api/overview', {
+            headers: { Authorization: 'Bearer ' + token() },
+          });
+          if (!res.ok) throw new Error('session expired');
+          showHub();
+        } catch {
+          setToken('');
+          setUser('');
+          showLogin();
+        }
+      }
+
+      document.getElementById('loginBtn').onclick = doLogin;
+      document.getElementById('password').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doLogin();
+      });
+      document.getElementById('username').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('password').focus();
+      });
+      document.getElementById('togglePasswordBtn').onclick = () => {
+        const input = document.getElementById('password');
+        const btn = document.getElementById('togglePasswordBtn');
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.textContent = show ? 'Hide' : 'Show';
+        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+      };
+      document.getElementById('logoutBtn').onclick = () => {
+        setToken('');
+        setUser('');
+        location.reload();
+      };
+      document.getElementById('openFoodBtn').onclick = () => openApp('food');
+      document.getElementById('openFreshBtn').onclick = () => openApp('fresh');
+
+      resume();
+    </script>
+  </body>
+</html>

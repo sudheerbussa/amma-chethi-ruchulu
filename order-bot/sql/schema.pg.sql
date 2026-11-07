@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS orders (
   meal TEXT NOT NULL,
   service_date DATE,
   service_label TEXT,
+  delivery_slot TEXT,
   items JSONB NOT NULL DEFAULT '[]'::jsonb,
   dish_code TEXT,
   dish_name TEXT,
@@ -92,6 +93,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
 CREATE INDEX IF NOT EXISTS idx_orders_meal_status ON orders (meal, status);
 CREATE INDEX IF NOT EXISTS idx_orders_created ON orders (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_service_date ON orders (service_date);
+CREATE INDEX IF NOT EXISTS idx_orders_delivery_slot ON orders (delivery_slot);
 CREATE INDEX IF NOT EXISTS idx_dishes_amma ON dishes (amma_id);
 
 CREATE TABLE IF NOT EXISTS feedbacks (
@@ -167,3 +169,42 @@ CREATE TABLE IF NOT EXISTS amma_payout_lines (
 );
 
 CREATE INDEX IF NOT EXISTS idx_payout_lines_week ON amma_payout_lines (week_id);
+
+-- Delivery riders (shared identity; Food is primary CRUD, sync to Fresh)
+CREATE TABLE IF NOT EXISTS riders (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  pin_hash TEXT NOT NULL DEFAULT '',
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_riders_phone ON riders (phone);
+CREATE INDEX IF NOT EXISTS idx_riders_active ON riders (active);
+CREATE INDEX IF NOT EXISTS idx_orders_rider ON orders ((meta->>'rider_id'));
+
+-- Daily cashbook (expenses, manual cash, opening backlog)
+CREATE TABLE IF NOT EXISTS cashbook_entries (
+  id SERIAL PRIMARY KEY,
+  entry_date DATE NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN (
+    'opening_balance',
+    'expense',
+    'manual_cash_in',
+    'adjustment'
+  )),
+  amount_paise INTEGER NOT NULL,
+  note TEXT,
+  order_ref TEXT,
+  created_by TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_cashbook_date ON cashbook_entries (entry_date);
+CREATE INDEX IF NOT EXISTS idx_cashbook_kind ON cashbook_entries (kind);
+
+-- Forward-compat columns for older deploys
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_slot TEXT;
+CREATE INDEX IF NOT EXISTS idx_orders_delivery_slot ON orders (delivery_slot);

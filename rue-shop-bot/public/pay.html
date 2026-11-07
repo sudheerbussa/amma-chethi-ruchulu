@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pay — Rare & Unique Electronics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet" />
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+      :root {
+        --bg0: #0a1036;
+        --panel: #141c48;
+        --text: #edf0fa;
+        --muted: #9aa3c4;
+        --accent: #ff8a1f;
+        --accent-ink: #1a1405;
+        --line: #2a3568;
+        --ok: #3dba7a;
+        --err: #e07070;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; min-height: 100vh; font-family: Inter, system-ui, sans-serif; color: var(--text);
+        background:
+          radial-gradient(ellipse 80% 50% at 20% 0%, rgb(255 138 31 / 0.2), transparent 55%),
+          linear-gradient(165deg, #141d4a, var(--bg0));
+        display: flex; align-items: center; justify-content: center; padding: 1.25rem;
+      }
+      .card {
+        width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--line);
+        border-radius: 18px; padding: 1.5rem 1.4rem; box-shadow: 0 20px 50px rgba(0,0,0,.35);
+      }
+      h1 { margin: 0 0 .2rem; font-family: "Plus Jakarta Sans", sans-serif; font-size: 1.2rem; }
+      .sub { color: var(--muted); font-size: .9rem; margin: 0 0 1.15rem; }
+      .row { display: flex; justify-content: space-between; gap: .75rem; padding: .5rem 0; border-bottom: 1px solid var(--line); }
+      .muted { color: var(--muted); }
+      .amount { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+      details.bill { margin: .85rem 0 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: rgba(0,0,0,.15); overflow: hidden; }
+      details.bill summary { cursor: pointer; list-style: none; padding: .75rem .9rem; font-weight: 600; display: flex; justify-content: space-between; }
+      details.bill summary::-webkit-details-marker { display: none; }
+      .bill-body { padding: 0 .9rem .85rem; }
+      .bill-line { display: flex; justify-content: space-between; gap: .75rem; padding: .35rem 0; font-size: .88rem; color: var(--muted); }
+      .bill-line strong, .bill-line.total { color: var(--text); font-weight: 700; }
+      .bill-line.total { margin-top: .35rem; padding-top: .55rem; border-top: 1px solid var(--line); }
+      button#payBtn {
+        width: 100%; border: 0; border-radius: 999px; padding: .95rem 1rem; font-size: 1rem; font-weight: 800;
+        font-family: "Plus Jakarta Sans", sans-serif; cursor: pointer;
+        background: linear-gradient(135deg, #ff8a1f, #ffab45); color: var(--accent-ink);
+      }
+      button#payBtn:disabled { opacity: .55; cursor: not-allowed; }
+      .msg { margin-top: 1rem; font-size: .9rem; line-height: 1.4; min-height: 1.25em; }
+      .msg.ok { color: var(--ok); }
+      .msg.err { color: var(--err); }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1 id="brand">Rare &amp; Unique Electronics</h1>
+      <p class="sub">Secure payment · Razorpay</p>
+      <div class="row"><span class="muted">Order</span><span id="ref">—</span></div>
+      <div class="row"><span class="muted">Amount</span><span class="amount" id="amount">—</span></div>
+      <details class="bill" id="billBox" hidden>
+        <summary><span>View bill</span><span class="muted" id="billHint"></span></summary>
+        <div class="bill-body" id="billBody"></div>
+      </details>
+      <button type="button" id="payBtn" disabled>Pay now</button>
+      <p class="msg" id="msg" role="status"></p>
+    </div>
+    <script>
+      (function () {
+        const path = window.location.pathname || '';
+        const match = path.match(/\/pay\/([^/]+)\/?$/i);
+        const orderRef = match ? decodeURIComponent(match[1]).toUpperCase() : '';
+        const refEl = document.getElementById('ref');
+        const amountEl = document.getElementById('amount');
+        const brandEl = document.getElementById('brand');
+        const btn = document.getElementById('payBtn');
+        const msg = document.getElementById('msg');
+        const billBox = document.getElementById('billBox');
+        const billBody = document.getElementById('billBody');
+        const billHint = document.getElementById('billHint');
+        let cached = null;
+
+        function setMsg(text, kind) {
+          msg.textContent = text || '';
+          msg.className = 'msg' + (kind ? ' ' + kind : '');
+        }
+        function formatInr(paise) {
+          const n = Number(paise) / 100;
+          return '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+        }
+        function renderBreakdown(b) {
+          if (!b || !Array.isArray(b.items)) { billBox.hidden = true; return; }
+          const lines = b.items.map(function (i) {
+            return '<div class="bill-line"><span>' + (i.qty || 1) + '× ' + (i.name || i.code) + '</span><span>' + formatInr(i.line_paise) + '</span></div>';
+          });
+          lines.push('<div class="bill-line"><span>Items</span><strong>' + formatInr(b.food_paise) + '</strong></div>');
+          lines.push('<div class="bill-line"><span>' + (b.delivery_label || 'Shipping') + '</span><strong>' + formatInr(b.delivery_fee_paise) + '</strong></div>');
+          lines.push('<div class="bill-line total"><span>Total</span><span>' + formatInr(b.total_paise) + '</span></div>');
+          billBody.innerHTML = lines.join('');
+          billHint.textContent = b.fulfillment || '';
+          billBox.hidden = false;
+        }
+        if (!orderRef) {
+          refEl.textContent = 'Missing';
+          setMsg('Invalid payment link.', 'err');
+          return;
+        }
+        refEl.textContent = orderRef;
+
+        async function loadInfo() {
+          const infoRes = await fetch('/api/pay-info/' + encodeURIComponent(orderRef));
+          const info = await infoRes.json().catch(function () { return {}; });
+          if (!infoRes.ok) throw new Error(info.error || 'Order not found');
+          if (info.business_name) brandEl.textContent = info.business_name;
+          amountEl.textContent = formatInr(info.amount_due_paise != null ? info.amount_due_paise : info.total_paise);
+          renderBreakdown(info);
+          if (info.payable === false) {
+            setMsg('This order is already paid. Thank you!', 'ok');
+            btn.disabled = true;
+            btn.textContent = 'Paid';
+            return info;
+          }
+          return info;
+        }
+
+        async function createOrder() {
+          setMsg('Preparing payment…');
+          btn.disabled = true;
+          const res = await fetch('/api/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_ref: orderRef }),
+          });
+          const data = await res.json().catch(function () { return {}; });
+          if (!res.ok) throw new Error(data.error || 'Could not create payment');
+          cached = data;
+          amountEl.textContent = formatInr(data.amount);
+          if (data.breakdown) renderBreakdown(data.breakdown);
+          setMsg('');
+          btn.disabled = false;
+          return data;
+        }
+
+        async function openCheckout() {
+          try {
+            const data = cached || (await createOrder());
+            if (typeof Razorpay === 'undefined') {
+              setMsg('Payment script failed to load.', 'err');
+              return;
+            }
+            const options = {
+              key: data.key_id,
+              amount: data.amount,
+              currency: data.currency || 'INR',
+              name: data.business_name || 'Rare & Unique Electronics',
+              description: 'Order ' + orderRef,
+              order_id: data.order_id,
+              theme: { color: '#ff8a1f' },
+              prefill: data.prefill || {},
+              handler: async function (response) {
+                setMsg('Confirming payment…');
+                btn.disabled = true;
+                try {
+                  const vRes = await fetch('/api/verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      order_ref: orderRef,
+                      razorpay_order_id: response.razorpay_order_id,
+                      razorpay_payment_id: response.razorpay_payment_id,
+                      razorpay_signature: response.razorpay_signature,
+                    }),
+                  });
+                  const vData = await vRes.json().catch(function () { return {}; });
+                  if (!vRes.ok || !vData.ok) {
+                    setMsg(vData.error || 'Payment could not be verified.', 'err');
+                    btn.disabled = false;
+                    return;
+                  }
+                  setMsg('Payment successful! Order ' + (vData.order_ref || orderRef) + ' is confirmed.', 'ok');
+                  btn.textContent = 'Paid';
+                } catch (err) {
+                  setMsg(err.message || 'Verification failed', 'err');
+                  btn.disabled = false;
+                }
+              },
+              modal: {
+                ondismiss: function () {
+                  setMsg('Payment cancelled. Tap Pay now to try again.');
+                  btn.disabled = false;
+                },
+              },
+            };
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (resp) {
+              const desc = (resp && resp.error && (resp.error.description || resp.error.reason)) || 'Payment failed';
+              setMsg(desc, 'err');
+              btn.disabled = false;
+            });
+            rzp.open();
+          } catch (err) {
+            setMsg(err.message || 'Could not start payment', 'err');
+            btn.disabled = false;
+          }
+        }
+
+        btn.addEventListener('click', openCheckout);
+        loadInfo()
+          .then(function (info) {
+            if (info && info.payable === false) return null;
+            return createOrder();
+          })
+          .catch(function (err) { setMsg(err.message || 'Could not load order', 'err'); });
+      })();
+    </script>
+  </body>
+</html>

@@ -178,7 +178,7 @@ Do **not** send chef applicants to the food-order number (or the reverse).
 | `{{WA_LINK}}` | **Clickable order link** → food WhatsApp (prefilled “today’s menu”) | **Default for customers:** captions, bio, link-in-bio, QR codes, end cards (“Order on WhatsApp”) |
 | `{{PHONE}}` | Digits for that **same** customer line | **Only if** you choose to print/show the number on that creative. Otherwise **omit** — no need to expose the number. |
 | `{{CHEF_WA}}` | Clickable **recruitment** link → ops WhatsApp for Amma applications | All Campaign B creatives (link, QR, captions) |
-| `{{CHEF_PHONE}}` | Digits for that **same** recruitment line | Only if a chef creative needs visible digits; otherwise link/QR is enough |
+| `{{CHEF_PHONE}}` | Digits for recruitment: **+91 88861 28995** | **Show on Amma recruit posters/reels** (Ammas should see this number to contact) |
 | Keyword **AMMA** | Prefill on `{{CHEF_WA}}` so chats open tagged for recruit | Chef ads only |
 
 **Customer policy (locked):**  
@@ -214,16 +214,16 @@ Show `{{PHONE}}` **only** when that specific poster/video/flyer is designed to d
 | Token | Value |
 |-------|--------|
 | `{{CHEF_WA}}` | https://wa.me/918886128995?text=AMMA%20-%20I%20want%20to%20cook%20with%20you |
-| `{{CHEF_PHONE}}` | +91 88861 28995 — **only if** a recruit creative shows digits; default is link/QR |
+| `{{CHEF_PHONE}}` | **+91 88861 28995** — **display on all Amma recruit creatives** |
 
-Ops: this number is the friend who looks after operations. Keep food orders on **9823583498**; keep Amma applications on **8886128995**.
+Ops: this number is the friend who looks after operations. Keep food orders on **9823583498**; keep Amma applications on **8886128995** (show as **+91 88861 28995** on recruit ads).
 
 ### Poster / video usage cheat sheet
 
 | Asset | Default | Show digits? |
 |-------|---------|--------------|
 | Food poster / customer reel | QR or “Order on WhatsApp” → `{{WA_LINK}}` | Only if you decide that piece should show `{{PHONE}}` |
-| Chef poster / recruit reel | QR or “WhatsApp us — AMMA” → `{{CHEF_WA}}` | Only if you decide to show `{{CHEF_PHONE}}` |
+| Chef poster / recruit reel | WhatsApp **+91 88861 28995** + keyword AMMA / QR to `{{CHEF_WA}}` | **Yes — always show +91 88861 28995** |
 | Instagram bio | Primary “Order” link = `{{WA_LINK}}`; second button or highlight = `{{CHEF_WA}}` | Not needed |
 
 

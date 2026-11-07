@@ -1,0 +1,18 @@
+{
+  "name": "ig-poster",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "ig-post-carousel": "./post-carousel.mjs"
+  },
+  "scripts": {
+    "post": "node post-carousel.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "sharp": "^0.33.5"
+  }
+}
