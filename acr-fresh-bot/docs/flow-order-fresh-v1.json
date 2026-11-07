@@ -1,0 +1,736 @@
+{
+  "version": "7.1",
+  "data_api_version": "3.0",
+  "routing_model": {
+    "START": [
+      "CATEGORY"
+    ],
+    "CATEGORY": [
+      "DISH"
+    ],
+    "DISH": [
+      "QTY",
+      "SIZE"
+    ],
+    "SIZE": [
+      "CART"
+    ],
+    "QTY": [
+      "CART"
+    ],
+    "CART": [
+      "CATEGORY",
+      "ADDRESS"
+    ],
+    "ADDRESS": [
+      "SLOT"
+    ],
+    "SLOT": [
+      "CONFIRM"
+    ],
+    "CONFIRM": []
+  },
+  "screens": [
+    {
+      "id": "START",
+      "title": "Order",
+      "data": {
+        "meal": {
+          "type": "string",
+          "__example__": "fresh"
+        },
+        "service_label": {
+          "type": "string",
+          "__example__": "Sunday, 30/08/2026"
+        },
+        "heading": {
+          "type": "string",
+          "__example__": "ACR-Fresh · Sunday"
+        },
+        "sub": {
+          "type": "string",
+          "__example__": "లిస్ట్‌లో లేని items — call +91 93920 44833"
+        },
+        "error_message": {
+          "type": "string",
+          "__example__": ""
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "${data.heading}"
+          },
+          {
+            "type": "TextBody",
+            "text": "${data.sub}"
+          },
+          {
+            "type": "Form",
+            "name": "start_form",
+            "children": [
+              {
+                "type": "Footer",
+                "label": "Choose items",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CATEGORY",
+      "title": "Category",
+      "data": {
+        "meal": {
+          "type": "string",
+          "__example__": "fresh"
+        },
+        "service_label": {
+          "type": "string",
+          "__example__": "Thursday · 10:00 AM–11:00 AM"
+        },
+        "heading": {
+          "type": "string",
+          "__example__": "ACR-Fresh · Thursday"
+        },
+        "category_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            }
+          },
+          "__example__": [
+            {
+              "id": "vegetables",
+              "title": "కూరగాయలు"
+            },
+            {
+              "id": "fruits",
+              "title": "పండ్లు"
+            }
+          ]
+        },
+        "error_message": {
+          "type": "string",
+          "__example__": ""
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "${data.heading}"
+          },
+          {
+            "type": "Form",
+            "name": "cat_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "category",
+                "label": "Category",
+                "required": true,
+                "data-source": "${data.category_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}",
+                    "category": "${form.category}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "DISH",
+      "title": "Item",
+      "data": {
+        "meal": {
+          "type": "string",
+          "__example__": "fresh"
+        },
+        "category": {
+          "type": "string",
+          "__example__": "vegetables"
+        },
+        "heading": {
+          "type": "string",
+          "__example__": "Vegetables"
+        },
+        "selected_dish": {
+          "type": "string",
+          "__example__": ""
+        },
+        "dish_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          },
+          "__example__": [
+            {
+              "id": "TOM",
+              "title": "టమాట",
+              "description": "₹40 / kg"
+            },
+            {
+              "id": "ONI",
+              "title": "ఉల్లిపాయ",
+              "description": "₹35 / kg"
+            }
+          ]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "${data.heading}"
+          },
+          {
+            "type": "Form",
+            "name": "dish_form",
+            "init-values": {
+              "dish_code": "${data.selected_dish}"
+            },
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "dish_code",
+                "label": "Choose an item",
+                "required": true,
+                "data-source": "${data.dish_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}",
+                    "category": "${data.category}",
+                    "dish_code": "${form.dish_code}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "SIZE",
+      "title": "Pack size",
+      "data": {
+        "meal": {
+          "type": "string",
+          "__example__": "fresh"
+        },
+        "category": {
+          "type": "string",
+          "__example__": "vegetables"
+        },
+        "dish_code": {
+          "type": "string",
+          "__example__": "TOM"
+        },
+        "dish_label": {
+          "type": "string",
+          "__example__": "Tomato"
+        },
+        "heading": {
+          "type": "string",
+          "__example__": "Pack size · Tomato"
+        },
+        "size_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          },
+          "__example__": [
+            {
+              "id": "0.5",
+              "title": "½ kg",
+              "description": "₹18"
+            },
+            {
+              "id": "1",
+              "title": "1 kg",
+              "description": "₹35"
+            }
+          ]
+        },
+        "error_message": {
+          "type": "string",
+          "__example__": ""
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "${data.heading}"
+          },
+          {
+            "type": "Form",
+            "name": "size_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "pack_kg",
+                "label": "Pack size",
+                "required": true,
+                "data-source": "${data.size_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Add to cart",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}",
+                    "category": "${data.category}",
+                    "dish_code": "${data.dish_code}",
+                    "dish_label": "${data.dish_label}",
+                    "pack_kg": "${form.pack_kg}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "QTY",
+      "title": "Quantity",
+      "data": {
+        "meal": {
+          "type": "string",
+          "__example__": "fresh"
+        },
+        "category": {
+          "type": "string",
+          "__example__": "fruits"
+        },
+        "dish_code": {
+          "type": "string",
+          "__example__": "BAN"
+        },
+        "dish_label": {
+          "type": "string",
+          "__example__": "అరటి"
+        },
+        "price_label": {
+          "type": "string",
+          "__example__": "₹55 / dozen"
+        },
+        "note": {
+          "type": "string",
+          "__example__": " "
+        },
+        "max_qty": {
+          "type": "number",
+          "__example__": 30
+        },
+        "error_message": {
+          "type": "string",
+          "__example__": " "
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "${data.dish_label}"
+          },
+          {
+            "type": "TextBody",
+            "text": "${data.price_label}"
+          },
+          {
+            "type": "Form",
+            "name": "qty_form",
+            "children": [
+              {
+                "type": "TextInput",
+                "name": "qty",
+                "label": "Quantity",
+                "input-type": "number",
+                "required": true
+              },
+              {
+                "type": "Footer",
+                "label": "Add to cart",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}",
+                    "category": "${data.category}",
+                    "dish_code": "${data.dish_code}",
+                    "dish_label": "${data.dish_label}",
+                    "price_label": "${data.price_label}",
+                    "qty": "${form.qty}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CART",
+      "title": "Cart",
+      "data": {
+        "meal": {
+          "type": "string",
+          "__example__": "fresh"
+        },
+        "heading": {
+          "type": "string",
+          "__example__": "Cart · 2 item(s)"
+        },
+        "summary": {
+          "type": "string",
+          "__example__": "1x టమాట (½ kg)\n1x ఉల్లిపాయ\nItems ₹75"
+        },
+        "next_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            }
+          },
+          "__example__": [
+            {
+              "id": "add_more",
+              "title": "Add another item"
+            },
+            {
+              "id": "checkout",
+              "title": "Checkout"
+            }
+          ]
+        },
+        "error_message": {
+          "type": "string",
+          "__example__": " "
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "${data.heading}"
+          },
+          {
+            "type": "TextBody",
+            "text": "${data.summary}"
+          },
+          {
+            "type": "Form",
+            "name": "cart_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "next_step",
+                "label": "Next",
+                "required": true,
+                "data-source": "${data.next_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}",
+                    "next_step": "${form.next_step}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ADDRESS",
+      "title": "Address",
+      "data": {
+        "meal": {
+          "type": "string",
+          "__example__": "fresh"
+        },
+        "heading": {
+          "type": "string",
+          "__example__": "Delivery address"
+        },
+        "helper": {
+          "type": "string",
+          "__example__": "Pick saved or type new"
+        },
+        "cart_preview": {
+          "type": "string",
+          "__example__": "1x Tomato (½ kg)"
+        },
+        "address_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          },
+          "__example__": [
+            {
+              "id": "saved_a1",
+              "title": "Amaravathi flats",
+              "description": "📍 Pin saved"
+            },
+            {
+              "id": "new",
+              "title": "Type a new address",
+              "description": "Enter below"
+            }
+          ]
+        },
+        "error_message": {
+          "type": "string",
+          "__example__": " "
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "${data.heading}"
+          },
+          {
+            "type": "TextBody",
+            "text": "${data.cart_preview}"
+          },
+          {
+            "type": "TextBody",
+            "text": "${data.helper}"
+          },
+          {
+            "type": "Form",
+            "name": "addr_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "address_choice",
+                "label": "Address",
+                "required": true,
+                "data-source": "${data.address_options}"
+              },
+              {
+                "type": "TextArea",
+                "name": "address_new",
+                "label": "New address (if Type new)",
+                "required": false
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "meal": "${data.meal}",
+                    "address_choice": "${form.address_choice}",
+                    "address_new": "${form.address_new}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "SLOT",
+      "title": "Delivery hour",
+      "data": {
+        "slot_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          },
+          "__example__": [
+            {
+              "id": "2026-08-27T10",
+              "title": "10:00 AM–11:00 AM",
+              "description": "Thursday"
+            },
+            {
+              "id": "2026-08-27T11",
+              "title": "11:00 AM–12:00 PM",
+              "description": "Thursday"
+            }
+          ]
+        },
+        "heading": {
+          "type": "string",
+          "__example__": "Pick a delivery hour"
+        },
+        "error_message": {
+          "type": "string",
+          "__example__": ""
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "${data.heading}"
+          },
+          {
+            "type": "Form",
+            "name": "slot_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "delivery_slot",
+                "label": "Delivery slot",
+                "required": true,
+                "data-source": "${data.slot_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "delivery_slot": "${form.delivery_slot}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONFIRM",
+      "title": "Confirm",
+      "terminal": true,
+      "success": true,
+      "data": {
+        "meal": {
+          "type": "string",
+          "__example__": "fresh"
+        },
+        "address": {
+          "type": "string",
+          "__example__": "Tower A"
+        },
+        "summary": {
+          "type": "string",
+          "__example__": "1x టమాట (½ kg)\nDelivery: Thursday · 10:00 AM–11:00 AM"
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "Confirm ACR-Fresh order"
+          },
+          {
+            "type": "TextBody",
+            "text": "${data.summary}"
+          },
+          {
+            "type": "Footer",
+            "label": "Place order",
+            "on-click-action": {
+              "name": "data_exchange",
+              "payload": {
+                "meal": "${data.meal}",
+                "address": "${data.address}"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

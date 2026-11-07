@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Order — ACR Fresh</title>
+    <meta name="description" content="Order fresh vegetables and fruits in Tenali. Pick pack size, delivery hour, pay online." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0d1812;
+        --surface: #ffffff;
+        --ink: #101914;
+        --muted: #5a6e62;
+        --line: #e4ebe6;
+        --brand: #1a8f4b;
+        --brand-dark: #136f39;
+        --hot: #e4572e;
+        --chip: #f1f7f3;
+        --ok: #1a8f4b;
+        --bad: #c0392b;
+        --font: "DM Sans", system-ui, sans-serif;
+        --display: "Fraunces", Georgia, serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: #eef3ef;
+        color: var(--ink);
+        padding-bottom: 5.5rem;
+      }
+      .top {
+        background:
+          linear-gradient(160deg, #14532d 0%, #0d1812 55%),
+          var(--bg);
+        color: #edf6f0;
+        padding: 1.1rem 1rem 1.25rem;
+      }
+      .top-inner { width: min(720px, 100%); margin: 0 auto; }
+      .brand {
+        font-family: var(--display);
+        font-size: clamp(1.45rem, 4.5vw, 1.85rem);
+        margin: 0 0 0.25rem;
+        letter-spacing: -0.02em;
+      }
+      .tag { margin: 0; opacity: 0.82; font-size: 0.9rem; }
+      .pills { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.75rem; }
+      .pill {
+        font-size: 0.72rem; padding: 0.28rem 0.55rem; border-radius: 999px;
+        background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.14);
+      }
+      .notice {
+        margin: 0.75rem 0 0; padding: 0.65rem 0.75rem; border-radius: 10px;
+        background: rgba(228,87,46,0.15); border: 1px solid rgba(228,87,46,0.35);
+        color: #ffd2c4; font-size: 0.82rem;
+      }
+      .call-hint {
+        margin: 0.65rem 0 0; padding: 0.7rem 0.8rem; border-radius: 10px;
+        background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+        color: #dceee3; font-size: 0.82rem; line-height: 1.4;
+      }
+      .call-hint a {
+        color: #fff; font-weight: 700; text-decoration: none;
+        border-bottom: 1px solid rgba(255,255,255,0.45);
+      }
+      .wrap { width: min(720px, 100%); margin: 0 auto; padding: 0 0 1rem; }
+      .search-bar {
+        position: sticky; top: 0; z-index: 25;
+        background: #eef3ef; padding: 0.75rem 1rem 0.35rem;
+        border-bottom: 1px solid transparent;
+      }
+      .search {
+        width: 100%; border: 1px solid var(--line); background: var(--surface);
+        border-radius: 12px; padding: 0.8rem 0.95rem; font: inherit; font-size: 1rem;
+        box-shadow: 0 4px 14px rgba(13,24,18,0.04);
+      }
+      .cats {
+        display: flex; gap: 0.45rem; overflow-x: auto; padding: 0.55rem 1rem 0.75rem;
+        scrollbar-width: none; position: sticky; top: 3.35rem; z-index: 24; background: #eef3ef;
+      }
+      .cats::-webkit-scrollbar { display: none; }
+      .cat {
+        flex: 0 0 auto; border: 1px solid var(--line); background: var(--surface);
+        border-radius: 999px; padding: 0.5rem 0.9rem; font: inherit; font-size: 0.86rem;
+        font-weight: 600; cursor: pointer; color: var(--ink);
+      }
+      .cat[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+      .section-label {
+        margin: 0.35rem 1rem 0.55rem; font-size: 0.78rem; font-weight: 700;
+        letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+      }
+      .list { display: flex; flex-direction: column; gap: 0.65rem; padding: 0 1rem; }
+      .dish {
+        display: grid; grid-template-columns: 1fr 108px; gap: 0.75rem;
+        background: var(--surface); border-radius: 16px; padding: 0.85rem;
+        box-shadow: 0 6px 18px rgba(13,24,18,0.05);
+      }
+      .dish-name { margin: 0 0 0.15rem; font-size: 1.05rem; font-weight: 700; line-height: 1.3; }
+      .dish-name-en { margin: 0; color: var(--muted); font-size: 0.78rem; font-weight: 500; line-height: 1.3; }
+      .dish-note { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.8rem; line-height: 1.35;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .dish-price { margin-top: 0.55rem; font-weight: 700; font-size: 0.95rem; }
+      .dish-media { position: relative; }
+      .dish-media img, .dish-ph {
+        width: 108px; height: 108px; border-radius: 14px; object-fit: cover; display: block;
+      }
+      .dish-ph {
+        display: grid; place-items: center; font-size: 1.8rem; font-weight: 700; color: #fff;
+      }
+      .dish-ph.vegetables { background: linear-gradient(145deg,#34b36a,#176b3c); }
+      .dish-ph.fruits { background: linear-gradient(145deg,#e8a317,#a8680c); }
+      .add {
+        position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%);
+        border: 1px solid #cfe8d8; background: #fff; color: var(--brand-dark);
+        font: inherit; font-weight: 800; font-size: 0.78rem; letter-spacing: 0.04em;
+        padding: 0.35rem 0.85rem; border-radius: 10px; cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      }
+      .add:active { transform: translateX(-50%) scale(0.98); }
+      .add.open { background: var(--brand); color: #fff; border-color: var(--brand); }
+      .add.oos, .add:disabled {
+        background: #eceff1; color: #78909c; border-color: #cfd8dc; cursor: not-allowed;
+        font-size: 0.68rem; letter-spacing: 0.02em; padding: 0.35rem 0.55rem; white-space: nowrap;
+      }
+      .dish.oos { opacity: 0.72; }
+      .dish.oos .dish-media img, .dish.oos .dish-ph { filter: grayscale(0.55); }
+      .oos-badge {
+        display: inline-block; margin-top: 0.45rem; padding: 0.2rem 0.5rem;
+        border-radius: 999px; background: #fff3e0; color: #b45309;
+        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em;
+      }
+      .pack-row {
+        grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.4rem;
+        padding-top: 0.35rem; margin-top: 0.15rem; border-top: 1px dashed var(--line);
+      }
+      .pack-chip {
+        border: 1px solid #cfe8d8; background: var(--chip); color: var(--brand-dark);
+        border-radius: 999px; padding: 0.4rem 0.7rem; font: inherit; font-size: 0.78rem;
+        font-weight: 700; cursor: pointer;
+      }
+      .pack-chip:active { transform: scale(0.98); }
+      .pack-chip small { display: block; font-weight: 600; color: var(--muted); font-size: 0.7rem; }
+      .empty { margin: 1rem; padding: 1.5rem; text-align: center; color: var(--muted); background: #fff; border-radius: 14px; }
+      .dock {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+        padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom));
+        background: linear-gradient(180deg, transparent, rgba(238,243,239,0.9) 25%, #eef3ef);
+      }
+      .dock-inner { width: min(720px,100%); margin: 0 auto; display: flex; gap: 0.5rem; }
+      .dock button, .dock a {
+        flex: 1; border: 0; border-radius: 14px; padding: 0.9rem 0.75rem; font: inherit;
+        font-weight: 700; text-decoration: none; text-align: center; cursor: pointer;
+      }
+      .cart-btn { background: var(--brand); color: #fff; }
+      .wa-btn { background: #25d366; color: #062016; flex: 0.65; }
+
+      /* Wizard */
+      .wizard {
+        display: none; position: fixed; inset: 0; z-index: 50; background: #eef3ef;
+        flex-direction: column;
+      }
+      .wizard.open { display: flex; }
+      .wiz-top {
+        display: flex; align-items: center; gap: 0.65rem;
+        padding: 0.75rem 1rem; background: #fff; border-bottom: 1px solid var(--line);
+        position: sticky; top: 0; z-index: 2;
+      }
+      .back {
+        border: 1px solid var(--line); background: #fff; border-radius: 10px;
+        padding: 0.45rem 0.7rem; font: inherit; font-weight: 600; cursor: pointer;
+      }
+      .wiz-title { margin: 0; font-size: 1.05rem; font-weight: 700; }
+      .wiz-step { margin: 0; color: var(--muted); font-size: 0.78rem; }
+      .wiz-body { flex: 1; overflow: auto; padding: 1rem; width: min(720px,100%); margin: 0 auto; }
+      .wiz-foot {
+        padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+        background: #fff; border-top: 1px solid var(--line);
+        width: min(720px,100%); margin: 0 auto;
+      }
+      .primary {
+        width: 100%; border: 0; border-radius: 12px; padding: 0.9rem; font: inherit;
+        font-weight: 700; background: var(--brand); color: #fff; cursor: pointer;
+      }
+      .primary:disabled { opacity: 0.45; cursor: not-allowed; }
+      .ghost {
+        border: 1px solid var(--line); background: #fff; border-radius: 12px;
+        padding: 0.7rem 0.9rem; font: inherit; font-weight: 600; cursor: pointer;
+      }
+      .card-box {
+        background: #fff; border-radius: 14px; padding: 0.85rem; margin-bottom: 0.75rem;
+        border: 1px solid var(--line);
+      }
+      .line {
+        display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;
+        padding: 0.55rem 0; border-bottom: 1px solid var(--line); font-size: 0.92rem;
+      }
+      .line:last-child { border-bottom: 0; }
+      .qty { display: flex; align-items: center; gap: 0.4rem; }
+      .qty button {
+        width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line);
+        background: #fff; font: inherit; cursor: pointer;
+      }
+      label.f { display: block; margin: 0.65rem 0 0.3rem; font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+      input.f, select.f, textarea.f {
+        width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 0.75rem 0.85rem;
+        font: inherit; background: #fff;
+      }
+      textarea.f { min-height: 70px; resize: vertical; }
+      .loc-actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+      .saved-list { display: flex; flex-direction: column; gap: 0.45rem; margin: 0.35rem 0 0.75rem; }
+      .saved-btn {
+        text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 12px;
+        padding: 0.7rem 0.8rem; font: inherit; cursor: pointer; line-height: 1.35;
+      }
+      .saved-btn.on { border-color: var(--brand); background: #e7f7ed; }
+      .saved-btn strong { display: block; font-size: 0.92rem; }
+      .saved-btn span { display: block; color: var(--muted); font-size: 0.78rem; margin-top: 0.15rem; }
+      .hint { color: var(--muted); font-size: 0.8rem; margin: 0.4rem 0 0; }
+      .ok { color: var(--ok); font-size: 0.85rem; font-weight: 600; }
+      .bad { color: var(--bad); font-size: 0.85rem; font-weight: 600; }
+      .review dt { color: var(--muted); font-size: 0.78rem; margin-top: 0.55rem; }
+      .review dd { margin: 0.15rem 0 0; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="top-inner">
+        <h1 class="brand">ACR Fresh</h1>
+        <p class="tag">Vegetables &amp; fruits · Tenali delivery</p>
+        <div class="pills" id="status"></div>
+        <p class="call-hint" id="callHint">
+          List లో లేని items / emergency groceries కావాలంటే call చేయండి:
+          <a id="callHintLink" href="tel:+919392044833">93920 44833</a>
+          · <a id="helpPageLink" href="/fresh/help">Help / ticket</a>
+        </p>
+        <p class="notice" id="notice" hidden></p>
+      </div>
+    </header>
+
+    <div class="search-bar">
+      <div class="wrap" style="padding:0">
+        <input id="q" class="search" type="search" placeholder="Search vegetables &amp; fruits…" autocomplete="off" />
+      </div>
+    </div>
+    <div class="cats" id="chips" role="toolbar" aria-label="Categories"></div>
+    <p class="section-label" id="count">Loading menu…</p>
+    <div class="list" id="root"></div>
+
+    <div class="dock">
+      <div class="dock-inner">
+        <button type="button" class="cart-btn" id="cartDock">View cart</button>
+        <a class="wa-btn" id="waDock" href="https://wa.me/919392044833?text=Hi%20Fresh" rel="noopener">WhatsApp</a>
+      </div>
+    </div>
+
+    <div class="wizard" id="wizard" aria-hidden="true">
+      <div class="wiz-top">
+        <button type="button" class="back" id="wizBack">← Back</button>
+        <div>
+          <p class="wiz-step" id="wizStep">Step</p>
+          <h2 class="wiz-title" id="wizTitle">Cart</h2>
+        </div>
+      </div>
+      <div class="wiz-body" id="wizBody"></div>
+      <div class="wiz-foot">
+        <button type="button" class="primary" id="wizNext">Continue</button>
+        <p class="hint" id="wizMsg"></p>
+      </div>
+    </div>
+
+    <script>
+      const STEPS = ["cart", "contact", "location", "slot", "review"];
+      const STEP_TITLE = {
+        cart: "Your cart",
+        contact: "Your details",
+        location: "Delivery location",
+        slot: "Delivery time",
+        review: "Review & pay",
+      };
+      const CART_KEY = "acr_fresh_cart";
+
+      const state = {
+        items: [],
+        categories: [],
+        filter: "vegetables",
+        query: "",
+        cart: {},
+        byCode: {},
+        packOpen: null,
+        whatsappUrl: "https://wa.me/919392044833?text=Hi%20Fresh",
+        supportTelUrl: "tel:+919392044833",
+        supportPhoneDisplay: "93920 44833",
+        minOrderPaise: 0,
+        leadMinutes: 60,
+        step: "cart",
+        name: "",
+        phone: "",
+        phoneLocked: false,
+        address: "",
+        lat: null,
+        lng: null,
+        zone: null,
+        km: null,
+        slot: "",
+        slots: [],
+        payment: "online",
+        savedAddresses: [],
+        selectedAddressId: null,
+        locationMode: "saved", // saved | new
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const el = {
+        root: $("root"),
+        chips: $("chips"),
+        q: $("q"),
+        count: $("count"),
+        status: $("status"),
+        notice: $("notice"),
+        callHint: $("callHint"),
+        callHintLink: $("callHintLink"),
+        waDock: $("waDock"),
+        cartDock: $("cartDock"),
+        wizard: $("wizard"),
+        wizBody: $("wizBody"),
+        wizTitle: $("wizTitle"),
+        wizStep: $("wizStep"),
+        wizNext: $("wizNext"),
+        wizBack: $("wizBack"),
+        wizMsg: $("wizMsg"),
+      };
+
+      function esc(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+      function paise(p) { return "₹" + Math.round(Number(p || 0) / 100); }
+
+      /** Cart key: "TOM@0.5" for packs, "COR" for pc/unit. */
+      function lineKey(code, packKg) {
+        if (packKg != null && packKg !== "" && Number.isFinite(Number(packKg)))
+          return `${code}@${Number(packKg)}`;
+        return String(code);
+      }
+      function parseKey(key) {
+        const s = String(key || "");
+        const at = s.indexOf("@");
+        if (at < 0) return { code: s, pack_kg: null };
+        const pack_kg = Number(s.slice(at + 1));
+        return {
+          code: s.slice(0, at),
+          pack_kg: Number.isFinite(pack_kg) ? pack_kg : null,
+        };
+      }
+      function unitPriceForLine(dish, packKg) {
+        if (!dish) return 0;
+        if (packKg != null) {
+          const pack = (dish.packs || []).find((p) => Number(p.kg) === Number(packKg));
+          if (pack) return Number(pack.price_paise) || 0;
+          return Math.round((Number(dish.price_paise) || 0) * Number(packKg) / 100) * 100;
+        }
+        return Number(dish.price_paise) || 0;
+      }
+      function primaryName(dish) {
+        if (!dish) return "";
+        return String(dish.display_name || dish.name_te || dish.name || "").trim();
+      }
+      function englishName(dish) {
+        if (!dish) return "";
+        const en = String(dish.name_en || dish.name || "").trim();
+        const primary = primaryName(dish);
+        if (!en || en === primary) return "";
+        return en;
+      }
+      function lineDisplayName(dish, packKg) {
+        if (!dish) return "";
+        const base = primaryName(dish);
+        if (packKg == null) return base;
+        const pack = (dish.packs || []).find((p) => Number(p.kg) === Number(packKg));
+        const label = pack ? pack.label : `${packKg} kg`;
+        return `${base} · ${label}`;
+      }
+      function entries() {
+        return Object.entries(state.cart)
+          .map(([key, qty]) => {
+            const { code, pack_kg } = parseKey(key);
+            const dish = state.byCode[code];
+            if (!dish || !(qty > 0)) return null;
+            return {
+              key,
+              code,
+              pack_kg,
+              qty,
+              dish,
+              unit_price_paise: unitPriceForLine(dish, pack_kg),
+              name: lineDisplayName(dish, pack_kg),
+            };
+          })
+          .filter(Boolean);
+      }
+      function foodPaise() {
+        return entries().reduce((s, x) => s + x.unit_price_paise * x.qty, 0);
+      }
+      function cartCount() {
+        return entries().reduce((s, x) => s + x.qty, 0);
+      }
+      function qtyForCode(code) {
+        return entries().filter((x) => x.code === code).reduce((s, x) => s + x.qty, 0);
+      }
+      function setQty(key, qty) {
+        const n = Math.max(0, Math.min(30, Math.round(Number(qty) || 0)));
+        if (n <= 0) delete state.cart[key];
+        else state.cart[key] = n;
+        try { localStorage.setItem(CART_KEY, JSON.stringify(state.cart)); } catch {}
+        updateDock();
+        if (el.wizard.classList.contains("open") && state.step === "cart") renderStep();
+      }
+      function updateDock() {
+        const n = cartCount();
+        const f = foodPaise();
+        el.cartDock.textContent = n ? `View cart · ${n} · ${paise(f)}` : "View cart";
+      }
+
+      function filtered() {
+        const q = state.query.trim().toLowerCase();
+        return state.items.filter((item) => {
+          const cat = item.browse || item.category;
+          if (state.filter && cat !== state.filter) return false;
+          if (!q) return true;
+          return `${item.display_name || ""} ${item.name || ""} ${item.name_te || ""} ${item.name_en || ""} ${item.note || ""} ${item.code}`.toLowerCase().includes(q);
+        });
+      }
+
+      function renderChips() {
+        const chips = state.categories.length
+          ? state.categories
+          : [
+              { id: "vegetables", title: "కూరగాయలు", emoji: "🥬" },
+              { id: "fruits", title: "పండ్లు", emoji: "🍎" },
+            ];
+        if (!chips.some((c) => c.id === state.filter) && chips[0])
+          state.filter = chips[0].id;
+        el.chips.innerHTML = chips.map((c) =>
+          `<button type="button" class="cat" data-id="${esc(c.id)}" aria-pressed="${state.filter === c.id}">${
+            c.emoji ? esc(c.emoji) + " " : ""
+          }${esc(c.title)}</button>`
+        ).join("");
+        el.chips.querySelectorAll(".cat").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            state.filter = btn.dataset.id;
+            renderChips();
+            renderList();
+          });
+        });
+      }
+
+      function renderList() {
+        const list = filtered();
+        el.count.textContent = list.length
+          ? `${list.length} item${list.length === 1 ? "" : "s"}`
+          : "No matches";
+        if (!list.length) {
+          el.root.innerHTML = `<div class="empty">No items match your search.</div>`;
+          return;
+        }
+        el.root.innerHTML = list.map((item) => {
+          const browse = item.browse || item.category || "vegetables";
+          const initial = esc((primaryName(item) || item.name || "?").slice(0, 1));
+          const enLine = englishName(item);
+          const qty = qtyForCode(item.code);
+          const packs = Array.isArray(item.packs) ? item.packs : [];
+          const hasPacks = packs.length > 0;
+          const isOos = item.active === false || item.out_of_stock === true;
+          const open = !isOos && state.packOpen === item.code;
+          let imgSrc = "";
+          if (item.has_image && item.image_url) {
+            try {
+              const u = new URL(item.image_url, location.origin);
+              imgSrc = u.pathname + u.search;
+            } catch {
+              imgSrc = String(item.image_url);
+            }
+          }
+          const media = imgSrc
+            ? `<img class="dish-img" src="${esc(imgSrc)}" alt="" loading="lazy" data-browse="${esc(browse)}" data-initial="${initial}" />`
+            : `<div class="dish-ph ${esc(browse)}">${initial}</div>`;
+          const packRow = open && hasPacks
+            ? `<div class="pack-row">${packs.map((p) => {
+                const k = lineKey(item.code, p.kg);
+                const q = state.cart[k] || 0;
+                return `<button type="button" class="pack-chip" data-pack-code="${esc(item.code)}" data-pack-kg="${esc(p.kg)}">
+                  ${esc(p.label)}${q ? ` · ${q}` : ""}
+                  <small>${esc(p.price_label || paise(p.price_paise))}</small>
+                </button>`;
+              }).join("")}</div>`
+            : "";
+          const addBtn = isOos
+            ? `<button type="button" class="add oos" disabled aria-disabled="true">OUT</button>`
+            : `<button type="button" class="add${open ? " open" : ""}" data-add="${esc(item.code)}" data-has-packs="${hasPacks ? "1" : "0"}">${
+                hasPacks
+                  ? (open ? "SIZE" : (qty ? `ADD ${qty}` : "ADD"))
+                  : (qty ? `ADD ${qty}` : "ADD")
+              }</button>`;
+          return `<article class="dish${isOos ? " oos" : ""}">
+            <div>
+              <h2 class="dish-name">${esc(primaryName(item))}</h2>
+              ${enLine ? `<p class="dish-name-en">${esc(enLine)}</p>` : ""}
+              ${item.note ? `<p class="dish-note">${esc(item.note)}</p>` : ""}
+              <div class="dish-price">${esc(item.price_label)}</div>
+              ${isOos ? `<span class="oos-badge">Out of stock · స్టాక్ లేదు</span>` : ""}
+            </div>
+            <div class="dish-media">
+              ${media}
+              ${addBtn}
+            </div>
+            ${packRow}
+          </article>`;
+        }).join("");
+        el.root.querySelectorAll("img.dish-img").forEach((img) => {
+          img.addEventListener("error", () => {
+            const ph = document.createElement("div");
+            ph.className = "dish-ph " + (img.dataset.browse || "vegetables");
+            ph.textContent = img.dataset.initial || "?";
+            img.replaceWith(ph);
+          });
+        });
+        el.root.querySelectorAll("[data-add]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const code = btn.dataset.add;
+            if (btn.dataset.hasPacks === "1") {
+              state.packOpen = state.packOpen === code ? null : code;
+              renderList();
+              return;
+            }
+            setQty(lineKey(code), (state.cart[lineKey(code)] || 0) + 1);
+            renderList();
+          });
+        });
+        el.root.querySelectorAll("[data-pack-code]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const code = btn.dataset.packCode;
+            const kg = Number(btn.dataset.packKg);
+            const key = lineKey(code, kg);
+            setQty(key, (state.cart[key] || 0) + 1);
+            renderList();
+          });
+        });
+      }
+
+      function renderStatus(data) {
+        const bits = [];
+        if (data.deliveryWindow) bits.push(`<span class="pill">Hours ${esc(data.deliveryWindow)}</span>`);
+        if (data.minOrderLabel) bits.push(`<span class="pill">Min ${esc(data.minOrderLabel)}</span>`);
+        bits.push(`<span class="pill">${data.orderingOpen ? "Online open" : "Closed — call/WA"}</span>`);
+        el.status.innerHTML = bits.join("");
+        if (data.notice) { el.notice.hidden = false; el.notice.textContent = data.notice; }
+        else el.notice.hidden = true;
+        if (el.callHintLink) {
+          if (data.supportTelUrl) el.callHintLink.href = data.supportTelUrl;
+          if (data.supportPhoneDisplay) el.callHintLink.textContent = data.supportPhoneDisplay;
+        }
+      }
+
+      function openWizard(step) {
+        state.step = step || "cart";
+        el.wizard.classList.add("open");
+        el.wizard.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        renderStep();
+      }
+      function closeWizard() {
+        el.wizard.classList.remove("open");
+        el.wizard.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+      }
+
+      function stepIndex() {
+        return STEPS.indexOf(state.step);
+      }
+
+      function renderStep() {
+        const i = stepIndex();
+        el.wizTitle.textContent = STEP_TITLE[state.step];
+        el.wizStep.textContent = `Step ${i + 1} of ${STEPS.length}`;
+        el.wizMsg.textContent = "";
+        el.wizMsg.className = "hint";
+        el.wizBack.textContent = i === 0 ? "← Menu" : "← Back";
+        el.wizNext.textContent =
+          state.step === "review"
+            ? (state.payment === "cod" ? "Place COD order" : "Place order & Pay")
+            : "Continue";
+        el.wizNext.disabled = false;
+
+        if (state.step === "cart") {
+          const lines = entries();
+          el.wizBody.innerHTML = !lines.length
+            ? `<div class="empty">Cart is empty.</div>`
+            : `<div class="card-box">${lines.map((x) => `
+                <div class="line">
+                  <div>
+                    <strong>${esc(x.name)}</strong>
+                    <div class="hint">${paise(x.unit_price_paise)}${x.pack_kg != null ? "" : (x.dish.unit === "pc" ? "/pc" : "")}</div>
+                  </div>
+                  <div class="qty">
+                    <button type="button" data-dec="${esc(x.key)}">−</button>
+                    <span>${x.qty}</span>
+                    <button type="button" data-inc="${esc(x.key)}">+</button>
+                  </div>
+                </div>`).join("")}</div>
+              <p class="hint">Items ${paise(foodPaise())}${
+                state.minOrderPaise && foodPaise() < state.minOrderPaise
+                  ? ` · Min order ${paise(state.minOrderPaise)}`
+                  : ""
+              }</p>`;
+          el.wizBody.querySelectorAll("[data-inc]").forEach((b) =>
+            b.addEventListener("click", () => { setQty(b.dataset.inc, (state.cart[b.dataset.inc] || 0) + 1); renderList(); }));
+          el.wizBody.querySelectorAll("[data-dec]").forEach((b) =>
+            b.addEventListener("click", () => { setQty(b.dataset.dec, (state.cart[b.dataset.dec] || 0) - 1); renderList(); }));
+          return;
+        }
+
+        if (state.step === "contact") {
+          el.wizBody.innerHTML = `
+            <div class="card-box">
+              <label class="f" for="cName">Name</label>
+              <input class="f" id="cName" value="${esc(state.name)}" autocomplete="name" />
+              <label class="f" for="cPhone">WhatsApp number</label>
+              <input class="f" id="cPhone" value="${esc(state.phone)}" inputmode="numeric" placeholder="10-digit mobile" autocomplete="tel" ${state.phoneLocked ? "readonly" : ""} />
+              ${state.phoneLocked ? `<p class="hint">Number from WhatsApp link</p>` : ""}
+              <p class="hint" style="margin-top:0.75rem">Delivery only — we bring produce to your door in Tenali.</p>
+            </div>`;
+          return;
+        }
+
+        if (state.step === "location") {
+          const hasSaved = state.savedAddresses.length > 0;
+          const useSaved = hasSaved && state.locationMode !== "new";
+          const savedBlock = hasSaved
+            ? `<label class="f">Saved for ${esc(state.phone.slice(-10))}</label>
+               <div class="saved-list" id="savedList">
+                 ${state.savedAddresses.map((a) => `
+                   <button type="button" class="saved-btn ${state.selectedAddressId === a.id ? "on" : ""}" data-addr="${esc(a.id)}">
+                     <strong>${esc(a.location_name || a.text || "Saved location")}</strong>
+                     <span>${a.has_pin ? "Pin saved · tap to reuse" : "Text only · pin optional"}</span>
+                   </button>`).join("")}
+               </div>
+               <button type="button" class="ghost" id="useNewAddr">${useSaved ? "Use a new address instead" : "Back to saved addresses"}</button>`
+            : `<p class="hint">No saved address yet for this WhatsApp number. Set one below — we’ll remember it next time.</p>`;
+
+          const newBlock = `
+              <label class="f" for="cAddress">Address / landmark</label>
+              <textarea class="f" id="cAddress" placeholder="House no, street, area">${esc(state.address)}</textarea>
+              <div class="loc-actions">
+                <button type="button" class="ghost" id="useGps">Use my current location (optional)</button>
+                <label class="f" for="mapsPaste">Or paste Google Maps link / lat,lng (optional)</label>
+                <input class="f" id="mapsPaste" placeholder="https://maps.app.goo.gl/… or 16.24, 80.64" />
+                <button type="button" class="ghost" id="usePaste">Use pasted location</button>
+              </div>
+              <label class="f" for="cZone">Delivery distance (if no pin)</label>
+              <select class="f" id="cZone">
+                <option value="">— pick distance —</option>
+                <option value="z1" ${state.zone === "z1" && (state.lat == null || state.pinOutside) ? "selected" : ""}>0–3 km · ₹20</option>
+                <option value="z2" ${state.zone === "z2" && (state.lat == null || state.pinOutside) ? "selected" : ""}>3–6 km · ₹35</option>
+                <option value="z3" ${state.zone === "z3" && (state.lat == null || state.pinOutside) ? "selected" : ""}>Above 6 km · ₹50</option>
+              </select>`;
+
+          el.wizBody.innerHTML = `
+            <div class="card-box">
+              ${savedBlock}
+              ${useSaved ? "" : newBlock}
+              <p id="zoneMsg" class="hint" style="margin-top:0.65rem">${
+                useSaved && state.lat != null
+                  ? ""
+                  : "Pin is optional (helps rider find you). Without a pin, pick distance for the delivery fee."
+              }</p>
+            </div>`;
+
+          el.wizBody.querySelectorAll("[data-addr]").forEach((b) =>
+            b.addEventListener("click", () => selectSavedAddress(b.dataset.addr)));
+          const toggle = $("useNewAddr");
+          if (toggle) {
+            toggle.onclick = () => {
+              state.locationMode = useSaved ? "new" : "saved";
+              if (useSaved) {
+                state.selectedAddressId = null;
+                state.pinOutside = false;
+                state.lat = null;
+                state.lng = null;
+                state.zone = null;
+                state.km = null;
+              }
+              renderStep();
+            };
+          }
+          if ($("useGps")) $("useGps").onclick = useGps;
+          if ($("usePaste")) $("usePaste").onclick = usePaste;
+          const zoneSel = $("cZone");
+          if (zoneSel) {
+            zoneSel.onchange = () => {
+              const z = zoneSel.value;
+              if (z && state.pinOutside && state.lat != null) {
+                state.zone = z;
+                const msg = $("zoneMsg");
+                if (msg) { msg.className = "ok"; msg.textContent = "Distance set for fee · we will confirm your location by call."; }
+              } else if (z) {
+                state.locSeq = (state.locSeq || 0) + 1;
+                state.zone = z;
+                state.lat = null;
+                state.lng = null;
+                state.km = null;
+                state.pinOutside = false;
+                const msg = $("zoneMsg");
+                if (msg) {
+                  msg.className = "ok";
+                  msg.textContent = "Distance set for fee · pin still optional if you want.";
+                }
+              }
+            };
+          }
+          if (state.lat != null) showZoneMsg();
+          return;
+        }
+
+        if (state.step === "slot") {
+          el.wizBody.innerHTML = `<div class="card-box">
+            <label class="f" for="cSlot">Available delivery hours</label>
+            <select class="f" id="cSlot"><option value="">Loading…</option></select>
+          </div>`;
+          loadSlots();
+          return;
+        }
+
+        if (state.step === "review") {
+          const slotLabel = (state.slots.find((s) => s.id === state.slot) || {}).label || state.slot;
+          el.wizBody.innerHTML = `
+            <div class="card-box review">
+              <dt>Items</dt>
+              <dd>${entries().map((x) => `${esc(x.name)} × ${x.qty}`).join("<br>")}</dd>
+              <dt>Items total</dt><dd>${paise(foodPaise())}</dd>
+              <dt>Name / phone</dt><dd>${esc(state.name || "—")} · ${esc(state.phone)}</dd>
+              <dt>Delivery</dt><dd>Zone ${esc(state.zone || "—")}${state.km != null ? ` · ~${state.km} km` : ""}</dd>
+              <dt>Address</dt><dd>${esc(state.address)}</dd>
+              <dt>Slot</dt><dd>${esc(slotLabel)}</dd>
+              ${referralRowHtml()}
+              ${walletRowHtml()}
+            </div>
+            <div class="card-box" style="margin-top:0.75rem">
+              <p style="margin:0 0 0.55rem;font-weight:700">Payment</p>
+              <label style="display:flex;gap:0.5rem;align-items:center;margin:0.35rem 0;font-weight:600">
+                <input type="radio" name="cPay" value="online" ${state.payment !== "cod" ? "checked" : ""} />
+                Pay online (UPI / card)
+              </label>
+              <label style="display:flex;gap:0.5rem;align-items:center;margin:0.35rem 0;font-weight:600">
+                <input type="radio" name="cPay" value="cod" ${state.payment === "cod" ? "checked" : ""} />
+                Cash on delivery (COD)
+              </label>
+              <p class="hint" style="margin:0.5rem 0 0">Delivery fee &amp; offers applied on final total. COD shows as COD due in our kitchen app.</p>
+            </div>`;
+          el.wizBody.querySelectorAll('input[name="cPay"]').forEach((inp) => {
+            inp.addEventListener("change", () => {
+              state.payment = inp.value === "cod" ? "cod" : "online";
+              el.wizNext.textContent =
+                state.payment === "cod" ? "Place COD order" : "Place order & Pay";
+            });
+          });
+        }
+      }
+
+      function showZoneMsg() {
+        const msg = $("zoneMsg");
+        if (!msg) return;
+        if (state.zone && state.km != null) {
+          msg.className = "ok";
+          msg.textContent = `Pin set · ~${state.km} km · zone ${state.zone}`;
+        }
+      }
+
+      function phoneForApi() {
+        let p = String(state.phone || "").replace(/\D/g, "");
+        if (p.length === 10) p = `91${p}`;
+        return p;
+      }
+
+      async function loadSavedAddresses() {
+        const phone = phoneForApi();
+        if (phone.length < 12) {
+          state.savedAddresses = [];
+          return;
+        }
+        try {
+          const res = await fetch(`/api/storefront/addresses?phone=${encodeURIComponent(phone)}`);
+          const data = await res.json();
+          state.savedAddresses = data.ok ? (data.addresses || []) : [];
+          if (data.name && !state.name) state.name = data.name;
+          if (state.savedAddresses.length && state.locationMode !== "new")
+            state.locationMode = "saved";
+        } catch {
+          state.savedAddresses = [];
+        }
+      }
+
+      async function selectSavedAddress(id) {
+        const a = state.savedAddresses.find((x) => x.id === id);
+        if (!a) return;
+        state.selectedAddressId = a.id;
+        state.locationMode = "saved";
+        const text = String(a.text || a.location_name || "").replace(/\n📍[\s\S]*/, "").trim();
+        state.address = text || a.location_name || "Saved location";
+        if (a.has_pin && a.lat != null && a.lng != null) {
+          await applyLatLng(a.lat, a.lng);
+          renderStep();
+          return;
+        }
+        state.lat = null;
+        state.lng = null;
+        state.zone = a.zone || null;
+        state.km = null;
+        state.locationMode = "new";
+        renderStep();
+        const msg = $("zoneMsg");
+        if (msg) {
+          msg.className = "hint";
+          msg.textContent = "Address filled — still set GPS or paste Maps link for delivery fee.";
+        }
+      }
+
+      /** `seq` from the action that started the lookup; a later distance pick or pin makes it stale. */
+      async function applyLatLng(lat, lng, seq = (state.locSeq = (state.locSeq || 0) + 1)) {
+        if (seq !== state.locSeq) return;
+        state.lat = lat;
+        state.lng = lng;
+        try {
+          const res = await fetch(`/api/storefront/zone?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
+          const data = await res.json();
+          if (seq !== state.locSeq) return;
+          state.zone = data.zone;
+          state.km = data.km;
+          state.pinOutside = !data.withinService;
+          const msg = $("zoneMsg");
+          if (msg) {
+            if (!data.withinService) {
+              msg.className = "bad";
+              msg.textContent = `Pin shows ~${data.km} km — phone GPS can be off. Pick your delivery distance below; we will call to confirm.`;
+            } else {
+              msg.className = "ok";
+              msg.textContent = `Location OK · ~${data.km} km · zone ${data.zone}`;
+            }
+          }
+        } catch {
+          const msg = $("zoneMsg");
+          if (msg) { msg.className = "bad"; msg.textContent = "Could not check zone."; }
+        }
+      }
+
+      function useGps() {
+        const msg = $("zoneMsg");
+        if (msg) { msg.className = "hint"; msg.textContent = "Getting GPS…"; }
+        if (!navigator.geolocation) {
+          if (msg) { msg.className = "bad"; msg.textContent = "GPS not available."; }
+          return;
+        }
+        const seq = (state.locSeq = (state.locSeq || 0) + 1);
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (seq !== state.locSeq) return;
+            if (Number(pos.coords.accuracy) > 1500) {
+              if (msg) { msg.className = "hint"; msg.textContent = "GPS is not accurate right now — pick your delivery distance below (pin optional)."; }
+              return;
+            }
+            applyLatLng(pos.coords.latitude, pos.coords.longitude, seq);
+          },
+          () => { if (msg && seq === state.locSeq) { msg.className = "bad"; msg.textContent = "GPS permission denied."; } },
+          { enableHighAccuracy: true, timeout: 15000 },
+        );
+      }
+
+      async function usePaste() {
+        const text = String($("mapsPaste")?.value || "").trim();
+        const msg = $("zoneMsg");
+        if (!text) {
+          if (msg) { msg.className = "bad"; msg.textContent = "Paste a Maps link first."; }
+          return;
+        }
+        if (msg) { msg.className = "hint"; msg.textContent = "Resolving link…"; }
+        const seq = (state.locSeq = (state.locSeq || 0) + 1);
+        try {
+          const res = await fetch("/api/storefront/resolve-location", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+          });
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error || "Failed");
+          await applyLatLng(data.lat, data.lng, seq);
+        } catch (err) {
+          if (msg) { msg.className = "bad"; msg.textContent = err.message || "Could not use that link."; }
+        }
+      }
+
+      async function loadSlots() {
+        try {
+          const res = await fetch("/api/storefront/slots");
+          const data = await res.json();
+          state.slots = data.slots || [];
+          if (data.leadMinutes) state.leadMinutes = Number(data.leadMinutes) || state.leadMinutes;
+          const sel = $("cSlot");
+          if (!sel) return;
+          if (!state.slots.length) {
+            sel.innerHTML = `<option value="">No delivery hours available — try WhatsApp or later</option>`;
+            return;
+          }
+          sel.innerHTML = state.slots.map((s) =>
+            `<option value="${esc(s.id)}" ${state.slot === s.id ? "selected" : ""}>${esc(s.label)}</option>`
+          ).join("");
+          if (!state.slot) state.slot = state.slots[0].id;
+        } catch {
+          const sel = $("cSlot");
+          if (sel) sel.innerHTML = `<option value="">Could not load slots</option>`;
+        }
+      }
+
+      function readContactFields() {
+        const n = $("cName");
+        const p = $("cPhone");
+        if (n) state.name = n.value.trim();
+        if (p) state.phone = p.value.replace(/\D/g, "");
+      }
+      function readAddress() {
+        const a = $("cAddress");
+        if (a) state.address = a.value.trim();
+      }
+      function readSlot() {
+        const s = $("cSlot");
+        if (s) state.slot = s.value;
+      }
+
+      function validateCurrent() {
+        if (state.step === "cart") {
+          if (!entries().length) return "Add at least one item.";
+          if (state.minOrderPaise && foodPaise() < state.minOrderPaise)
+            return `Min order is ${paise(state.minOrderPaise)}.`;
+          return "";
+        }
+        if (state.step === "contact") {
+          readContactFields();
+          if (state.phone.length < 10) return "Enter a valid 10-digit WhatsApp number.";
+          return "";
+        }
+        if (state.step === "location") {
+          readAddress();
+          if (state.selectedAddressId && state.lat != null && state.lng != null && state.address.length >= 5)
+            return "";
+          if (state.address.length < 5) return "Enter address / landmark.";
+          if (state.lat != null && state.lng != null && state.pinOutside) {
+            const picked = $("cZone") ? $("cZone").value : "";
+            if (["z1", "z2", "z3", "flat"].includes(picked)) { state.zone = picked; return ""; }
+            return "Your pin looks far (phone GPS can be off) — pick your delivery distance to continue.";
+          }
+          if (state.lat != null && state.lng != null) return "";
+          const zoneSel = $("cZone");
+          if (zoneSel && zoneSel.value) state.zone = zoneSel.value;
+          if (state.zone === "z1" || state.zone === "z2" || state.zone === "z3" || state.zone === "flat")
+            return "";
+          return "Pick delivery distance, or set an optional location pin.";
+        }
+        if (state.step === "slot") {
+          readSlot();
+          if (!state.slot) return "Pick a delivery hour.";
+          return "";
+        }
+        return "";
+      }
+
+      async function placeOrder() {
+        el.wizNext.disabled = true;
+        el.wizMsg.className = "hint";
+        el.wizMsg.textContent = "Creating order…";
+        try {
+          const paySel = el.wizBody.querySelector('input[name="cPay"]:checked');
+          if (paySel) state.payment = paySel.value === "cod" ? "cod" : "online";
+          const body = {
+            phone: state.phone,
+            customer_name: state.name,
+            fulfillment_type: "delivery",
+            delivery_slot: state.slot,
+            address: state.address,
+            lat: state.lat,
+            lng: state.lng,
+            delivery_zone: state.zone || undefined,
+            payment: state.payment === "cod" ? "cod" : "unpaid",
+            items: entries().map((x) =>
+              x.pack_kg != null
+                ? { code: x.code, pack_kg: x.pack_kg, qty: x.qty }
+                : { code: x.code, qty: x.qty }
+            ),
+            referral_code: referralInput() || undefined,
+            t: state.waToken || undefined,
+            use_wallet: state.waToken ? state.useWallet !== false : undefined,
+          };
+          const res = await fetch("/api/storefront/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) throw new Error(data.error || "Checkout failed");
+          state.cart = {};
+          try { localStorage.removeItem(CART_KEY); } catch {}
+          updateDock();
+          if (data.cod) {
+            const due = data.cod_due_paise != null ? data.cod_due_paise : data.total_paise;
+            el.wizBody.innerHTML = `
+              <div class="card-box">
+                <p style="margin:0 0 0.5rem;font-weight:800;font-size:1.1rem">Order placed · COD ✅</p>
+                <p class="hint" style="margin:0">Ref <strong>${esc(data.order_ref)}</strong></p>
+                <p style="margin:0.75rem 0 0;font-weight:700">Pay cash on delivery: ${paise(due)}</p>
+                <p class="hint" style="margin:0.5rem 0 0">We’ll pack and deliver in your chosen slot. WhatsApp updates on the Fresh number.</p>
+              </div>`;
+            el.wizMsg.className = "ok";
+            el.wizMsg.textContent = "COD confirmed — pay at door.";
+            el.wizNext.textContent = "Done";
+            el.wizNext.disabled = false;
+            el.wizNext.onclick = () => {
+              closeWizard();
+              el.wizNext.onclick = null;
+              load();
+            };
+            return;
+          }
+          el.wizMsg.textContent = "Opening payment…";
+          window.location.href = data.pay_url;
+        } catch (err) {
+          el.wizMsg.className = "bad";
+          el.wizMsg.textContent = err.message || "Checkout failed";
+          el.wizNext.disabled = false;
+        }
+      }
+
+      el.cartDock.addEventListener("click", () => openWizard("cart"));
+      el.wizBack.addEventListener("click", () => {
+        const i = stepIndex();
+        if (i <= 0) {
+          closeWizard();
+          return;
+        }
+        state.step = STEPS[i - 1];
+        renderStep();
+      });
+      el.wizNext.addEventListener("click", async () => {
+        const err = validateCurrent();
+        if (err) {
+          el.wizMsg.className = "bad";
+          el.wizMsg.textContent = err;
+          return;
+        }
+        if (state.step === "review") {
+          await placeOrder();
+          return;
+        }
+        const i = stepIndex() + 1;
+        if (STEPS[i] === "location") {
+          el.wizMsg.className = "hint";
+          el.wizMsg.textContent = "Loading saved addresses…";
+          await loadSavedAddresses();
+        }
+        state.step = STEPS[i];
+        renderStep();
+      });
+
+      el.wizBody.addEventListener("change", (e) => {
+        if (e.target && e.target.id === "cWallet") state.useWallet = e.target.checked;
+      });
+
+      /** Estimate only — server applies the same cap (max % of food, whole rupees). */
+      function walletUsePaise() {
+        const w = state.wallet;
+        if (!state.waToken || !w || !(w.balance_paise > 0)) return 0;
+        const cap = Math.floor((foodPaise() * (Number(w.max_pct) || 0)) / 100);
+        return Math.floor(Math.min(w.balance_paise, cap) / 100) * 100;
+      }
+
+      function walletRowHtml() {
+        const use = walletUsePaise();
+        if (!use) return "";
+        return `<dt>ACR Credit</dt><dd><label style="display:flex;gap:0.45rem;align-items:center">
+          <input type="checkbox" id="cWallet" ${state.useWallet !== false ? "checked" : ""} />
+          Use up to ${paise(use)} (balance ${paise(state.wallet.balance_paise)}, max ${state.wallet.max_pct}% of food)
+        </label></dd>`;
+      }
+
+      /** Typed value wins over the ?ref= code saved from a friend's link. */
+      function referralInput() {
+        const box = $("cRef");
+        if (box) state.refInput = box.value.trim();
+        return state.refInput != null ? state.refInput : referralCode();
+      }
+
+      function referralRowHtml() {
+        const v = state.refInput != null ? state.refInput : referralCode();
+        const key = v + "|" + phoneForApi();
+        if (v && state.refCheckedKey !== key) setTimeout(checkReferral, 0);
+        return `<dt>Referral</dt><dd>
+          <div style="display:flex;gap:0.4rem">
+            <input class="f" id="cRef" style="flex:1" placeholder="Friend's code or mobile number" value="${esc(v)}" />
+            <button type="button" id="cRefBtn" style="padding:0 0.8rem">Apply</button>
+          </div>
+          <small id="cRefMsg" class="${state.refMsg ? (state.refOk ? "ok" : "bad") : "hint"}">${refMsgHtml()}</small>
+        </dd>`;
+      }
+
+      /** Without the signed WhatsApp link the phone is unproven: the discount is linked by messaging us from that number. */
+      function refVerifyUrl(input) {
+        const m = String(state.whatsappUrl || "").match(/wa\.me\/(\d+)/);
+        if (!m) return "";
+        const digits = input.replace(/\D/g, "");
+        const text = /^(91)?[6-9]\d{9}$/.test(digits) && !/[A-Za-z]/.test(input)
+          ? "Hi, referral " + digits.slice(-10)
+          : "Hi " + input.toUpperCase().replace(/[^A-Z0-9]/g, "");
+        return "https://wa.me/" + m[1] + "?text=" + encodeURIComponent(text);
+      }
+
+      function refMsgHtml() {
+        if (!state.refMsg) return esc("New customers get a first-order discount");
+        if (!state.refOk || state.waToken || !state.refVerifyUrl) return esc(state.refMsg);
+        return `Valid. To get the discount, verify your number: <a href="${esc(state.refVerifyUrl)}" target="_blank" rel="noopener" style="font-weight:600">Send on WhatsApp</a>, then order from the link we reply with.`;
+      }
+
+      async function checkReferral() {
+        const msg = $("cRefMsg");
+        const input = referralInput();
+        state.refCheckedKey = input + "|" + phoneForApi();
+        state.refOk = false;
+        state.refMsg = "";
+        state.refVerifyUrl = "";
+        if (!input) {
+          if (msg) { msg.className = "hint"; msg.textContent = "New customers get a first-order discount"; }
+          return;
+        }
+        if (msg) { msg.className = "hint"; msg.textContent = "Checking…"; }
+        try {
+          const res = await fetch("/api/storefront/referral-check", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: phoneForApi(), code: input }),
+          });
+          const data = await res.json().catch(() => ({}));
+          state.refOk = Boolean(data.ok);
+          state.refMsg = data.message || (data.ok ? "Applied" : "Not valid");
+          if (state.refOk && !state.waToken) state.refVerifyUrl = refVerifyUrl(input);
+        } catch {
+          state.refMsg = "Could not check right now";
+        }
+        if (msg) { msg.className = state.refOk ? "ok" : "bad"; msg.innerHTML = refMsgHtml(); }
+      }
+
+      el.wizBody.addEventListener("click", (e) => {
+        if (e.target && e.target.id === "cRefBtn") checkReferral();
+      });
+
+      function referralCode() {
+        try { return localStorage.getItem("acr_ref") || ""; } catch { return ""; }
+      }
+
+      function captureRefParam() {
+        const ref = (new URLSearchParams(location.search).get("ref") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (!/^[A-Z]{3,8}\d{2,3}$/.test(ref)) return;
+        try { localStorage.setItem("acr_ref", ref); } catch {}
+      }
+
+      async function applyWaToken() {
+        const params = new URLSearchParams(location.search);
+        const t = params.get("t") || params.get("token") || "";
+        if (!t) return;
+        try {
+          const res = await fetch("/api/storefront/session?t=" + encodeURIComponent(t));
+          const data = await res.json();
+          if (data.ok && data.phone) {
+            const digits = String(data.phone).replace(/\D/g, "");
+            state.phone = digits.length === 12 && digits.startsWith("91") ? digits.slice(2) : digits.slice(-10);
+            state.phoneLocked = true;
+            state.waToken = t;
+            state.wallet = data.wallet || null;
+            if (data.name) state.name = data.name;
+            await loadSavedAddresses();
+          }
+        } catch {}
+      }
+
+      async function load() {
+        try {
+          const saved = localStorage.getItem(CART_KEY);
+          if (saved) state.cart = JSON.parse(saved) || {};
+        } catch {}
+        captureRefParam();
+        await applyWaToken();
+        try {
+          const res = await fetch("/api/storefront/menu");
+          const data = await res.json();
+          if (!data.ok) throw new Error("fail");
+          state.items = data.items || [];
+          state.byCode = Object.fromEntries(state.items.map((i) => [i.code, i]));
+          state.categories = data.categories || [];
+          state.minOrderPaise = Number(data.minOrderPaise) || 0;
+          if (data.leadMinutes) state.leadMinutes = Number(data.leadMinutes) || state.leadMinutes;
+          if (data.whatsappUrl) {
+            state.whatsappUrl = data.whatsappUrl;
+            el.waDock.href = data.whatsappUrl;
+          }
+          const helpLink = document.getElementById("helpPageLink");
+          if (helpLink) {
+            const t = new URLSearchParams(location.search).get("t") || new URLSearchParams(location.search).get("token");
+            helpLink.href = t ? "/fresh/help?t=" + encodeURIComponent(t) : "/fresh/help";
+          }
+          // Drop cart lines for unknown / retired / out-of-stock codes
+          Object.keys(state.cart).forEach((key) => {
+            const { code } = parseKey(key);
+            const dish = state.byCode[code];
+            if (!dish || dish.active === false || dish.out_of_stock === true) delete state.cart[key];
+          });
+          try { localStorage.setItem(CART_KEY, JSON.stringify(state.cart)); } catch {}
+          renderStatus(data);
+          renderChips();
+          renderList();
+          updateDock();
+        } catch {
+          el.root.innerHTML = `<div class="empty">Could not load menu. Use WhatsApp or refresh.</div>`;
+        }
+      }
+
+      let t = null;
+      el.q.addEventListener("input", () => {
+        clearTimeout(t);
+        t = setTimeout(() => { state.query = el.q.value; renderList(); }, 120);
+      });
+
+      load();
+    </script>
+  </body>
+</html>

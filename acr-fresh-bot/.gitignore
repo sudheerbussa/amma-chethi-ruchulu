@@ -1,0 +1,9 @@
+data/
+.deploy-venv/
+dist/
+.DS_Store
+.env
+*.log
+node_modules/
+.flow-keys/
+*.pem

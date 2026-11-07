@@ -1,0 +1,17 @@
+services:
+  # Local Postgres for ACR-Fresh (optional — leave DATABASE_URL empty to use JSON)
+  # Use port 5433 so it does not clash with food order-bot on 5432
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: acr
+      POSTGRES_PASSWORD: acr_dev
+      POSTGRES_DB: acr_fresh
+    ports:
+      - '5433:5432'
+    volumes:
+      - acr_fresh_pg_data:/var/lib/postgresql/data
+
+volumes:
+  acr_fresh_pg_data:

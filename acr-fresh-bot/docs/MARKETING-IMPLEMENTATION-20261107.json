@@ -1,0 +1,33 @@
+{
+  "release": "/home/innotronix/SudhirLaptop_Backup/business_proposal/acr-fresh-bot/release/acr-fresh-bot-20261107-080233.tar.gz",
+  "sha256": "b08e3f6044456ac858532197ac629765dd04e8d6bfb54d8b1997ac33b4a387c1",
+  "files": [
+    "src/config.js",
+    "src/index.js",
+    "src/whatsapp.js",
+    "src/marketing/core.js",
+    "src/marketing/routes.js",
+    "src/marketing/service.js",
+    "src/marketing/store.js",
+    "src/marketing/worker.js",
+    "src/handlers/message.js",
+    "src/admin/routes.js",
+    "sql/schema.pg.sql",
+    "sql/marketing.pg.sql",
+    "public/admin.html",
+    "package.json",
+    "package-lock.json",
+    ".env.example",
+    "scripts/package.sh",
+    "scripts/db-migrate-marketing.mjs",
+    "scripts/configure-marketing-env.mjs",
+    "tests/whatsapp-template.test.mjs",
+    "tests/marketing-db.test.mjs",
+    "tests/marketing.test.mjs",
+    "tests/marketing-ui.test.mjs",
+    "tests/marketing-env.test.mjs"
+  ],
+  "testsPassed": 27,
+  "productionModified": false,
+  "realWhatsAppMessagesSent": 0
+}

@@ -1,0 +1,26 @@
+{
+  "rawCustomers": {
+    "fresh": 59,
+    "food": 126
+  },
+  "suppressed": 0,
+  "suppressionTableExists": false,
+  "foodReferralConnectionMatches": true,
+  "counts": {
+    "defaultOrderedOnly": {
+      "all": 32,
+      "ordered-ever": 32,
+      "not-recent": 31,
+      "fresh-only": 11,
+      "food-only": 24
+    },
+    "includeNeverOrdered": {
+      "all": 169,
+      "ordered-ever": 32,
+      "not-recent": 168,
+      "fresh-only": 57,
+      "food-only": 121
+    }
+  },
+  "eligibleOverlap": 9
+}

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Help · ACR Fresh</title>
+    <meta name="description" content="Raise a support ticket for ACR Fresh orders." />
+    <style>
+      :root {
+        --brand: #1f8a4c; --brand-dark: #146338; --ink: #14201a; --muted: #5b6b62;
+        --line: #d7e3db; --bg: #eef3ef; --surface: #fff; --ok: #1a7f4a; --bad: #b42318;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; font-family: "Segoe UI", system-ui, sans-serif; color: var(--ink);
+        background: var(--bg); min-height: 100vh;
+      }
+      .wrap { width: min(520px, 100%); margin: 0 auto; padding: 1rem 1rem 2.5rem; }
+      h1 { margin: 0 0 0.35rem; font-size: 1.35rem; }
+      .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 1rem; line-height: 1.4; }
+      .card {
+        background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+        padding: 1rem; margin-bottom: 0.85rem;
+      }
+      label { display: block; margin: 0.75rem 0 0.35rem; font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+      input, select, textarea {
+        width: 100%; border: 1px solid var(--line); border-radius: 12px;
+        padding: 0.75rem; font: inherit; background: #fff;
+      }
+      textarea { min-height: 110px; resize: vertical; }
+      .topics { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.35rem; }
+      .topic {
+        text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 12px;
+        padding: 0.7rem 0.8rem; font: inherit; cursor: pointer;
+      }
+      .topic.on { border-color: var(--brand); background: #e7f7ed; }
+      .topic strong { display: block; font-size: 0.92rem; }
+      .topic span { display: block; color: var(--muted); font-size: 0.78rem; margin-top: 0.15rem; }
+      .primary {
+        width: 100%; border: 0; border-radius: 12px; padding: 0.9rem; margin-top: 0.85rem;
+        font: inherit; font-weight: 700; background: var(--brand); color: #fff; cursor: pointer;
+      }
+      .primary:disabled { opacity: 0.45; cursor: not-allowed; }
+      .ghost { display: inline-block; margin-top: 0.75rem; color: var(--brand-dark); font-weight: 600; text-decoration: none; }
+      .msg { margin-top: 0.65rem; font-size: 0.88rem; font-weight: 600; }
+      .msg.ok { color: var(--ok); }
+      .msg.err { color: var(--bad); }
+      .call { margin-top: 0.75rem; font-size: 0.88rem; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Help &amp; support</h1>
+      <p class="sub">Pick a topic, describe the issue — kitchen gets a ticket on WhatsApp.</p>
+      <div class="card" id="formCard">
+        <p class="sub" id="ctxLine">Loading…</p>
+        <label>Topic</label>
+        <div class="topics" id="topics"></div>
+        <label for="orderRef">Order ref (optional)</label>
+        <input id="orderRef" placeholder="e.g. F260919-001" autocomplete="off" />
+        <label for="phone">WhatsApp number</label>
+        <input id="phone" inputmode="numeric" placeholder="10-digit mobile" maxlength="15" />
+        <label for="message">What happened?</label>
+        <textarea id="message" placeholder="Payment not reflecting, wrong item, delivery delay…" maxlength="800"></textarea>
+        <button type="button" class="primary" id="submitBtn">Send ticket</button>
+        <p class="msg" id="msg"></p>
+        <p class="call" id="callLine"></p>
+        <a class="ghost" id="orderLink" href="/fresh">Order Fresh</a>
+        · <a class="ghost" href="/fresh/feedback">Rate an order</a>
+      </div>
+      <div class="card" id="doneCard" hidden>
+        <p style="margin:0;font-weight:800;font-size:1.1rem">Ticket sent ✅</p>
+        <p class="sub" id="doneSub" style="margin:0.5rem 0 0"></p>
+        <a class="ghost" href="/fresh">Back to Fresh</a>
+      </div>
+    </div>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const token = params.get("t") || params.get("token") || "";
+      const refQ = (params.get("ref") || "").toUpperCase();
+      const state = { topic: "other", topics: [], phone: "", lockedPhone: false };
+
+      function esc(s) {
+        return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+      }
+
+      function renderTopics() {
+        const root = document.getElementById("topics");
+        root.innerHTML = state.topics.map((t) =>
+          `<button type="button" class="topic${state.topic === t.id ? " on" : ""}" data-id="${esc(t.id)}">
+            <strong>${esc(t.title)}</strong><span>${esc(t.hint || "")}</span>
+          </button>`
+        ).join("");
+        root.querySelectorAll(".topic").forEach((btn) => {
+          btn.onclick = () => { state.topic = btn.dataset.id; renderTopics(); };
+        });
+      }
+
+      async function load() {
+        const q = new URLSearchParams();
+        if (token) q.set("t", token);
+        if (refQ) q.set("ref", refQ);
+        const res = await fetch("/api/storefront/help/context?" + q.toString());
+        const data = await res.json().catch(() => ({}));
+        state.topics = data.topics || [];
+        if (!state.topics.length) {
+          state.topics = [
+            { id: "payment", title: "Payment failed / paid", hint: "" },
+            { id: "cancel_unpaid", title: "Cancel unpaid order", hint: "" },
+            { id: "refund", title: "Refund / paid order", hint: "" },
+            { id: "status", title: "Order / delivery status", hint: "" },
+            { id: "other", title: "Other issue", hint: "" },
+          ];
+        }
+        renderTopics();
+        const phoneEl = document.getElementById("phone");
+        const refEl = document.getElementById("orderRef");
+        if (data.phone) {
+          const digits = String(data.phone).replace(/\D/g, "");
+          phoneEl.value = digits.length === 12 && digits.startsWith("91") ? digits.slice(2) : digits.slice(-10);
+          state.lockedPhone = true;
+          phoneEl.readOnly = true;
+        }
+        if (data.order_ref) refEl.value = data.order_ref;
+        else if (refQ) refEl.value = refQ;
+        const bits = [];
+        if (data.latest_status) bits.push("Latest: " + data.latest_ref + " · " + data.latest_status);
+        if (data.pending_ref) bits.push("Unpaid: " + data.pending_ref);
+        document.getElementById("ctxLine").textContent = bits.join(" · ") || "Describe your issue below.";
+        if (data.support_display) {
+          document.getElementById("callLine").innerHTML =
+            `Urgent? Call <a href="tel:+${esc(String(data.support_phone || "").replace(/\D/g,""))}">${esc(data.support_display)}</a>`;
+        }
+        if (token) document.getElementById("orderLink").href = "/fresh?t=" + encodeURIComponent(token);
+      }
+
+      document.getElementById("submitBtn").onclick = async () => {
+        const msg = document.getElementById("msg");
+        const btn = document.getElementById("submitBtn");
+        btn.disabled = true;
+        msg.className = "msg";
+        msg.textContent = "Sending…";
+        try {
+          const res = await fetch("/api/storefront/help", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              t: token || undefined,
+              phone: document.getElementById("phone").value,
+              topic: state.topic,
+              order_ref: document.getElementById("orderRef").value.trim() || undefined,
+              message: document.getElementById("message").value,
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) throw new Error(data.error || "Could not send");
+          document.getElementById("formCard").hidden = true;
+          document.getElementById("doneCard").hidden = false;
+          document.getElementById("doneSub").textContent =
+            "Ticket #" + data.ticket_id + " received. We will reply on WhatsApp soon." +
+            (data.support_display ? " Or call " + data.support_display + "." : "");
+        } catch (e) {
+          msg.className = "msg err";
+          msg.textContent = e.message || "Failed";
+          btn.disabled = false;
+        }
+      };
+
+      load().catch(() => {
+        document.getElementById("ctxLine").textContent = "Fill the form — WhatsApp link optional.";
+        renderTopics();
+      });
+    </script>
+  </body>
+</html>

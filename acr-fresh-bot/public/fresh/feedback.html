@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Rate your order · ACR Fresh</title>
+    <meta name="description" content="Quick overall rating for your ACR Fresh delivery." />
+    <style>
+      :root {
+        --brand: #1f8a4c; --brand-dark: #146338; --ink: #14201a; --muted: #5b6b62;
+        --line: #d7e3db; --bg: #eef3ef; --surface: #fff; --ok: #1a7f4a; --bad: #b42318;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; font-family: "Segoe UI", system-ui, sans-serif; color: var(--ink);
+        background: var(--bg); min-height: 100vh;
+      }
+      .wrap { width: min(520px, 100%); margin: 0 auto; padding: 1rem 1rem 2.5rem; }
+      h1 { margin: 0 0 0.35rem; font-size: 1.35rem; }
+      .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 1rem; line-height: 1.4; }
+      .card {
+        background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+        padding: 1rem; margin-bottom: 0.85rem;
+      }
+      .stars { display: flex; gap: 0.45rem; flex-wrap: wrap; margin: 0.5rem 0 0.25rem; }
+      .star {
+        width: 3rem; height: 3rem; border-radius: 12px; border: 1px solid var(--line);
+        background: #fff; font-size: 1.35rem; cursor: pointer; font: inherit;
+      }
+      .star.on { background: #fff8e6; border-color: #f5c451; }
+      .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.55rem; }
+      .tag {
+        border: 1px solid var(--line); background: #f4f8f5; border-radius: 999px;
+        padding: 0.4rem 0.7rem; font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+      }
+      .tag.on { background: #e7f7ed; border-color: var(--brand); color: var(--brand-dark); }
+      label { display: block; margin: 0.75rem 0 0.35rem; font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+      textarea {
+        width: 100%; min-height: 90px; border: 1px solid var(--line); border-radius: 12px;
+        padding: 0.75rem; font: inherit; resize: vertical;
+      }
+      .primary {
+        width: 100%; border: 0; border-radius: 12px; padding: 0.9rem; margin-top: 0.85rem;
+        font: inherit; font-weight: 700; background: var(--brand); color: #fff; cursor: pointer;
+      }
+      .primary:disabled { opacity: 0.45; cursor: not-allowed; }
+      .ghost {
+        display: inline-block; margin-top: 0.75rem; color: var(--brand-dark); font-weight: 600;
+        text-decoration: none;
+      }
+      .msg { margin-top: 0.65rem; font-size: 0.88rem; font-weight: 600; }
+      .msg.ok { color: var(--ok); }
+      .msg.err { color: var(--bad); }
+      .items { color: var(--muted); font-size: 0.85rem; line-height: 1.45; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Rate your order</h1>
+      <p class="sub">One overall score — no item-by-item taps. Optional comment helps kitchen.</p>
+      <div class="card" id="orderCard">
+        <p class="sub" id="loading">Loading…</p>
+      </div>
+      <div class="card" id="formCard" hidden>
+        <strong>Overall rating</strong>
+        <div class="stars" id="stars" role="group" aria-label="Rating 1 to 5"></div>
+        <div class="tags" id="tags"></div>
+        <label for="comment">Comment (optional)</label>
+        <textarea id="comment" placeholder="Taste, freshness, packing, delivery…" maxlength="500"></textarea>
+        <button type="button" class="primary" id="submitBtn" disabled>Submit feedback</button>
+        <p class="msg" id="msg"></p>
+        <a class="ghost" id="orderLink" href="/fresh">Order again</a>
+      </div>
+      <div class="card" id="doneCard" hidden>
+        <p style="margin:0;font-weight:800;font-size:1.1rem">Thank you! 🙏</p>
+        <p class="sub" style="margin:0.5rem 0 0">Your rating was saved.</p>
+        <a class="ghost" href="/fresh">Back to Fresh menu</a>
+      </div>
+    </div>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const token = params.get("t") || params.get("token") || "";
+      const refQ = (params.get("ref") || "").toUpperCase();
+      const TAGS = ["Freshness", "Taste", "Packing", "Delivery", "Value"];
+      const state = { rating: 0, tags: new Set(), phone: "", order_ref: refQ };
+
+      function esc(s) {
+        return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+      }
+
+      async function load() {
+        const q = new URLSearchParams();
+        if (token) q.set("t", token);
+        if (refQ) q.set("ref", refQ);
+        const res = await fetch("/api/storefront/feedback/context?" + q.toString());
+        const data = await res.json().catch(() => ({}));
+        const card = document.getElementById("orderCard");
+        if (!res.ok || !data.ok) {
+          card.innerHTML = `<p class="msg err">${esc(data.error || "Could not load order. Open the link from WhatsApp again.")}</p>
+            <a class="ghost" href="/fresh">Go to Fresh</a>`;
+          return;
+        }
+        if (data.already) {
+          document.getElementById("doneCard").hidden = false;
+          card.innerHTML = `<p><strong>${esc(data.order.order_ref)}</strong> — already rated.</p>`;
+          return;
+        }
+        state.phone = data.phone || "";
+        state.order_ref = data.order.order_ref;
+        card.innerHTML = `<p style="margin:0 0 0.35rem"><strong>${esc(data.order.order_ref)}</strong>
+          · ${esc(data.order.service_label || "")}</p>
+          <div class="items">${esc(data.order.items_text || "")}</div>`;
+        document.getElementById("formCard").hidden = false;
+        if (token) document.getElementById("orderLink").href = "/fresh?t=" + encodeURIComponent(token);
+        renderStars();
+        renderTags();
+      }
+
+      function renderStars() {
+        const root = document.getElementById("stars");
+        root.innerHTML = [1,2,3,4,5].map((n) =>
+          `<button type="button" class="star${state.rating === n ? " on" : ""}" data-n="${n}" aria-label="${n} stars">${"★".repeat(n)}</button>`
+        ).join("");
+        root.querySelectorAll(".star").forEach((btn) => {
+          btn.onclick = () => {
+            state.rating = Number(btn.dataset.n);
+            document.getElementById("submitBtn").disabled = false;
+            renderStars();
+          };
+        });
+      }
+
+      function renderTags() {
+        const root = document.getElementById("tags");
+        root.innerHTML = TAGS.map((t) =>
+          `<button type="button" class="tag${state.tags.has(t) ? " on" : ""}" data-t="${esc(t)}">${esc(t)}</button>`
+        ).join("");
+        root.querySelectorAll(".tag").forEach((btn) => {
+          btn.onclick = () => {
+            const t = btn.dataset.t;
+            if (state.tags.has(t)) state.tags.delete(t); else state.tags.add(t);
+            renderTags();
+          };
+        });
+      }
+
+      document.getElementById("submitBtn").onclick = async () => {
+        const msg = document.getElementById("msg");
+        const btn = document.getElementById("submitBtn");
+        btn.disabled = true;
+        msg.className = "msg";
+        msg.textContent = "Saving…";
+        try {
+          const res = await fetch("/api/storefront/feedback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              t: token || undefined,
+              phone: state.phone || undefined,
+              order_ref: state.order_ref,
+              rating: state.rating,
+              comment: document.getElementById("comment").value,
+              tags: [...state.tags],
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) throw new Error(data.error || "Save failed");
+          document.getElementById("formCard").hidden = true;
+          document.getElementById("doneCard").hidden = false;
+          msg.textContent = "";
+        } catch (e) {
+          msg.className = "msg err";
+          msg.textContent = e.message || "Save failed";
+          btn.disabled = false;
+        }
+      };
+
+      load().catch(() => {
+        document.getElementById("orderCard").innerHTML =
+          `<p class="msg err">Could not load. Open the link from WhatsApp again.</p>`;
+      });
+    </script>
+  </body>
+</html>
