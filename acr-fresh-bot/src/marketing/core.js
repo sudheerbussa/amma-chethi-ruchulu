@@ -71,7 +71,8 @@ export function templateParams(t, recipient, params = {}) {
 }
 export function errorPolicy(err) {
   if (err.httpStatus === 429 || [4, 17, 130429, 131056].includes(err.code)) return 'retry';
-  if ([190, 10, 200, 131005, 131031, 131042, 131048, 131049, 132000, 132001, 132005, 132007, 132012, 132015, 132016].includes(err.code) || [400,401,403,404].includes(err.httpStatus) && ![131026,131030].includes(err.code)) return 'halt';
+  if ([131049,131026,130472,131047,131050].includes(err.code)) return 'fail';
+  if ([190, 10, 200, 131005, 131031, 131042, 131048, 132000, 132001, 132005, 132007, 132012, 132015, 132016].includes(err.code) || [400,401,403,404].includes(err.httpStatus) && ![131026,131030].includes(err.code)) return 'halt';
   // A transport failure or server error could have accepted the send: never retry blindly.
   if (!err.httpStatus || err.httpStatus >= 500) return 'unknown';
   return 'fail';
@@ -87,6 +88,47 @@ export async function sendWithBackoff(send, sleep, attempts = 4) {
 export function nextDeliveryStatus(current, incoming) {
   const rank = { sending: 0, unknown: 0, accepted: 1, sent: 2, delivered: 3, read: 4 };
   if (!['sent','delivered','read','failed'].includes(incoming)) return current;
+  if (current === 'failed' && !['delivered','read'].includes(incoming)) return current;
   if (incoming === 'failed') return ['delivered','read'].includes(current) ? current : 'failed';
   return (rank[incoming] || 0) > (rank[current] ?? -1) ? incoming : current;
+}
+
+/** Normalize delivery webhooks only; never infer delivery from API acceptance. */
+export function parseStatus(s) {
+  if (!s || typeof s.id !== 'string' || !s.id || !['sent','delivered','read','failed'].includes(s.status)) return null;
+  const errors = Array.isArray(s.errors) ? s.errors : [];
+  const e = errors[0] || {};
+  const seconds = Number(s.timestamp);
+  const validTime = s.timestamp != null && Number.isFinite(seconds) && seconds > 0 && seconds < 8640000000000;
+  const text = value => value == null ? null : String(value).slice(0, 4000);
+  return { wamid:s.id, recipient:text(s.recipient_id), status:s.status,
+    ts:validTime ? new Date(seconds * 1000).toISOString() : new Date().toISOString(),
+    error_code:e.code != null && Number.isInteger(Number(e.code)) ? String(e.code) : null,
+    error_title:text(e.title), error_detail:text(e.error_data?.details || e.message || e.title), raw:s };
+}
+export function extractStatuses(payload) {
+  const out=[];
+  for (const entry of Array.isArray(payload?.entry) ? payload.entry : [])
+    for (const change of Array.isArray(entry?.changes) ? entry.changes : [])
+      for (const status of Array.isArray(change?.value?.statuses) ? change.value.statuses : []) {
+        const parsed=parseStatus(status); if(parsed) out.push(parsed);
+      }
+  return out;
+}
+export function deliveryReason(code, fallback = '') {
+  return ({
+    '131049':'Meta per-user marketing limit: Meta restricted marketing delivery to this recipient. Do not retry immediately.',
+    '131026':'Undeliverable: the number may not be on WhatsApp, or another recipient/device restriction prevented delivery.',
+    '130472':'Meta experiment: marketing delivery to this recipient is currently restricted.',
+    '131047':'Re-engagement required: use an approved template outside the 24-hour service window.',
+    '131050':'The user stopped marketing messages. Do not send more marketing unless they opt back in.',
+    '131042':'Payment issue: check the WhatsApp Business billing/payment method.'
+  })[String(code)] || fallback || 'Delivery failed; Meta provided no further detail.';
+}
+export function testRecipients(raw, admins) {
+  const inputs = Array.isArray(raw) ? raw : String(raw || '').split(/[\s,;]+/).filter(Boolean);
+  if (!inputs.length || inputs.length > 10) throw new Error('Enter 1–10 configured admin numbers');
+  const phones=inputs.map(normalizePhone), allowed=new Set(admins.map(normalizePhone).filter(Boolean));
+  if(phones.some(p=>!p || !allowed.has(p))) throw new Error('Test sends are restricted to configured admin numbers');
+  return [...new Set(phones)].sort();
 }

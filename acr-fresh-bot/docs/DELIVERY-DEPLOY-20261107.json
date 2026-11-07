@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-07",
+  "timezone": "Asia/Calcutta (IST)",
+  "release": "acr-fresh-status-20261107-173617",
+  "backup": "/root/acr-fresh-backups/20261107-173640-before-status-tracking",
+  "backup_contents": [
+    "app.tar.gz (root-only app/settings/keys, excludes node_modules and release)",
+    "acr_fresh.dump (pg_dump custom format)",
+    "dump-contents.txt",
+    "log-offsets.json"
+  ],
+  "migration": "Applied twice successfully to demonstrate idempotency",
+  "admin_token": "Configured; value not printed; previous fallback removal now deployed",
+  "tests": {
+    "passed": 33,
+    "failed": 0
+  },
+  "verification": [
+    "localhost health: ok, driver pg",
+    "Fresh PM2 online",
+    "authenticated campaign API read and test-send confirmation guard passed",
+    "synthetic all-entry/change status callbacks: HTTP 200; persistence, monotonic read/failed, error 131049 mapping and raw pricing/conversation verified",
+    "synthetic campaign, recipients and audit events removed",
+    "new PM2 stderr lines: 0; error-like stdout lines: 0"
+  ],
+  "whatsapp_messages_sent_by_task": 0,
+  "unchanged": [
+    "Food bot process/files/database",
+    "production .env and private keys",
+    "webhook signature-verification limitation"
+  ],
+  "limitations": [
+    "No live Meta delivery test performed",
+    "Historical direct-send outcomes cannot be reconstructed unless Meta retries their callbacks"
+  ]
+}

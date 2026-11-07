@@ -12,6 +12,7 @@ await client.connect();
 try {
   await client.query('BEGIN');
   await client.query(fs.readFileSync(path.join(root,'sql/marketing.pg.sql'),'utf8'));
+  await client.query(fs.readFileSync(path.join(root,'sql/whatsapp-status.pg.sql'),'utf8'));
   await client.query('COMMIT');
   console.log('Marketing migration applied (Fresh DB only)');
 } catch(e) {await client.query('ROLLBACK');throw e;} finally {await client.end();}

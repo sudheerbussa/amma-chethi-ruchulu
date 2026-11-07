@@ -4,15 +4,16 @@ import fs from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import pg from 'pg';
 // Embedded in-memory PostgreSQL. No production URL, external socket, or real network.
-Object.assign(process.env,{NODE_ENV:'test',DATABASE_URL:'postgres://unit-test-only/fresh',FOOD_DATABASE_URL:'postgres://unit-test-only/food',REFERRAL_DATABASE_URL:'',WHATSAPP_ACCESS_TOKEN:'MOCK_ONLY',WHATSAPP_PHONE_NUMBER_ID:'MOCK_ONLY'});
+Object.assign(process.env,{NODE_ENV:'test',ADMIN_TOKEN:'TEST_ONLY_ADMIN',DATABASE_URL:'postgres://unit-test-only/fresh',FOOD_DATABASE_URL:'postgres://unit-test-only/food',REFERRAL_DATABASE_URL:'',WHATSAPP_ACCESS_TOKEN:'MOCK_ONLY',WHATSAPP_PHONE_NUMBER_ID:'MOCK_ONLY'});
 globalThis.fetch=async()=>{throw new Error('Network forbidden in SQL tests');};
 const fresh=new PGlite(),food=new PGlite();
 const schema=fs.readFileSync(new URL('../sql/schema.pg.sql',import.meta.url),'utf8');
 await fresh.exec(schema);await fresh.exec(schema);await food.exec(schema);
+const migration=fs.readFileSync(new URL('../sql/whatsapp-status.pg.sql',import.meta.url),'utf8');await fresh.exec(migration);await fresh.exec(migration);
 let foodReadOnly=false;
 pg.Pool=class {
   constructor(opts){this.db=opts.connectionString.endsWith('/food')?food:fresh;if(this.db===food)foodReadOnly=opts.options.includes('default_transaction_read_only=on');}
-  async query(sql,params=[]){if(/pg_try_advisory_lock/.test(sql))return {rows:[{locked:true}],rowCount:1};if(/pg_advisory_unlock/.test(sql))return {rows:[{}],rowCount:1};const r=await this.db.query(sql,params);return {...r,rowCount:r.affectedRows??r.rows.length};}
+  async query(sql,params=[]){if(/pg_advisory_xact_lock/.test(sql))return {rows:[{}],rowCount:1};if(/pg_try_advisory_lock/.test(sql))return {rows:[{locked:true}],rowCount:1};if(/pg_advisory_unlock/.test(sql))return {rows:[{}],rowCount:1};const r=await this.db.query(sql,params);return {...r,rowCount:r.affectedRows??r.rows.length};}
   async connect(){return {query:this.query.bind(this),release(){}};} async end(){}
 };
 const {initDb}=await import('../src/db.js');await initDb();
@@ -52,6 +53,26 @@ test('idle session with an actual pending order preserves existing STOP cancella
   assert.equal(await handleMarketingPreference({from:phone,kind:'text',text:'STOP'},{state:'idle'}),false);
   assert.equal(await store.isSuppressed(phone),false);
 });
+test('audit persists unmatched/direct sends, deduplicates callbacks, and replays callbacks before acceptance',async()=>{
+  const raw={id:'wamid.EARLY',status:'failed',recipient_id:phone,timestamp:'1794030000',errors:[{code:131049,title:'Limited',error_data:{details:'Meta detail'}}],pricing:{billable:false},conversation:{id:'test'}};
+  await store.updateWebhookStatus(raw);await store.updateWebhookStatus(raw);
+  const events=(await fresh.query('SELECT * FROM whatsapp_message_statuses WHERE wamid=$1',[raw.id])).rows;
+  assert.equal(events.length,1);assert.equal(events[0].raw.conversation.id,'test');
+  const cid='22222222-2222-4222-8222-222222222222';
+  await store.createCampaign(cid,'early',{mode:'test'},[{phone}]);
+  await store.recipientState(cid,phone,'accepted',{wamid:raw.id});
+  let r=(await store.getCampaign(cid)).recipients[0];assert.equal(r.status,'failed');assert.equal(r.error_code,'131049');assert.equal(r.error_message,'Meta detail');assert.ok(r.failed_at);assert.match(r.failure_reason,/per-user/);
+  await store.updateWebhookStatus({...raw,status:'sent',errors:[]});r=(await store.getCampaign(cid)).recipients[0];assert.equal(r.status,'failed');assert.equal(r.error_code,'131049');
+  await store.updateWebhookStatus({...raw,status:'delivered',errors:[]});r=(await store.getCampaign(cid)).recipients[0];assert.equal(r.status,'delivered');assert.equal(r.error_code,null);assert.equal(r.error_message,null);assert.ok(r.delivered_at);
+  await store.updateWebhookStatus({...raw,status:'read',timestamp:'1794030001',errors:[]});
+  await store.updateWebhookStatus({...raw,status:'failed'});r=(await store.getCampaign(cid)).recipients[0];assert.equal(r.status,'read');assert.ok(r.read_at);
+});
+test('status-only, mixed, malformed, and unrelated webhooks never trigger outbound network',async()=>{
+  const {handleMarketingStatuses}=await import('../src/marketing/service.js');
+  await handleMarketingStatuses({entry:[{changes:[{value:{messages:[{id:'ignored'}],statuses:[{id:'wamid.MULTI',status:'sent',timestamp:'1794030002'}]}}]},{changes:[{value:{statuses:[{id:'wamid.MULTI',status:'delivered',timestamp:'1794030003'}]}}]}]});
+  assert.equal((await fresh.query("SELECT count(*)::int n FROM whatsapp_message_statuses WHERE wamid='wamid.MULTI'")).rows[0].n,2);
+  await handleMarketingStatuses({entry:[null,{changes:'bad'}]});
+});
 test.after(async()=>{await fresh.close();await food.close();});
 
 test('marketing API is authenticated and legacy broadcasts honor suppression without sending',async()=>{
@@ -65,6 +86,8 @@ test('marketing API is authenticated and legacy broadcasts honor suppression wit
   });
   try {
     const unauthorized=await request('/admin/api/marketing/audience',{},false);assert.equal(unauthorized.status,401);
+    assert.equal((await request('/admin/api/marketing/test-send',{},false)).status,401);
+    assert.equal((await request('/admin/api/marketing/test-send',{confirmed:false})).status,400);
     const count=await request('/admin/api/marketing/audience',{});assert.equal(count.status,200);assert.equal(count.data.count,1);
     await store.setSuppression(phone,true);
     const result=await request('/admin/api/broadcast',{phones:[phone],message:'Mock promotion'});assert.equal(result.status,200);assert.equal(result.data.ok,0);assert.equal(result.data.skipped,1);

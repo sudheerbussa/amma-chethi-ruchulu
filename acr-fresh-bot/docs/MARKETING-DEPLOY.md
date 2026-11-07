@@ -1,16 +1,17 @@
-# Prepared deployment — NOT executed
+# Marketing deployment reference
 
 Do not run until the owner explicitly approves production deployment. Approval to deploy does not approve sending a test or campaign.
 
 Local source backup: `backup-before-templates-20261107/` (src, admin.html, SQL, package manifests and changed packaging script). No VPS files/processes were changed while preparing this feature.
 
-## Exact commands for the prepared release
+## Commands for a newly approved release
 
 On the owner's PC:
 
 ```bash
 cd /home/innotronix/SudhirLaptop_Backup/business_proposal/acr-fresh-bot
-REL=acr-fresh-bot-20261107-080233
+npm run package
+REL=acr-fresh-bot-YYYYMMDD-HHMMSS # use the release name printed above
 scp "release/$REL.tar.gz" root@162.35.105.110:/tmp/
 ssh root@162.35.105.110 "REL='$REL' bash -s" <<'VPS'
 set -euo pipefail
@@ -29,9 +30,9 @@ cd "$APP"
 cp -a "$STAGE/$REL/dist/." dist/
 cp -a "$STAGE/$REL/public/admin.html" public/admin.html
 mkdir -p sql scripts docs
-cp -a "$STAGE/$REL/sql/marketing.pg.sql" sql/
-cp -a "$STAGE/$REL/scripts/db-migrate-marketing.mjs" "$STAGE/$REL/scripts/configure-marketing-env.mjs" scripts/
-cp -a "$STAGE/$REL/docs/MARKETING-TEMPLATES.md" "$STAGE/$REL/docs/MARKETING-DEPLOY.md" docs/
+cp -a "$STAGE/$REL/sql/marketing.pg.sql" "$STAGE/$REL/sql/whatsapp-status.pg.sql" sql/
+cp -a "$STAGE/$REL/scripts/db-migrate-marketing.mjs" "$STAGE/$REL/scripts/configure-marketing-env.mjs" "$STAGE/$REL/scripts/verify-delivery-status.mjs" scripts/
+cp -a "$STAGE/$REL/docs/MARKETING-TEMPLATES.md" "$STAGE/$REL/docs/MARKETING-DEPLOY.md" "$STAGE/$REL/docs/DELIVERY-TRACKING.md" docs/
 # Runtime dependencies have not changed; preserve installed production dependencies/package manifests.
 # Helper sets WHATSAPP_WABA_ID=2336111803586962 and merges Food staff exclusions.
 # Existing REFERRAL_DATABASE_URL matches Food; no new credential is needed.
@@ -43,7 +44,7 @@ printf '\nBackup retained at %s\n' "$BACKUP"
 VPS
 ```
 
-The migration is additive and transactional; unlike a full existing db:migrate it touches only the three new marketing tables. Full schema.pg.sql also includes those definitions for fresh installations. Keep the existing pm2 process configuration unchanged. Never restart acr-order-bot.
+The migration is additive and transactional; unlike a full existing db:migrate it touches only marketing tables and the WhatsApp status audit table/recipient status columns. Full schema.pg.sql also includes those definitions for fresh installations. Keep the existing pm2 process configuration unchanged. Never restart acr-order-bot.
 
 ## Smoke checks (no WhatsApp send)
 - Fresh health reports driver pg.
@@ -68,3 +69,7 @@ cp -a "$ROLLBACK/acr-fresh-bot/.env" /opt/acr-fresh-bot/.env
 pm2 restart acr-fresh-bot --update-env
 curl --fail --silent http://127.0.0.1:3001/health
 ```
+
+## Delivery tracking rollout
+
+Delivery tracking was deployed on 7 November 2026 (IST). See `DELIVERY-TRACKING.md` for behavior and synthetic no-send verification, and `DELIVERY-DEPLOY-20261107.json` for the rollout record. The prior unsafe admin-token fallback removal is now live; ADMIN_TOKEN was confirmed configured without displaying its value.

@@ -1,7 +1,7 @@
 import pg from 'pg';
 import { config } from '../config.js';
 import { getDb } from '../db.js';
-import { normalizePhone, nextDeliveryStatus } from './core.js';
+import { normalizePhone, nextDeliveryStatus, parseStatus, deliveryReason } from './core.js';
 
 export const CUSTOMER_QUERY = `SELECT c.phone, c.name,
   GREATEST(c.order_count, COALESCE(o.n, 0))::int AS order_count,
@@ -64,14 +64,15 @@ export async function createCampaign(id, hash, spec, recipients) {
 export async function getCampaign(id) {
   const c = (await pool().query('SELECT * FROM marketing_campaigns WHERE id=$1', [id])).rows[0];
   if (!c) return null;
-  const recipients = (await pool().query('SELECT phone,name,status,wamid,error,updated_at FROM marketing_recipients WHERE campaign_id=$1 ORDER BY phone', [id])).rows;
-  const counts = {};
+  const recipients = (await pool().query('SELECT phone,name,status,wamid,error,error_code,error_message,sent_at,delivered_at,read_at,failed_at,updated_at FROM marketing_recipients WHERE campaign_id=$1 ORDER BY phone', [id])).rows;
+  for (const r of recipients) if (r.status === 'failed') r.failure_reason = deliveryReason(r.error_code,r.error_message || r.error);
+  const counts = {sent:0,delivered:0,read:0,failed:0};
   for (const r of recipients) counts[r.status] = (counts[r.status] || 0) + 1;
   return { ...c, recipients, counts, total: recipients.length };
 }
 export async function listCampaigns() {
   return (await pool().query(`SELECT c.id,c.status,c.created_at,c.last_error,c.spec->>'name' AS template,
-    c.spec->>'language' AS language, COUNT(r.phone)::int AS total FROM marketing_campaigns c
+    c.spec->>'language' AS language, c.spec->>'mode' AS mode, COUNT(r.phone)::int AS total FROM marketing_campaigns c
     LEFT JOIN marketing_recipients r ON r.campaign_id=c.id GROUP BY c.id ORDER BY c.created_at DESC LIMIT 30`)).rows;
 }
 export async function campaignState(id, status, error = null) {
@@ -81,9 +82,20 @@ export async function claimRecipient(id, phone) {
   const result = await pool().query("UPDATE marketing_recipients SET status='sending',updated_at=NOW() WHERE campaign_id=$1 AND phone=$2 AND status='queued' RETURNING phone", [id,phone]);
   return result.rowCount === 1;
 }
-export async function recipientState(id, phone, status, { wamid = null, error = null } = {}) {
-  await pool().query(`UPDATE marketing_recipients SET status=$3,wamid=COALESCE($4,wamid),error=$5,updated_at=NOW()
-    WHERE campaign_id=$1 AND phone=$2`, [id,phone,status,wamid,error]);
+export async function recipientState(id, phone, status, { wamid = null, error = null, errorCode = null } = {}) {
+  const client = await pool().connect();
+  try {
+    await client.query('BEGIN');
+    // Serialize acceptance and callback persistence, including callbacks arriving before send returns.
+    if (wamid) await client.query('SELECT pg_advisory_xact_lock(hashtext($1))',[wamid]);
+    await client.query(`UPDATE marketing_recipients SET
+      status=CASE WHEN status IN ('sent','delivered','read','failed') AND $3='accepted' THEN status ELSE $3 END,
+      wamid=COALESCE($4,wamid),error=$5,error_code=$6,error_message=$5,
+      failed_at=CASE WHEN $3='failed' THEN COALESCE(failed_at,NOW()) ELSE failed_at END,updated_at=NOW()
+      WHERE campaign_id=$1 AND phone=$2`, [id,phone,status,wamid,error,errorCode == null ? null : String(errorCode)]);
+    if(wamid) for(const event of (await client.query('SELECT * FROM whatsapp_message_statuses WHERE wamid=$1 ORDER BY ts,id',[wamid])).rows) await applyStatus(client,event);
+    await client.query('COMMIT');
+  } catch(e) {await client.query('ROLLBACK');throw e;} finally {client.release();}
 }
 // One worker globally keeps all campaigns under the same send rate and avoids pool exhaustion.
 export async function withCampaignLock(id, fn) {
@@ -98,17 +110,34 @@ export async function withCampaignLock(id, fn) {
     client.release();
   }
 }
+async function applyStatus(client, event) {
+  const rows = (await client.query('SELECT campaign_id,phone,status FROM marketing_recipients WHERE wamid=$1 FOR UPDATE',[event.wamid])).rows;
+  for(const row of rows) {
+    const next=nextDeliveryStatus(row.status,event.status);
+    const failed=next==='failed';
+    const column={sent:'sent_at',delivered:'delivered_at',read:'read_at',failed:'failed_at'}[event.status];
+    await client.query(`UPDATE marketing_recipients SET status=$3,
+      ${column}=CASE WHEN ${column} IS NULL OR ${column}>$4::timestamptz THEN $4::timestamptz ELSE ${column} END,
+      error=CASE WHEN $5 THEN COALESCE($6,error) ELSE NULL END,
+      error_message=CASE WHEN $5 THEN COALESCE($6,error_message) ELSE NULL END,
+      error_code=CASE WHEN $5 THEN COALESCE($7,error_code) ELSE NULL END,updated_at=NOW()
+      WHERE campaign_id=$1 AND phone=$2`,[row.campaign_id,row.phone,next,event.ts,failed,
+        event.status==='failed' ? (event.error_detail || event.error_title || 'Delivery failed') : null,
+        event.status==='failed' ? event.error_code : null]);
+  }
+  return rows;
+}
 export async function updateWebhookStatus(status) {
-  if (!status.id || getDb().driver !== 'pg') return null;
+  const event=parseStatus(status);
+  if (!event || getDb().driver !== 'pg') return [];
   const client = await pool().connect();
   try {
     await client.query('BEGIN');
-    const rows = (await client.query('SELECT campaign_id,phone,status FROM marketing_recipients WHERE wamid=$1 FOR UPDATE', [status.id])).rows;
-    for (const row of rows) {
-      const next = nextDeliveryStatus(row.status, status.status);
-      const error = next === 'failed' ? String(status.errors?.[0]?.title || 'Delivery failed').slice(0,300) : null;
-      await client.query('UPDATE marketing_recipients SET status=$3,error=$4,updated_at=NOW() WHERE campaign_id=$1 AND phone=$2', [row.campaign_id,row.phone,next,error]);
-    }
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))',[event.wamid]);
+    await client.query(`INSERT INTO whatsapp_message_statuses(wamid,recipient,status,error_code,error_title,error_detail,raw,ts)
+      VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8) ON CONFLICT(wamid,status,ts) DO NOTHING`,
+      [event.wamid,event.recipient,event.status,event.error_code,event.error_title,event.error_detail,JSON.stringify(event.raw),event.ts]);
+    const rows=await applyStatus(client,event);
     await client.query('COMMIT');
     return rows;
   } catch (e) { await client.query('ROLLBACK'); throw e; } finally { client.release(); }

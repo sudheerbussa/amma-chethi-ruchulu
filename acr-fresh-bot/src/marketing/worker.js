@@ -25,7 +25,7 @@ export async function executeCampaign(id, { db, approvedTemplates, sendTemplate,
       } catch (e) {
         const policy = errorPolicy(e);
         const error = `Meta ${e.code || e.httpStatus || 'transport'}: ${String(e.message || 'Send failed').replace(/Bearer\s+\S+/g,'[redacted]').slice(0,240)}`;
-        await db.recipientState(id,r.phone,policy === 'unknown' ? 'unknown' : 'failed',{error});
+        await db.recipientState(id,r.phone,policy === 'unknown' ? 'unknown' : 'failed',{error,errorCode:e.code});
         if (policy !== 'fail') { await db.campaignState(id,'halted',error); return; }
       }
       await sleep(1100);

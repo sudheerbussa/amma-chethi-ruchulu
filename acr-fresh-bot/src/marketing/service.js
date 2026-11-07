@@ -3,7 +3,7 @@ import { executeCampaign } from './worker.js';
 import { createHash } from 'node:crypto';
 import { config } from '../config.js';
 import { sendTemplate, sendText } from '../whatsapp.js';
-import { normalizePhone, marketingCommand, selectAudience, inspectTemplate, templateParams, errorPolicy } from './core.js';
+import { normalizePhone, marketingCommand, selectAudience, inspectTemplate, templateParams, errorPolicy, extractStatuses, testRecipients } from './core.js';
 import * as db from './store.js';
 const sleep = ms => new Promise(resolve=>setTimeout(resolve, ms));
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -56,12 +56,10 @@ export async function prepareCampaign(body) {
   const spec = { name: t.name, language: t.language, params, mode: body.mode === 'test' ? 'test' : 'audience' };
   let recipients;
   if (spec.mode === 'test') {
-    const phone = normalizePhone(body.phone);
-    if (!phone) throw new Error('Enter an Indian mobile number with 91 country code');
-    // A test may include an admin/rider, but never silently override suppression.
-    if (await db.isSuppressed(phone)) throw new Error('Test phone opted out; reply START in idle chat to opt back in');
-    spec.phone = phone;
-    recipients = [{ phone, name:'Test Customer' }];
+    const phones = testRecipients(body.phones || body.phone, config.adminPhones);
+    for (const phone of phones) if (await db.isSuppressed(phone)) throw new Error('Test phone opted out; reply START in idle chat to opt back in');
+    spec.phones = phones;
+    recipients = phones.map(phone=>({phone,name:'Test Customer'}));
   } else {
     const opts = body.audience || {};
     spec.audience = { filter: opts.filter || 'all', days: Number(opts.days || 7), excludeNeverOrdered: opts.excludeNeverOrdered !== false };
@@ -88,13 +86,14 @@ export async function runCampaign(id) {
   return executeCampaign(id, { db, approvedTemplates, sendTemplate, sleep });
 }
 export async function handleMarketingStatuses(payload) {
-  for (const entry of payload?.entry || []) for (const change of entry.changes || []) {
-    for (const s of change.value?.statuses || []) {
-      const rows = await db.updateWebhookStatus(s);
-      const code = Number(s.errors?.[0]?.code);
-      if (s.status === 'failed' && errorPolicy({code,httpStatus:400}) === 'halt') for (const r of rows || []) {
-        await db.campaignState(r.campaign_id,'halted',`Delivery webhook Meta ${code}; review template/account quality before resuming`);
+  for (const event of extractStatuses(payload)) {
+    try {
+      const rows = await db.updateWebhookStatus(event.raw);
+      const code=Number(event.error_code);
+      if (event.status==='failed' && errorPolicy({code,httpStatus:400})==='halt') for(const r of rows || []) {
+        const campaign=await db.getCampaign(r.campaign_id);
+        if(['queued','running'].includes(campaign?.status)) await db.campaignState(r.campaign_id,'halted',`Delivery webhook Meta ${code}; review account/template before resuming`);
       }
-    }
+    } catch(err) { console.error('WhatsApp status persistence failed',err.message); }
   }
 }

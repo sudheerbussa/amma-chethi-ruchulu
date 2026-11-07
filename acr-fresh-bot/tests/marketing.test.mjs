@@ -43,8 +43,8 @@ test('numeric template validation and name fallbacks',()=>{
   assert.equal(inspectTemplate({...template,components:[{type:'BODY',text:'{{2}}'}]}).supported,false);
 });
 test('only explicit rate limits retry with backoff; auth/template/quality halt; network ambiguous',async()=>{
-  for(const code of [190,132001,132015,131048,131049])assert.equal(errorPolicy({code,httpStatus:400}),'halt');
-  assert.equal(errorPolicy({code:131026,httpStatus:400}),'fail');assert.equal(errorPolicy(new Error('timeout')),'unknown');assert.equal(errorPolicy({httpStatus:500}),'unknown');
+  for(const code of [190,132001,132015,131048])assert.equal(errorPolicy({code,httpStatus:400}),'halt');
+  for(const code of [131049,131026,130472,131047,131050])assert.equal(errorPolicy({code,httpStatus:400}),'fail');assert.equal(errorPolicy(new Error('timeout')),'unknown');assert.equal(errorPolicy({httpStatus:500}),'unknown');
   let tries=0;const delays=[];
   const r=await sendWithBackoff(async()=>{if(++tries<4)throw Object.assign(new Error('limited'),{httpStatus:429});return 'ok';},async ms=>delays.push(ms));
   assert.equal(r,'ok');assert.equal(tries,4);assert.deepEqual(delays,[2000,4000,8000]);

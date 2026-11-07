@@ -22,9 +22,9 @@ if [[ -d "$ROOT/sql" ]]; then
   cp -a "$ROOT/sql/." "$STAGE/sql/"
 fi
 mkdir -p "$STAGE/scripts"
-cp -a "$ROOT/scripts/db-migrate.mjs" "$ROOT/scripts/import-json-to-pg.mjs" "$ROOT/scripts/db-migrate-marketing.mjs" "$ROOT/scripts/configure-marketing-env.mjs" "$STAGE/scripts/"
+cp -a "$ROOT/scripts/db-migrate.mjs" "$ROOT/scripts/import-json-to-pg.mjs" "$ROOT/scripts/db-migrate-marketing.mjs" "$ROOT/scripts/configure-marketing-env.mjs" "$ROOT/scripts/verify-delivery-status.mjs" "$STAGE/scripts/"
 mkdir -p "$STAGE/docs"
-cp -a "$ROOT/docs/MARKETING-TEMPLATES.md" "$ROOT/docs/MARKETING-DEPLOY.md" "$STAGE/docs/"
+cp -a "$ROOT/docs/MARKETING-TEMPLATES.md" "$ROOT/docs/MARKETING-DEPLOY.md" "$ROOT/docs/DELIVERY-TRACKING.md" "$STAGE/docs/"
 if [[ -f "$ROOT/docker-compose.yml" ]]; then
   cp -a "$ROOT/docker-compose.yml" "$STAGE/" 2>/dev/null || true
 fi

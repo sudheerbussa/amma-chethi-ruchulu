@@ -16,6 +16,7 @@ export function mountMarketing(app, auth) {
     if (!result) return res.status(404).json({error:'Campaign not found'});
     res.json(result);
   }));
+  app.post('/admin/api/marketing/test-send',auth,route(async(req,res)=>res.status(202).json(await prepareCampaign({...req.body,mode:'test'}))));
   app.post('/admin/api/marketing/campaigns',auth,route(async(req,res)=>res.status(202).json(await prepareCampaign(req.body || {}))));
   app.post('/admin/api/marketing/campaigns/:id/pause',auth,route(async(req,res)=>{
     const id=campaignId(req.params.id);

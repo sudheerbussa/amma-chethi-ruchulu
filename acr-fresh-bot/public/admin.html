@@ -2058,10 +2058,10 @@
             </div>
             <label><input id="mtOrdered" type="checkbox" checked> Exclude customers who never ordered (recommended)</label>
             <p id="mtCount" class="sub">Preview audience before sending.</p>
-            <label for="mtPhone">My test phone (91…)</label><input id="mtPhone" type="tel" placeholder="Enter your own WhatsApp number">
+            <label for="mtPhone">Admin test numbers (comma-separated, 91…)</label><input id="mtPhone" type="text" placeholder="Enter configured admin WhatsApp numbers">
             <label><input id="mtConsent" type="checkbox"> I confirm I have permission to send these WhatsApp marketing messages.</label>
             <div class="toolbar">
-              <button class="btn ghost" type="button" id="mtTest">Send test to my number</button>
+              <button class="btn ghost" type="button" id="mtTest">Send test to admin numbers</button>
               <button class="btn" type="button" id="mtSend" disabled>Send to 0 customers</button>
               <button class="btn ghost" type="button" id="mtNew">New campaign</button>
             </div>
@@ -2492,7 +2492,7 @@
           if(!value) throw new Error('Fill parameter '+i);
           params[i]=value;
         }
-        return {name:t.name,language:t.language,params,mode,...(mode==='test'?{phone:mtEl('Phone').value.trim()}:{audience:mtOptions()})};
+        return {name:t.name,language:t.language,params,mode,...(mode==='test'?{phones:mtEl('Phone').value.trim().split(/[\s,;]+/).filter(Boolean)}:{audience:mtOptions()})};
       }
       function mtRenderTemplate() {
         const t=mtSelected();
@@ -2525,7 +2525,7 @@
       async function mtHistory() {
         const r=await api('/admin/api/marketing/campaigns');
         const select=mtEl('History'); select.replaceChildren(new Option('Select campaign',''));
-        for(const c of r.campaigns) select.add(new Option(c.template+' / '+c.language+' · '+c.status+' · '+c.total+' · '+new Date(c.created_at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST',c.id));
+        for(const c of r.campaigns) select.add(new Option((c.mode==='test'?'TEST · ':'')+c.template+' / '+c.language+' · '+c.status+' · '+c.total+' · '+new Date(c.created_at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST',c.id));
         if(mt.campaign) select.value=mt.campaign;
       }
       async function mtLoad() {
@@ -2544,8 +2544,9 @@
         clearTimeout(mt.timer); mt.campaign=id; if(!id)return;
         try {
           const c=await api('/admin/api/marketing/campaigns/'+encodeURIComponent(id));
-          mtEl('Progress').textContent='Campaign '+c.id+'\n'+c.status+' · '+c.total+' recipients\n'+Object.entries(c.counts).map(([k,v])=>k+': '+v).join(' · ')+(c.last_error?'\n'+c.last_error:'')+'\nTimes: IST\n'+c.recipients.map(r=>r.phone+' · '+r.status+(r.wamid?' · '+r.wamid:'')+(r.error?' · '+r.error:'')).join('\n')+'\nAccepted = Meta accepted, not delivery. Unknown = interrupted/ambiguous; never automatically resent.';
-          if(['queued','running'].includes(c.status)) mt.timer=setTimeout(()=>mtShowCampaign(id),2500);
+          mtEl('Progress').textContent='Campaign '+c.id+'\n'+c.status+' · '+c.total+' recipients\n'+Object.entries({sent:0,delivered:0,read:0,failed:0,...c.counts}).map(([k,v])=>k+': '+v).join(' · ')+(c.last_error?'\n'+c.last_error:'')+'\nTimes: IST\n'+c.recipients.map(r=>r.phone+' · '+r.status+(r.wamid?' · '+r.wamid:'')+(r.error_code?' · Meta '+r.error_code:'')+(r.failure_reason?' · '+r.failure_reason:r.error?' · '+r.error:'')+(['sent_at','delivered_at','read_at','failed_at'].filter(k=>r[k]).map(k=>' · '+k+': '+new Date(r[k]).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST').join(''))).join('\n')+'\nAccepted = Meta accepted, not delivery. Unknown = interrupted/ambiguous; never automatically resent.';
+          // Delivery callbacks continue after the send worker completes. Poll while this campaign is visible.
+          if(mt.campaign===id && !document.hidden) mt.timer=setTimeout(()=>mtShowCampaign(id),5000);
         }catch(e){mtEl('Progress').textContent=e.message;}
       }
       async function mtSend(mode) {
@@ -2555,13 +2556,14 @@
           if(!mtEl('Consent').checked) throw new Error('Confirm marketing permission first');
           const body=mtBody(mode);
           if(mode!=='test') {await mtPreviewAudience();if(!mt.count)throw new Error('No eligible customers');}
-          const count=mode==='test'?1:mt.count;
-          if(!confirm('Send '+body.name+' ('+body.language+') to '+count+(mode==='test'?' test phone?':' customers?')+'\nThis sends real WhatsApp messages and may incur Meta fees.'))return;
+          const count=mode==='test'?new Set(body.phones).size:mt.count;
+          if(mode==='test'&&!count)throw new Error('Enter admin test numbers');
+          if(!confirm('Send '+body.name+' ('+body.language+') to '+count+(mode==='test'?' admin test numbers?':' customers?')+'\nThis sends real WhatsApp messages and may incur Meta fees.'))return;
           // Keep the ID across timeouts/reloads: submitting identical content reopens the same campaign.
           const fingerprint=JSON.stringify(body), key='acr_marketing_'+mode;
           let saved; try {saved=JSON.parse(lsGet(key)||'null');}catch{}
           if(!saved||saved.fingerprint!==fingerprint) {saved={id:crypto.randomUUID(),fingerprint};if(!lsSet(key,JSON.stringify(saved)))throw new Error('Browser storage unavailable; cannot safely retain a campaign ID');}
-          const result=await api('/admin/api/marketing/campaigns',{method:'POST',body:JSON.stringify({...body,id:saved.id,expectedCount:count,confirmed:true})});
+          const result=await api(mode==='test'?'/admin/api/marketing/test-send':'/admin/api/marketing/campaigns',{method:'POST',body:JSON.stringify({...body,id:saved.id,expectedCount:count,confirmed:true})});
           mt.campaign=result.id; lsSet('acr_marketing_last',result.id); mtEl('Msg').textContent='Campaign '+result.id+' recorded. Watch results below. Repeating the same request does not resend completed recipients.';
           await mtHistory(); await mtShowCampaign(result.id);
         }catch(e){mtEl('Msg').textContent=e.message+' If the request timed out, retry unchanged: its campaign ID is retained.';}
